@@ -989,6 +989,38 @@ h1{
 @media(max-width:1050px){.km-month-summary{grid-template-columns:repeat(2,1fr)}.km-budget-head{align-items:flex-start;flex-direction:column}.km-budget-actions{width:100%}}
 @media(max-width:600px){.km-month-summary{grid-template-columns:1fr}.km-days-bar small{width:100%;margin-left:0}}
 
+
+/* Jornadas: dato inicial del Presupuesto KM */
+.km-jornadas-panel{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  padding:16px 18px;
+  order:0;
+}
+.km-jornadas-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:12px}
+.km-jornadas-head h3{margin:2px 0 2px;font-size:18px;font-weight:900}
+.km-jornadas-head p{margin:0;color:var(--muted);font-size:11px}
+.km-step{font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--green)}
+.km-jornadas-total{text-align:right}
+.km-jornadas-total span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:850;letter-spacing:.04em}
+.km-jornadas-total strong{display:block;margin-top:3px;font-size:25px;line-height:1;font-weight:950}
+.km-jornadas-grid{display:grid;grid-template-columns:160px 160px 160px 1fr;gap:10px;align-items:stretch}
+.km-jornada{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;align-items:center;gap:2px 8px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fbfdfc}
+.km-jornada.sab{background:#fffaf4;border-top:3px solid #d77817}
+.km-jornada.dom{background:#faf8fd;border-top:3px solid #7b6aa6}
+.km-jornada.hab{border-top:3px solid var(--green)}
+.km-jornada>span{font-size:12px;font-weight:900}
+.km-jornada>input{grid-row:1 / 3;grid-column:2;width:64px;height:38px;border:1px solid var(--line);border-radius:9px;text-align:center;font-size:18px;font-weight:900;padding:4px}
+.km-jornada>small{font-size:10px;color:var(--muted)}
+.km-formula{display:flex;flex-direction:column;justify-content:center;border-left:1px solid var(--line);padding-left:14px}
+.km-formula b{font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.km-formula span{margin-top:4px;color:var(--muted);font-size:11px;line-height:1.35}
+.km-model-card em{display:block;margin-top:7px;padding-top:7px;border-top:1px dashed var(--line);font-style:normal;color:#555058;font-size:10px;font-weight:700}
+@media(max-width:900px){.km-jornadas-grid{grid-template-columns:repeat(3,1fr)}.km-formula{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);padding:10px 0 0}}
+@media(max-width:560px){.km-jornadas-grid{grid-template-columns:1fr}.km-formula{grid-column:auto}.km-jornadas-head{align-items:flex-start}.km-jornadas-total{min-width:80px}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
@@ -1145,13 +1177,40 @@ h1{
         </div>
       </div>
 
-      <div class="km-days-bar">
-        <span>Días por modelo</span>
-        <label>Hábil <input id="kmDaysHab" type="number" min="0" step="1" value="19" oninput="updateKmBudget();markKmDirty()"></label>
-        <label>Sábado <input id="kmDaysSab" type="number" min="0" step="1" value="4" oninput="updateKmBudget();markKmDirty()"></label>
-        <label>Domingo <input id="kmDaysDom" type="number" min="0" step="1" value="7" oninput="updateKmBudget();markKmDirty()"></label>
-        <small>Los días son editables para contemplar feriados o modelos especiales.</small>
-      </div>
+      <section class="km-jornadas-panel">
+        <div class="km-jornadas-head">
+          <div>
+            <span class="km-step">1 · DATO INICIAL</span>
+            <h3>Jornadas del mes</h3>
+            <p>Primero definí cuántas jornadas Hábil, Sábado y Domingo tendrá el mes.</p>
+          </div>
+          <div class="km-jornadas-total">
+            <span>Total jornadas</span>
+            <strong id="kmDaysTotal">30</strong>
+          </div>
+        </div>
+        <div class="km-jornadas-grid">
+          <label class="km-jornada hab">
+            <span>Hábil</span>
+            <input id="kmDaysHab" type="number" min="0" step="1" value="19" oninput="updateKmBudget();markKmDirty()">
+            <small>jornadas</small>
+          </label>
+          <label class="km-jornada sab">
+            <span>Sábado</span>
+            <input id="kmDaysSab" type="number" min="0" step="1" value="4" oninput="updateKmBudget();markKmDirty()">
+            <small>jornadas</small>
+          </label>
+          <label class="km-jornada dom">
+            <span>Domingo</span>
+            <input id="kmDaysDom" type="number" min="0" step="1" value="7" oninput="updateKmBudget();markKmDirty()">
+            <small>jornadas</small>
+          </label>
+          <div class="km-formula">
+            <b>Cálculo mensual</b>
+            <span>KM diario Hábil × jornadas + KM diario Sábado × jornadas + KM diario Domingo × jornadas</span>
+          </div>
+        </div>
+      </section>
 
       <section class="km-month-summary">
         <div class="km-summary-main">
@@ -1164,16 +1223,19 @@ h1{
           <span>KM modelo · Hábil</span>
           <strong id="kmModelHab">0</strong>
           <small id="kmModelHabSplit">0 prod / 0 impro</small>
+          <em id="kmModelHabMonth">0 km/día × 0 jornadas = 0 km mes</em>
         </div>
         <div class="km-model-card sab">
           <span>KM modelo · Sábado</span>
           <strong id="kmModelSab">0</strong>
           <small id="kmModelSabSplit">0 prod / 0 impro</small>
+          <em id="kmModelSabMonth">0 km/día × 0 jornadas = 0 km mes</em>
         </div>
         <div class="km-model-card dom">
           <span>KM modelo · Domingo</span>
           <strong id="kmModelDom">0</strong>
           <small id="kmModelDomSplit">0 prod / 0 impro</small>
+          <em id="kmModelDomMonth">0 km/día × 0 jornadas = 0 km mes</em>
         </div>
       </section>
 
@@ -1285,13 +1347,13 @@ function loadKmBudget(period){
   const input=document.getElementById('kmPeriod'); if(!input)return;
   const key=period||input.value||'2026-11'; input.value=key;
   const saved=getKmBudgets();
-  let days={hab:19,sab:4,dom:7};
+  let days={hab:0,sab:0,dom:0};
   if(saved[key]?.rows){kmBudgetRows=kmClone(saved[key].rows);days=saved[key].days||days;setKmState('Guardado '+new Date(saved[key].updatedAt).toLocaleString('es-AR'))}
-  else if(key==='2026-11'){kmBudgetRows=kmClone(KM_NOV_2026);setKmState('Base inicial · sin guardar')}
-  else{kmBudgetRows=kmClone(kmBudgetRows.length?kmBudgetRows:KM_NOV_2026);setKmState('Nuevo mes · sin guardar')}
-  document.getElementById('kmDaysHab').value=days.hab??19;
-  document.getElementById('kmDaysSab').value=days.sab??4;
-  document.getElementById('kmDaysDom').value=days.dom??7;
+  else if(key==='2026-11'){kmBudgetRows=kmClone(KM_NOV_2026);days={hab:19,sab:4,dom:7};setKmState('Base inicial · sin guardar')}
+  else{kmBudgetRows=kmClone(kmBudgetRows.length?kmBudgetRows:KM_NOV_2026);setKmState('Completá primero las jornadas del mes')}
+  document.getElementById('kmDaysHab').value=days.hab??0;
+  document.getElementById('kmDaysSab').value=days.sab??0;
+  document.getElementById('kmDaysDom').value=days.dom??0;
   renderKmBudget(); renderKmSavedMonths();
 }
 function kmInput(i,k,v,cls=''){return `<input class="${cls}" type="number" step="0.001" min="0" value="${kmN(v)}" oninput="kmBudgetRows[${i}].${k}=kmN(this.value);updateKmBudget();markKmDirty()">`}
@@ -1317,13 +1379,19 @@ function updateKmBudget(){
   kmBudgetRows.forEach((r,i)=>{t.qHab+=kmN(r.qHab);t.gas+=kmN(r.flotaGas);t.gnc+=kmN(r.flotaGnc);t.pHab+=kmN(r.prodHab);t.iHab+=kmN(r.improHab);t.qSab+=kmN(r.qSab);t.fSab+=kmN(r.flotaSab);t.pSab+=kmN(r.prodSab);t.iSab+=kmN(r.improSab);t.qDom+=kmN(r.qDom);t.fDom+=kmN(r.flotaDom);t.pDom+=kmN(r.prodDom);t.iDom+=kmN(r.improDom);const h=document.getElementById('kmHabRowTotal'+i),s=document.getElementById('kmSabRowTotal'+i),d=document.getElementById('kmDomRowTotal'+i);if(h)h.textContent=kmFmt(kmN(r.prodHab)+kmN(r.improHab),3);if(s)s.textContent=kmFmt(kmN(r.prodSab)+kmN(r.improSab),3);if(d)d.textContent=kmFmt(kmN(r.prodDom)+kmN(r.improDom),3)});
   const dH=kmI(document.getElementById('kmDaysHab')?.value),dS=kmI(document.getElementById('kmDaysSab')?.value),dD=kmI(document.getElementById('kmDaysDom')?.value);
   const modelH=t.pHab+t.iHab,modelS=t.pSab+t.iSab,modelD=t.pDom+t.iDom;
+  const monthH=modelH*dH,monthS=modelS*dS,monthD=modelD*dD;
   const monthProd=t.pHab*dH+t.pSab*dS+t.pDom*dD,monthImpro=t.iHab*dH+t.iSab*dS+t.iDom*dD,monthTotal=monthProd+monthImpro;
   const set=(id,v,d=2)=>{const e=document.getElementById(id);if(e)e.textContent=kmFmt(v,d)};
   set('kmQHab',t.qHab,0);set('kmFlotaGasHab',t.gas,0);set('kmFlotaGncHab',t.gnc,0);set('kmProdHab',t.pHab,3);set('kmImproHab',t.iHab,3);set('kmTotalHab',modelH,3);
   set('kmQSab',t.qSab,0);set('kmFlotaSab',t.fSab,0);set('kmProdSab',t.pSab,3);set('kmImproSab',t.iSab,3);set('kmTotalSab',modelS,3);
   set('kmQDom',t.qDom,0);set('kmFlotaDom',t.fDom,0);set('kmProdDom',t.pDom,3);set('kmImproDom',t.iDom,3);set('kmTotalDom',modelD,3);
   set('kmModelHab',modelH,3);set('kmModelSab',modelS,3);set('kmModelDom',modelD,3);
+  set('kmDaysTotal',dH+dS+dD,0);
   set('kmMonthProd',Math.round(monthProd),0);set('kmMonthImpro',Math.round(monthImpro),0);set('kmMonthTotal',Math.round(monthTotal),0);
+  const mh=document.getElementById('kmModelHabMonth'),ms=document.getElementById('kmModelSabMonth'),md=document.getElementById('kmModelDomMonth');
+  if(mh)mh.textContent=kmFmt(modelH,3)+' km/día × '+dH+' jornadas = '+kmFmt(monthH,3)+' km mes';
+  if(ms)ms.textContent=kmFmt(modelS,3)+' km/día × '+dS+' jornadas = '+kmFmt(monthS,3)+' km mes';
+  if(md)md.textContent=kmFmt(modelD,3)+' km/día × '+dD+' jornadas = '+kmFmt(monthD,3)+' km mes';
   const hs=document.getElementById('kmModelHabSplit'),ss=document.getElementById('kmModelSabSplit'),ds=document.getElementById('kmModelDomSplit');
   if(hs)hs.textContent=kmFmt(t.pHab,3)+' prod / '+kmFmt(t.iHab,3)+' impro';
   if(ss)ss.textContent=kmFmt(t.pSab,3)+' prod / '+kmFmt(t.iSab,3)+' impro';
@@ -1339,7 +1407,7 @@ function saveKmBudget(){
 }
 function renderKmSavedMonths(){const w=document.getElementById('kmSavedMonths'),p=document.getElementById('kmPeriod')?.value;if(!w)return;const a=getKmBudgets(),ks=Object.keys(a).sort();w.innerHTML=ks.length?ks.map(k=>`<button class="monthly-month-chip ${k===p?'active':''}" onclick="loadKmBudget('${k}')">${monthlyPeriodLabel(k)}</button>`).join(''):'<span style="color:var(--muted);font-size:11px">Todavía no hay presupuestos guardados.</span>'}
 function moveKmPeriod(d){const e=document.getElementById('kmPeriod');if(!e)return;loadKmBudget(shiftMonthKey(e.value||'2026-11',d))}
-function createNextKmBudget(){const e=document.getElementById('kmPeriod');if(!e)return;const cur=e.value||'2026-11',next=shiftMonthKey(cur,1),all=getKmBudgets();if(all[next]){loadKmBudget(next);return}e.value=next;kmBudgetRows=kmClone(kmBudgetRows);setKmState('Nuevo mes basado en '+monthlyPeriodLabel(cur)+' · sin guardar');renderKmBudget();renderKmSavedMonths()}
+function createNextKmBudget(){const e=document.getElementById('kmPeriod');if(!e)return;const cur=e.value||'2026-11',next=shiftMonthKey(cur,1),all=getKmBudgets();if(all[next]){loadKmBudget(next);return}e.value=next;kmBudgetRows=kmClone(kmBudgetRows);const h=document.getElementById('kmDaysHab'),s=document.getElementById('kmDaysSab'),d=document.getElementById('kmDaysDom');if(h)h.value=0;if(s)s.value=0;if(d)d.value=0;setKmState('Completá primero las jornadas de '+monthlyPeriodLabel(next));renderKmBudget();renderKmSavedMonths()}
 function copyPreviousKmBudget(){const e=document.getElementById('kmPeriod');if(!e)return;const prev=shiftMonthKey(e.value||'2026-11',-1),all=getKmBudgets();if(!all[prev]){alert('No hay presupuesto KM guardado para '+monthlyPeriodLabel(prev)+'.');return}kmBudgetRows=kmClone(all[prev].rows);const d=all[prev].days||{};const hEl=document.getElementById('kmDaysHab'),sEl=document.getElementById('kmDaysSab'),dEl=document.getElementById('kmDaysDom');if(hEl)hEl.value=d.hab??19;if(sEl)sEl.value=d.sab??4;if(dEl)dEl.value=d.dom??7;renderKmBudget();setKmState('Copiado de '+monthlyPeriodLabel(prev)+' · sin guardar')}
 function initKmBudget(){const e=document.getElementById('kmPeriod');if(!e||e.dataset.ready)return;e.dataset.ready='1';e.addEventListener('change',()=>loadKmBudget(e.value));loadKmBudget(e.value||'2026-11')}
 
