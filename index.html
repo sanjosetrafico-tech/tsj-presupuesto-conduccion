@@ -1069,6 +1069,57 @@ h1{
 .km-model-table tbody td:nth-child(n+9):nth-child(-n+11),
 .km-model-table tfoot td:nth-child(n+9):nth-child(-n+11){background:#fbf9fd!important}
 
+
+/* Diferenciación visual del Plan de servicio */
+#planBody tr{
+  transition:background .15s ease;
+}
+#planBody tr.plan-hab td:first-child{border-left:4px solid #0b9b73!important}
+#planBody tr.plan-sab td:first-child{border-left:4px solid #d77817!important}
+#planBody tr.plan-dom td:first-child{border-left:4px solid #7b6aa6!important}
+#planBody tr.plan-other td:first-child{border-left:4px solid #aaa2a7!important}
+
+#planBody tr.plan-hab{background:#f7fcfa}
+#planBody tr.plan-sab{background:#fffaf4}
+#planBody tr.plan-dom{background:#faf8fd}
+
+#planBody .plan-type-select{
+  font-weight:900!important;
+}
+#planBody tr.plan-hab .plan-type-select{
+  border-color:#a8d8c8!important;
+  background:#f3faf7!important;
+  color:#176a55!important;
+}
+#planBody tr.plan-sab .plan-type-select{
+  border-color:#f1c995!important;
+  background:#fff7ed!important;
+  color:#9a5817!important;
+}
+#planBody tr.plan-dom .plan-type-select{
+  border-color:#cfc4e6!important;
+  background:#f7f4fb!important;
+  color:#66548c!important;
+}
+
+#planBody .plan-days-input{
+  font-size:13px!important;
+  font-weight:950!important;
+  text-align:center!important;
+  border-width:2px!important;
+}
+#planBody tr.plan-hab .plan-days-input{border-color:#0b9b73!important;background:#f7fcfa!important}
+#planBody tr.plan-sab .plan-days-input{border-color:#d77817!important;background:#fffaf4!important}
+#planBody tr.plan-dom .plan-days-input{border-color:#7b6aa6!important;background:#faf8fd!important}
+
+#planBody .plan-jornadas{
+  font-weight:950!important;
+  font-size:12px!important;
+}
+#planBody tr.plan-hab .plan-jornadas{color:#087456!important}
+#planBody tr.plan-sab .plan-jornadas{color:#a55c12!important}
+#planBody tr.plan-dom .plan-jornadas{color:#66548c!important}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
@@ -1758,7 +1809,7 @@ let deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5},{name:'Lic
 const fmt=(n,d=0)=>new Intl.NumberFormat('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}).format(Number(n)||0);const val=x=>Number(x)||0;const whole=x=>Math.floor(val(x));const deductionDays=(raw,kind)=>kind==='percent'?Math.ceil(val(raw)):Math.floor(val(raw));
 function computeMetricsData(planData=plan,staffData=staff,dedData=deductions){let need=0,days=0;(planData||[]).forEach(r=>{const fleet=whole(r.fleet),d=whole(r.days);need+=fleet*d;days+=d});let gross=0,count=0;(staffData||[]).forEach(r=>{const c=whole(r.count),w=whole(r.workdays);gross+=c*w;count+=c});let deds=0;const dedItems=(dedData||[]).map(r=>{const raw=r.kind==='percent'?need*val(r.value)/100:val(r.value);const j=deductionDays(raw,r.kind);deds+=j;return j});const net=Math.floor(gross-deds),balance=Math.floor(net-need),cov=need?net/need*100:0;return{need,days,gross,count,deds,net,balance,cov,dedItems}}
 function renderAll(){renderPlan();renderStaff();renderDeds();calculate();renderSaved()}
-function renderPlan(){planBody.innerHTML=plan.map((r,i)=>`<tr><td><select onchange="plan[${i}].type=this.value;calculate()"><option ${r.type==='Hábil'?'selected':''}>Hábil</option><option ${r.type==='Sábado'?'selected':''}>Sábado</option><option ${r.type==='Domingo'?'selected':''}>Domingo</option><option ${r.type==='Feriado'?'selected':''}>Feriado</option><option ${r.type==='Otro'?'selected':''}>Otro</option></select></td><td><input value="${esc(r.desc)}" oninput="plan[${i}].desc=this.value"></td><td><input type="number" min="0" value="${r.fleet}" oninput="plan[${i}].fleet=val(this.value);calculate()"></td><td><input type="number" min="0" value="${r.days}" oninput="plan[${i}].days=val(this.value);calculate()"></td><td class="num" id="planJ${i}">0</td><td><button class="icon-btn" onclick="removePlan(${i})">×</button></td></tr>`).join('')}
+function renderPlan(){planBody.innerHTML=plan.map((r,i)=>{const cls=r.type==='Hábil'?'plan-hab':r.type==='Sábado'?'plan-sab':r.type==='Domingo'?'plan-dom':'plan-other';return `<tr class="${cls}"><td><select class="plan-type-select" onchange="plan[${i}].type=this.value;renderPlan();calculate()"><option ${r.type==='Hábil'?'selected':''}>Hábil</option><option ${r.type==='Sábado'?'selected':''}>Sábado</option><option ${r.type==='Domingo'?'selected':''}>Domingo</option><option ${r.type==='Feriado'?'selected':''}>Feriado</option><option ${r.type==='Otro'?'selected':''}>Otro</option></select></td><td><input value="${esc(r.desc)}" oninput="plan[${i}].desc=this.value"></td><td><input type="number" min="0" value="${r.fleet}" oninput="plan[${i}].fleet=val(this.value);calculate()"></td><td><input class="plan-days-input" type="number" min="0" value="${r.days}" oninput="plan[${i}].days=val(this.value);calculate()"></td><td class="num plan-jornadas" id="planJ${i}">0</td><td><button class="icon-btn" onclick="removePlan(${i})">×</button></td></tr>`}).join('')}
 function renderStaff(){staffBody.innerHTML=staff.map((r,i)=>`<tr><td><input type="number" min="0" value="${r.count}" oninput="staff[${i}].count=val(this.value);calculate()"></td><td><input type="number" min="0" value="${r.workdays}" oninput="staff[${i}].workdays=val(this.value);calculate()"></td><td class="num" id="staffJ${i}">0</td><td><button class="icon-btn" onclick="removeStaff(${i})">×</button></td></tr>`).join('')}
 function renderDeds(){dedBody.innerHTML=deductions.map((r,i)=>{const aus=r.kind==='percent'&&String(r.name).toLowerCase().includes('ausentismo');const c=aus?`<input value="Ausentismo estimado" readonly style="background:#f5f3f4;color:#6b7280">`:`<select onchange="deductions[${i}].name=this.value">${DED_CONCEPTS.map(x=>`<option value="${x}" ${r.name===x?'selected':''}>${x}</option>`).join('')}</select>`;return `<tr><td>${c}</td><td><select onchange="deductions[${i}].kind=this.value;renderDeds();calculate()"><option value="days" ${r.kind==='days'?'selected':''}>Jornadas</option><option value="percent" ${r.kind==='percent'?'selected':''}>Porcentaje</option></select></td><td><input type="number" min="0" step="${r.kind==='percent'?'0.1':'1'}" value="${r.value}" oninput="deductions[${i}].value=val(this.value);calculate()"></td><td class="num" id="dedJ${i}">0</td><td><button class="icon-btn" onclick="removeDed(${i})">×</button></td></tr>`}).join('')}
 function calculate(){const m=computeMetricsData();plan.forEach((r,i)=>{const e=document.getElementById('planJ'+i);if(e)e.textContent=fmt(whole(r.fleet)*whole(r.days))});staff.forEach((r,i)=>{const e=document.getElementById('staffJ'+i);if(e)e.textContent=fmt(whole(r.count)*whole(r.workdays))});deductions.forEach((r,i)=>{const e=document.getElementById('dedJ'+i);if(e)e.textContent=fmt(m.dedItems[i]||0)});planDays.textContent=fmt(m.days);planTotal.textContent=fmt(m.need);staffCount.textContent=fmt(m.count);staffTotal.textContent=fmt(m.gross);dedTotal.textContent=fmt(m.deds);needKpi.textContent=fmt(m.need);grossKpi.textContent=fmt(m.gross);netKpi.textContent=fmt(m.net);balanceKpi.textContent=(m.balance>=0?'+':'')+fmt(m.balance);rNeed.textContent=fmt(m.need);rGross.textContent=fmt(m.gross);rDeds.textContent=fmt(m.deds);rNet.textContent=fmt(m.net);coverage.textContent=fmt(m.cov,1)+'%';rBalance.textContent=(m.balance>=0?'+':'')+fmt(m.balance);balanceCard.className='card '+(m.balance>=0?'positive':'negative');resultAlert.className='alert '+(m.balance>=0?'ok':'bad');resultAlert.textContent=m.balance>=0?`La dotación cubre el plan con un margen de ${fmt(m.balance)} jornadas (${fmt(m.cov,1)}% de cobertura).`:`Faltan ${fmt(Math.abs(m.balance))} jornadas para cubrir el plan (${fmt(m.cov,1)}% de cobertura).`;return m}
