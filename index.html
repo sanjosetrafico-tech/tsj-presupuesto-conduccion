@@ -991,17 +991,17 @@ h1{
         <div class="monthly-summary-card">
           <span>Hábil</span>
           <strong id="monthlyHabTotal">0</strong>
-          <small>TM + TT</small>
+          <small id="monthlyHabSplit">0 TM / 0 TT</small>
         </div>
         <div class="monthly-summary-card">
           <span>Sábado</span>
           <strong id="monthlySabTotal">0</strong>
-          <small>TM + TT</small>
+          <small id="monthlySabSplit">0 TM / 0 TT</small>
         </div>
         <div class="monthly-summary-card">
           <span>Domingo</span>
           <strong id="monthlyDomTotal">0</strong>
-          <small>TM + TT</small>
+          <small id="monthlyDomSplit">0 TM / 0 TT</small>
         </div>
         <div class="monthly-summary-card neutral">
           <span>Líneas / ramales</span>
@@ -1167,6 +1167,12 @@ function calculateMonthlyPlan(){
   set('monthlyHabTotal',t.habTM+t.habTT);
   set('monthlySabTotal',t.sabTM+t.sabTT);
   set('monthlyDomTotal',t.domTM+t.domTT);
+  const habSplit=document.getElementById('monthlyHabSplit');
+  const sabSplit=document.getElementById('monthlySabSplit');
+  const domSplit=document.getElementById('monthlyDomSplit');
+  if(habSplit)habSplit.textContent=fmt(t.habTM)+' TM / '+fmt(t.habTT)+' TT';
+  if(sabSplit)sabSplit.textContent=fmt(t.sabTM)+' TM / '+fmt(t.sabTT)+' TT';
+  if(domSplit)domSplit.textContent=fmt(t.domTM)+' TM / '+fmt(t.domTT)+' TT';
   set('monthlyLineCount',monthlyPlanRows.length);
 }
 function updateMonthlySavedState(text){
