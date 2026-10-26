@@ -1770,7 +1770,277 @@ function deleteBudget(id){if(!confirm('¿Eliminar este presupuesto guardado?'))r
 function renderSaved(){let list=getSaved();savedList.innerHTML=list.length?list.map(s=>{const m=computeMetricsData(s.plan||[],s.staff||[],s.deductions||[]);return `<div class="saved-item"><div><b>${esc(s.name)} <span class="badge">${esc(s.status||'Borrador')}</span></b><span>${s.period||''} · Saldo ${m.balance>=0?'+':''}${fmt(m.balance)} jornadas · actualizado ${new Date(s.updatedAt).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="loadBudget('${s.id}')">Abrir</button><button class="btn pdf" onclick="downloadSavedPDF('${s.id}')">PDF</button><button class="btn danger" onclick="deleteBudget('${s.id}')">Eliminar</button></div></div>`}).join(''):'<div class="footer-note">Todavía no hay presupuestos guardados.</div>'}
 function newBudget(){currentId=null;budgetName.value='Nuevo presupuesto';document.getElementById('status').value='Borrador';plan=[{type:'Hábil',desc:'Plan normal',fleet:0,days:0},{type:'Sábado',desc:'Plan sábado',fleet:0,days:0},{type:'Domingo',desc:'Plan domingo',fleet:0,days:0}];staff=[{count:0,workdays:0}];deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5}];renderAll();window.scrollTo({top:0,behavior:'smooth'})}
 function downloadPDF(){downloadPDFFromSnapshot(snapshot())}function downloadSavedPDF(id){let s=getSaved().find(x=>x.id===id);if(s)downloadPDFFromSnapshot(s)}function periodLabel(p){if(!p)return'Sin período';let[y,m]=p.split('-').map(Number);let d=new Date(Date.UTC(y,m-1,1));let t=new Intl.DateTimeFormat('es-AR',{month:'long',year:'numeric',timeZone:'UTC'}).format(d);return t.charAt(0).toUpperCase()+t.slice(1)}function safeFileName(s){return String(s||'presupuesto').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'')||'presupuesto'}
-function downloadPDFFromSnapshot(s){if(!window.jspdf||!window.jspdf.jsPDF){alert('No se pudo cargar el generador de PDF.');return}const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});const ink=[17,17,17],gray=[100,95,99],light=[246,243,244],green=[0,163,108],red=[212,75,62],black=[23,21,25];const M=computeMetricsData(s.plan||[],s.staff||[],s.deductions||[]);try{doc.addImage(document.querySelector('.brand img').src,'PNG',14,10,34,20)}catch(e){}doc.setFont('helvetica','bold');doc.setTextColor(...ink);doc.setFontSize(19);doc.text('Presupuesto mensual de conducción',55,17);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...gray);doc.text('Transporte San José S.A.',55,23);doc.text(periodLabel(s.period),55,28);doc.setDrawColor(...black);doc.setLineWidth(1);doc.line(14,34,196,34);doc.setFontSize(10);doc.setTextColor(...ink);doc.setFont('helvetica','bold');doc.text(s.name||'Presupuesto',14,42);doc.setFont('helvetica','normal');doc.setTextColor(...gray);doc.text(`Estado: ${s.status||'Borrador'}`,14,47);doc.text(`Emitido: ${new Date().toLocaleString('es-AR')}`,196,47,{align:'right'});const cards=[['Jornadas necesarias',fmt(M.need)],['Disponibilidad bruta',fmt(M.gross)],['Disponibilidad neta',fmt(M.net)],['Saldo mensual',(M.balance>=0?'+':'')+fmt(M.balance)]];cards.forEach((c,i)=>{let x=14+i*46;doc.setFillColor(...light);doc.roundedRect(x,53,43.5,22,2,2,'F');doc.setFontSize(7.5);doc.setTextColor(...gray);doc.setFont('helvetica','normal');doc.text(c[0],x+3,59);doc.setFontSize(15);doc.setFont('helvetica','bold');doc.setTextColor(...(i===3?(M.balance>=0?green:red):ink));doc.text(c[1],x+3,69)});let cursor=83;const common={theme:'grid',styles:{font:'helvetica',fontSize:8,cellPadding:2.2,textColor:ink,lineColor:[225,228,233],lineWidth:.2},headStyles:{fillColor:black,textColor:[255,255,255],fontStyle:'bold'},alternateRowStyles:{fillColor:[249,250,251]},margin:{left:14,right:14}};doc.setFontSize(11);doc.setTextColor(...ink);doc.setFont('helvetica','bold');doc.text('Plan de servicio',14,cursor);doc.autoTable({...common,startY:cursor+4,head:[['Tipo','Descripción','Flota','Días','Jornadas']],body:(s.plan||[]).map(r=>[r.type||'',r.desc||'',fmt(whole(r.fleet)),fmt(whole(r.days)),fmt(whole(r.fleet)*whole(r.days))])});cursor=doc.lastAutoTable.finalY+8;doc.text('Dotación disponible',14,cursor);doc.autoTable({...common,startY:cursor+4,head:[['Conductores','Jornadas por conductor','Disponibles']],body:(s.staff||[]).map(r=>[fmt(whole(r.count)),fmt(whole(r.workdays)),fmt(whole(r.count)*whole(r.workdays))])});cursor=doc.lastAutoTable.finalY+8;doc.text('Incidencias',14,cursor);doc.autoTable({...common,startY:cursor+4,head:[['Concepto','Tipo','Valor','Descuento']],body:(s.deductions||[]).map(r=>{let raw=r.kind==='percent'?M.need*val(r.value)/100:val(r.value);let discount=deductionDays(raw,r.kind);return[r.name||'',r.kind==='percent'?'Porcentaje':'Jornadas',r.kind==='percent'?fmt(r.value,1)+'%':fmt(whole(r.value)),fmt(discount)]})});cursor=doc.lastAutoTable.finalY+8;if(cursor>245){doc.addPage();cursor=20}doc.setFillColor(...(M.balance>=0?[237,249,244]:[255,240,238]));doc.roundedRect(14,cursor,182,35,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...ink);doc.text('Resultado del presupuesto',18,cursor+8);doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(...gray);doc.text(`Conductores contemplados: ${fmt(M.count)}`,18,cursor+15);doc.text(`Descuentos totales: ${fmt(M.deds)} jornadas`,18,cursor+21);doc.text(`Cobertura: ${fmt(M.cov,1)}%`,18,cursor+27);doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(...(M.balance>=0?green:red));doc.text(`Saldo: ${M.balance>=0?'+':''}${fmt(M.balance)} jornadas`,192,cursor+15,{align:'right'});doc.setTextColor(...gray);doc.setFontSize(7.5);doc.text('Documento generado desde el simulador de presupuesto de conducción TSJ.',14,287);doc.text(`Página ${doc.getNumberOfPages()}`,196,287,{align:'right'});doc.save(`${safeFileName(s.name)}_${s.period||'sin_periodo'}.pdf`)}
+function downloadPDFFromSnapshot(s){
+  if(!window.jspdf||!window.jspdf.jsPDF){
+    alert('No se pudo cargar el generador de PDF.');
+    return;
+  }
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const ink=[22,20,22];
+  const muted=[103,96,101];
+  const line=[229,225,228];
+  const soft=[248,246,247];
+  const soft2=[243,240,242];
+  const green=[0,156,105];
+  const greenSoft=[235,248,243];
+  const red=[204,67,58];
+  const redSoft=[255,239,237];
+  const black=[24,21,24];
+  const M=computeMetricsData(s.plan||[],s.staff||[],s.deductions||[]);
+  const pageW=210;
+  const left=14;
+  const right=196;
+  const contentW=182;
+
+  const planRows=(s.plan||[]).map(r=>[
+    r.type||'',
+    r.desc||'',
+    fmt(whole(r.fleet)),
+    fmt(whole(r.days)),
+    fmt(whole(r.fleet)*whole(r.days))
+  ]);
+  const planDays=(s.plan||[]).reduce((a,r)=>a+whole(r.days),0);
+
+  const staffRows=(s.staff||[]).map(r=>[
+    fmt(whole(r.count)),
+    fmt(whole(r.workdays)),
+    fmt(whole(r.count)*whole(r.workdays))
+  ]);
+
+  const incidenceRows=(s.deductions||[]).map(r=>{
+    const raw=r.kind==='percent'?M.need*val(r.value)/100:val(r.value);
+    const discount=deductionDays(raw,r.kind);
+    return [
+      r.name||'',
+      r.kind==='percent'?'Porcentaje':'Jornadas',
+      r.kind==='percent'?fmt(r.value,1)+'%':fmt(whole(r.value)),
+      fmt(discount)
+    ];
+  });
+
+  function addSectionTitle(title,y){
+    doc.setFillColor(...soft2);
+    doc.roundedRect(left,y,contentW,8,1.5,1.5,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...ink);
+    doc.text(title,left+4,y+5.4);
+    return y+11;
+  }
+
+  function needPage(y,needed=40){
+    if(y+needed>275){
+      doc.addPage();
+      return 18;
+    }
+    return y;
+  }
+
+  // Encabezado
+  try{
+    doc.addImage(document.querySelector('.brand img').src,'PNG',14,10,30,18);
+  }catch(e){}
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(18);
+  doc.setTextColor(...ink);
+  doc.text('Presupuesto mensual de conducción',50,16);
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...muted);
+  doc.text('Transporte San José S.A.',50,22);
+  doc.text(periodLabel(s.period),50,27);
+
+  // Estado a la derecha
+  doc.setFillColor(...black);
+  doc.roundedRect(158,11,38,11,2,2,'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(255,255,255);
+  doc.text(String(s.status||'Borrador').toUpperCase(),177,18,{align:'center'});
+
+  doc.setDrawColor(...line);
+  doc.setLineWidth(.4);
+  doc.line(left,34,right,34);
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...ink);
+  doc.text(s.name||'Presupuesto',left,42);
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...muted);
+  doc.text('Emitido: '+new Date().toLocaleString('es-AR'),right,42,{align:'right'});
+
+  // Resumen KPI
+  const cardY=49;
+  const gap=3;
+  const cardW=(contentW-gap*3)/4;
+  const cards=[
+    {label:'Jornadas necesarias',value:fmt(M.need),hint:'Plan del mes'},
+    {label:'Disponibilidad bruta',value:fmt(M.gross),hint:'Antes de incidencias'},
+    {label:'Disponibilidad neta',value:fmt(M.net),hint:'Luego de incidencias'},
+    {label:'Saldo mensual',value:(M.balance>=0?'+':'')+fmt(M.balance),hint:'Jornadas de margen',accent:true}
+  ];
+
+  cards.forEach((c,i)=>{
+    const x=left+i*(cardW+gap);
+    const fill=c.accent?(M.balance>=0?greenSoft:redSoft):soft;
+    doc.setFillColor(...fill);
+    doc.setDrawColor(...line);
+    doc.roundedRect(x,cardY,cardW,25,2,2,'FD');
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7.2);
+    doc.setTextColor(...muted);
+    doc.text(c.label.toUpperCase(),x+3,cardY+6);
+
+    doc.setFontSize(15);
+    doc.setTextColor(...(c.accent?(M.balance>=0?green:red):ink));
+    doc.text(c.value,x+3,cardY+15.5);
+
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7.2);
+    doc.setTextColor(...muted);
+    doc.text(c.hint,x+3,cardY+21.5);
+  });
+
+  let cursor=82;
+  const common={
+    theme:'grid',
+    styles:{
+      font:'helvetica',
+      fontSize:8,
+      cellPadding:{top:2.3,right:2.2,bottom:2.3,left:2.2},
+      textColor:ink,
+      lineColor:line,
+      lineWidth:.2,
+      valign:'middle'
+    },
+    headStyles:{
+      fillColor:black,
+      textColor:[255,255,255],
+      fontStyle:'bold',
+      halign:'center'
+    },
+    alternateRowStyles:{fillColor:[251,250,250]},
+    margin:{left,right:14}
+  };
+
+  // Plan de servicio
+  cursor=addSectionTitle('Plan de servicio',cursor);
+  doc.autoTable({
+    ...common,
+    startY:cursor,
+    head:[['Tipo','Descripción','Flota','Días','Jornadas']],
+    body:planRows,
+    foot:[['Total','', '',fmt(planDays),fmt(M.need)]],
+    footStyles:{fillColor:soft2,textColor:ink,fontStyle:'bold'},
+    columnStyles:{
+      0:{cellWidth:27},
+      1:{cellWidth:70,halign:'left'},
+      2:{cellWidth:25,halign:'center'},
+      3:{cellWidth:25,halign:'center'},
+      4:{cellWidth:35,halign:'right'}
+    }
+  });
+
+  cursor=doc.lastAutoTable.finalY+7;
+  cursor=needPage(cursor,38);
+
+  // Dotación
+  cursor=addSectionTitle('Dotación disponible',cursor);
+  doc.autoTable({
+    ...common,
+    startY:cursor,
+    head:[['Conductores','Jornadas por conductor','Disponibles']],
+    body:staffRows,
+    foot:[[fmt(M.count),'Total',fmt(M.gross)]],
+    footStyles:{fillColor:soft2,textColor:ink,fontStyle:'bold'},
+    columnStyles:{
+      0:{halign:'center'},
+      1:{halign:'center'},
+      2:{halign:'right'}
+    }
+  });
+
+  cursor=doc.lastAutoTable.finalY+7;
+  cursor=needPage(cursor,45);
+
+  // Incidencias
+  cursor=addSectionTitle('Incidencias',cursor);
+  doc.autoTable({
+    ...common,
+    startY:cursor,
+    head:[['Concepto','Tipo','Valor','Descuento']],
+    body:incidenceRows,
+    foot:[['Total','','',fmt(M.deds)]],
+    footStyles:{fillColor:soft2,textColor:ink,fontStyle:'bold'},
+    columnStyles:{
+      0:{cellWidth:72,halign:'left'},
+      1:{cellWidth:38,halign:'center'},
+      2:{cellWidth:30,halign:'center'},
+      3:{cellWidth:42,halign:'right'}
+    }
+  });
+
+  cursor=doc.lastAutoTable.finalY+8;
+  cursor=needPage(cursor,42);
+
+  // Resultado final
+  const boxFill=M.balance>=0?greenSoft:redSoft;
+  const boxAccent=M.balance>=0?green:red;
+  doc.setFillColor(...boxFill);
+  doc.setDrawColor(...boxAccent);
+  doc.setLineWidth(.5);
+  doc.roundedRect(left,cursor,contentW,34,2,2,'FD');
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(...ink);
+  doc.text('Resultado del presupuesto',left+4,cursor+7);
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8.6);
+  doc.setTextColor(...muted);
+  doc.text('Conductores contemplados: '+fmt(M.count),left+4,cursor+14);
+  doc.text('Incidencias totales: '+fmt(M.deds)+' jornadas',left+4,cursor+20);
+  doc.text('Cobertura: '+fmt(M.cov,1)+'%',left+4,cursor+26);
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...muted);
+  doc.text('SALDO',right-4,cursor+9,{align:'right'});
+
+  doc.setFontSize(19);
+  doc.setTextColor(...boxAccent);
+  doc.text((M.balance>=0?'+':'')+fmt(M.balance)+' jornadas',right-4,cursor+20,{align:'right'});
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...muted);
+  doc.text(M.balance>=0?'Margen disponible sobre el plan previsto':'Déficit respecto del plan previsto',right-4,cursor+27,{align:'right'});
+
+  // Footer en todas las páginas
+  const totalPages=doc.getNumberOfPages();
+  for(let p=1;p<=totalPages;p++){
+    doc.setPage(p);
+    doc.setDrawColor(...line);
+    doc.setLineWidth(.25);
+    doc.line(left,282,right,282);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...muted);
+    doc.text('Presupuesto mensual de conducción - '+periodLabel(s.period),left,287);
+    doc.text('Página '+p+' de '+totalPages,right,287,{align:'right'});
+  }
+
+  doc.save(`${safeFileName(s.name)}_${s.period||'sin_periodo'}.pdf`);
+}
 function exportJSON(){let blob=new Blob([JSON.stringify(getSaved(),null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tsj-presupuestos-respaldo.json';a.click();URL.revokeObjectURL(a.href)}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}renderAll();
 restoreServiceTab();
 </script>
