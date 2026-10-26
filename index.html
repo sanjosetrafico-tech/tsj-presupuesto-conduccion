@@ -1120,6 +1120,42 @@ h1{
 #planBody tr.plan-sab .plan-jornadas{color:#a55c12!important}
 #planBody tr.plan-dom .plan-jornadas{color:#66548c!important}
 
+
+/* Dotación disponible + resumen */
+.plan-service-panel{margin-bottom:14px!important}
+.staff-panel{margin-bottom:14px!important}
+.staff-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,.95fr);gap:14px;align-items:stretch}
+.staff-table-wrap{min-width:0;overflow:auto;border:1px solid var(--line);border-radius:12px}
+.staff-table{border:0!important;border-radius:0!important;min-width:720px}
+.staff-table th,.staff-table td{padding:9px 9px!important}
+.staff-table th:nth-child(1){width:18%}
+.staff-table th:nth-child(2){width:25%}
+.staff-table th:nth-child(3){width:29%}
+.staff-table th:nth-child(4){width:20%}
+.staff-table th:nth-child(5){width:8%}
+.staff-francos-wrap{display:flex;align-items:center;gap:6px}
+.staff-francos-wrap select{font-weight:800!important}
+.staff-info{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:2px solid #1876ea;border-radius:50%;color:#1876ea;font-size:11px;font-weight:900;cursor:help;flex:0 0 auto}
+.staff-summary{background:#f4f8ff;border:1px solid #cfe1ff;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.staff-summary-title{display:flex;align-items:center;gap:8px;color:#0d3f97;border-bottom:1px solid #dce8fb;padding-bottom:9px}
+.staff-summary-title strong{font-size:15px;font-weight:900}
+.staff-summary-icon{font-size:20px;line-height:1}
+.staff-summary-top{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.staff-summary-stat{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.78);border-radius:12px;padding:11px}
+.staff-summary-mini{display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px;background:#e5f0ff;color:#1876ea;font-size:20px}
+.staff-summary-stat strong{display:block;font-size:23px;line-height:1;font-weight:950;color:#111}
+.staff-summary-stat small{display:block;margin-top:4px;font-size:11px;color:#5f6270}
+.staff-summary-bottom{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.staff-franco-card{border-radius:12px;padding:11px 12px;min-height:84px}
+.staff-franco-card.franco-6{background:#edf9f4;border:1px solid #bce7d6;color:#0d684f}
+.staff-franco-card.franco-7{background:#fff6ed;border:1px solid #ffd2a2;color:#9b4b0f}
+.staff-franco-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.staff-franco-head strong{font-size:24px;line-height:1;font-weight:950}
+.staff-franco-head b{font-size:16px;font-weight:950}
+.staff-franco-card span{display:block;margin-top:7px;font-size:11px;line-height:1.35;color:#334155}
+@media(max-width:1050px){.staff-layout{grid-template-columns:1fr}.staff-summary{min-height:0}}
+@media(max-width:620px){.staff-summary-top,.staff-summary-bottom{grid-template-columns:1fr}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
@@ -1242,7 +1278,7 @@ h1{
       <div>
         <div class="module-kicker">PRESUPUESTO</div>
         <h2>Presupuesto conducción</h2>
-        <p>Simulación mensual de dotación, francos, licencias e indisponibilidades.</p>
+        <p>Simulación mensual de dotación, francos, licencias e incidencias.</p>
       </div>
       <div class="controls">
         <input class="input" id="budgetName" value="Presupuesto Octubre 2026" aria-label="Nombre del presupuesto">
@@ -1250,9 +1286,50 @@ h1{
         <select id="status" aria-label="Estado"><option>Borrador</option><option>Definitivo</option><option>Cerrado</option></select>
       </div>
     </div>
-    <section class="cards"><div class="card"><div class="label">Jornadas necesarias</div><div class="value" id="needKpi">0</div><div class="hint">Plan de servicio del mes</div></div><div class="card"><div class="label">Disponibilidad bruta</div><div class="value" id="grossKpi">0</div><div class="hint">Antes de licencias y ausentismo</div></div><div class="card"><div class="label">Disponibilidad neta</div><div class="value" id="netKpi">0</div><div class="hint">Luego de indisponibilidades</div></div><div class="card positive" id="balanceCard"><div class="label">Saldo mensual</div><div class="value" id="balanceKpi">0</div><div class="hint">Jornadas de margen</div></div></section>
-  <div class="grid"><section class="panel"><div class="panel-head"><div><h2>Plan de servicio</h2><p class="help">Podés tener varios tramos hábiles dentro del mismo mes.</p></div><button class="btn soft" onclick="addPlanRow()">+ Agregar período</button></div><table><thead><tr><th>Tipo</th><th>Descripción</th><th>Flota</th><th>Días</th><th>Jornadas</th><th></th></tr></thead><tbody id="planBody"></tbody><tfoot><tr class="total-row"><td colspan="3">Total</td><td class="num" id="planDays">0</td><td class="num" id="planTotal">0</td><td></td></tr></tfoot></table></section>
-  <section class="panel"><div class="panel-head"><div><h2>Dotación disponible</h2><p class="help">Agrupá conductores según las jornadas que trabajarán.</p></div><button class="btn soft" onclick="addStaffRow()">+ Agregar grupo</button></div><table><thead><tr><th>Conductores</th><th>Jornadas por conductor</th><th>Disponibles</th><th></th></tr></thead><tbody id="staffBody"></tbody><tfoot><tr class="total-row"><td class="num" id="staffCount">0</td><td>Total</td><td class="num" id="staffTotal">0</td><td></td></tr></tfoot></table></section></div>
+    <section class="cards"><div class="card"><div class="label">Jornadas necesarias</div><div class="value" id="needKpi">0</div><div class="hint">Plan de servicio del mes</div></div><div class="card"><div class="label">Disponibilidad bruta</div><div class="value" id="grossKpi">0</div><div class="hint">Antes de licencias y ausentismo</div></div><div class="card"><div class="label">Disponibilidad neta</div><div class="value" id="netKpi">0</div><div class="hint">Luego de incidencias</div></div><div class="card positive" id="balanceCard"><div class="label">Saldo mensual</div><div class="value" id="balanceKpi">0</div><div class="hint">Jornadas de margen</div></div></section>
+  <section class="panel plan-service-panel"><div class="panel-head"><div><h2>Plan de servicio</h2><p class="help">Podés tener varios tramos hábiles dentro del mismo mes.</p></div><button class="btn soft" onclick="addPlanRow()">+ Agregar período</button></div><table><thead><tr><th>Tipo</th><th>Descripción</th><th>Flota</th><th>Días</th><th>Jornadas</th><th></th></tr></thead><tbody id="planBody"></tbody><tfoot><tr class="total-row"><td colspan="3">Total</td><td class="num" id="planDays">0</td><td class="num" id="planTotal">0</td><td></td></tr></tfoot></table></section>
+
+  <section class="panel staff-panel">
+    <div class="panel-head">
+      <div><h2>Dotación disponible</h2><p class="help">Agrupá conductores según las jornadas que trabajarán.</p></div>
+      <button class="btn soft" onclick="addStaffRow()">+ Agregar grupo</button>
+    </div>
+    <div class="staff-layout">
+      <div class="staff-table-wrap">
+        <table class="staff-table">
+          <thead><tr><th>Conductores</th><th>Jornadas por conductor</th><th>Francos mensuales</th><th>Disponibles</th><th></th></tr></thead>
+          <tbody id="staffBody"></tbody>
+          <tfoot><tr class="total-row"><td class="num" id="staffCount">0</td><td>Total</td><td></td><td class="num" id="staffTotal">0</td><td></td></tr></tfoot>
+        </table>
+      </div>
+      <aside class="staff-summary">
+        <div class="staff-summary-title">
+          <span class="staff-summary-icon">👥</span>
+          <strong>Resumen de dotación</strong>
+        </div>
+        <div class="staff-summary-top">
+          <div class="staff-summary-stat">
+            <span class="staff-summary-mini">👥</span>
+            <div><strong id="staffSummaryCount">0</strong><small>Conductores totales</small></div>
+          </div>
+          <div class="staff-summary-stat">
+            <span class="staff-summary-mini">▣</span>
+            <div><strong id="staffSummaryGross">0</strong><small>Jornadas disponibles</small></div>
+          </div>
+        </div>
+        <div class="staff-summary-bottom">
+          <div class="staff-franco-card franco-6">
+            <div class="staff-franco-head"><strong>6</strong><b id="staffSummary6Count">0</b></div>
+            <span>Conductores con 6 francos<br>(trabajan feriado)</span>
+          </div>
+          <div class="staff-franco-card franco-7">
+            <div class="staff-franco-head"><strong>7</strong><b id="staffSummary7Count">0</b></div>
+            <span>Conductores con 7 francos<br>(no trabajan feriado)</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
   <div class="grid"><section class="panel"><div class="panel-head"><div><h2>Incidencias</h2><p class="help">Las porcentuales se aplican sobre las jornadas necesarias.</p></div><button class="btn soft" onclick="addDeductionRow()">+ Agregar concepto</button></div><table><thead><tr><th>Concepto</th><th>Tipo</th><th>Valor</th><th>Descuento</th><th></th></tr></thead><tbody id="dedBody"></tbody><tfoot><tr class="total-row"><td colspan="3">Total descuentos</td><td class="num" id="dedTotal">0</td><td></td></tr></tfoot></table><div class="footer-note">Las jornadas se muestran siempre como números enteros. El saldo y la disponibilidad se ajustan hacia abajo.</div></section>
   <section class="panel"><div class="panel-head"><div><h2>Resultado del escenario</h2><p class="help">Se actualiza automáticamente con cada cambio.</p></div></div><div class="kpi-line"><span>Jornadas necesarias</span><strong id="rNeed">0</strong></div><div class="kpi-line"><span>Disponibilidad bruta</span><strong id="rGross">0</strong></div><div class="kpi-line"><span>Descuentos</span><strong id="rDeds">0</strong></div><div class="kpi-line"><span>Disponibilidad neta</span><strong id="rNet">0</strong></div><div class="kpi-line"><span>Cobertura</span><strong id="coverage">0%</strong></div><div class="kpi-line"><span>Saldo</span><strong id="rBalance">0</strong></div><div id="resultAlert" class="alert ok"></div><div class="section-actions" style="margin-top:14px"><button class="btn primary" onclick="saveBudget(false)">Guardar presupuesto</button><button class="btn pdf" onclick="downloadPDF()">Descargar PDF</button><button class="btn ghost" onclick="saveBudget(true)">Duplicar escenario</button><button class="btn ghost" onclick="newBudget()">Nuevo</button></div></section></div>
   <section class="panel" id="historial"><div class="panel-head"><div><h2>Presupuestos guardados</h2><p class="help">Se guardan en este navegador. Podés abrirlos y seguir simulando.</p></div><button class="btn ghost" onclick="exportJSON()">Exportar respaldo</button></div><div class="saved-list" id="savedList"></div></section>
@@ -1803,23 +1880,36 @@ function restoreServiceTab(){
 
 const KEY='tsj_presupuestos_v1';let currentId=null;
 let plan=[{type:'Hábil',desc:'Plan normal',fleet:116,days:20},{type:'Sábado',desc:'Plan sábado',fleet:54,days:6},{type:'Domingo',desc:'Plan domingo',fleet:36,days:5}];
-let staff=[{count:36,workdays:24},{count:95,workdays:23}];
+let staff=[{count:36,workdays:24,francos:6},{count:95,workdays:23,francos:7}];
 const DED_CONCEPTS=['Licencia medica','Licencia especial','Monitor escuela','Monitor taller','Sanciones','Vacaciones'];
 let deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5},{name:'Licencia medica',kind:'days',value:65},{name:'Licencia especial',kind:'days',value:10},{name:'Monitor escuela',kind:'days',value:32}];
 const fmt=(n,d=0)=>new Intl.NumberFormat('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}).format(Number(n)||0);const val=x=>Number(x)||0;const whole=x=>Math.floor(val(x));const deductionDays=(raw,kind)=>kind==='percent'?Math.ceil(val(raw)):Math.floor(val(raw));
 function computeMetricsData(planData=plan,staffData=staff,dedData=deductions){let need=0,days=0;(planData||[]).forEach(r=>{const fleet=whole(r.fleet),d=whole(r.days);need+=fleet*d;days+=d});let gross=0,count=0;(staffData||[]).forEach(r=>{const c=whole(r.count),w=whole(r.workdays);gross+=c*w;count+=c});let deds=0;const dedItems=(dedData||[]).map(r=>{const raw=r.kind==='percent'?need*val(r.value)/100:val(r.value);const j=deductionDays(raw,r.kind);deds+=j;return j});const net=Math.floor(gross-deds),balance=Math.floor(net-need),cov=need?net/need*100:0;return{need,days,gross,count,deds,net,balance,cov,dedItems}}
-function renderAll(){renderPlan();renderStaff();renderDeds();calculate();renderSaved()}
+function staffFrancos(r){const f=whole(r?.francos);if(f===6||f===7)return f;return whole(r?.workdays)===23?7:6}
+function normalizeStaff(){staff=(staff||[]).map(r=>({...r,francos:staffFrancos(r)}))}
+function renderAll(){normalizeStaff();renderPlan();renderStaff();renderDeds();calculate();renderSaved()}
 function renderPlan(){planBody.innerHTML=plan.map((r,i)=>{const cls=r.type==='Hábil'?'plan-hab':r.type==='Sábado'?'plan-sab':r.type==='Domingo'?'plan-dom':'plan-other';return `<tr class="${cls}"><td><select class="plan-type-select" onchange="plan[${i}].type=this.value;renderPlan();calculate()"><option ${r.type==='Hábil'?'selected':''}>Hábil</option><option ${r.type==='Sábado'?'selected':''}>Sábado</option><option ${r.type==='Domingo'?'selected':''}>Domingo</option><option ${r.type==='Feriado'?'selected':''}>Feriado</option><option ${r.type==='Otro'?'selected':''}>Otro</option></select></td><td><input value="${esc(r.desc)}" oninput="plan[${i}].desc=this.value"></td><td><input type="number" min="0" value="${r.fleet}" oninput="plan[${i}].fleet=val(this.value);calculate()"></td><td><input class="plan-days-input" type="number" min="0" value="${r.days}" oninput="plan[${i}].days=val(this.value);calculate()"></td><td class="num plan-jornadas" id="planJ${i}">0</td><td><button class="icon-btn" onclick="removePlan(${i})">×</button></td></tr>`}).join('')}
-function renderStaff(){staffBody.innerHTML=staff.map((r,i)=>`<tr><td><input type="number" min="0" value="${r.count}" oninput="staff[${i}].count=val(this.value);calculate()"></td><td><input type="number" min="0" value="${r.workdays}" oninput="staff[${i}].workdays=val(this.value);calculate()"></td><td class="num" id="staffJ${i}">0</td><td><button class="icon-btn" onclick="removeStaff(${i})">×</button></td></tr>`).join('')}
+function renderStaff(){normalizeStaff();staffBody.innerHTML=staff.map((r,i)=>`<tr>
+<td><input type="number" min="0" value="${r.count}" oninput="staff[${i}].count=val(this.value);calculate()"></td>
+<td><input type="number" min="0" value="${r.workdays}" oninput="staff[${i}].workdays=val(this.value);calculate()"></td>
+<td><div class="staff-francos-wrap"><select onchange="staff[${i}].francos=whole(this.value);calculate()"><option value="6" ${staffFrancos(r)===6?'selected':''}>6 (trabaja feriado)</option><option value="7" ${staffFrancos(r)===7?'selected':''}>7 (no trabaja feriado)</option></select><span class="staff-info" title="Base: 6 francos mensuales. Si no trabaja un feriado nacional: 7.">i</span></div></td>
+<td class="num" id="staffJ${i}">0</td>
+<td><button class="icon-btn" onclick="removeStaff(${i})">×</button></td>
+</tr>`).join('')}
 function renderDeds(){dedBody.innerHTML=deductions.map((r,i)=>{const aus=r.kind==='percent'&&String(r.name).toLowerCase().includes('ausentismo');const c=aus?`<input value="Ausentismo estimado" readonly style="background:#f5f3f4;color:#6b7280">`:`<select onchange="deductions[${i}].name=this.value">${DED_CONCEPTS.map(x=>`<option value="${x}" ${r.name===x?'selected':''}>${x}</option>`).join('')}</select>`;return `<tr><td>${c}</td><td><select onchange="deductions[${i}].kind=this.value;renderDeds();calculate()"><option value="days" ${r.kind==='days'?'selected':''}>Jornadas</option><option value="percent" ${r.kind==='percent'?'selected':''}>Porcentaje</option></select></td><td><input type="number" min="0" step="${r.kind==='percent'?'0.1':'1'}" value="${r.value}" oninput="deductions[${i}].value=val(this.value);calculate()"></td><td class="num" id="dedJ${i}">0</td><td><button class="icon-btn" onclick="removeDed(${i})">×</button></td></tr>`}).join('')}
-function calculate(){const m=computeMetricsData();plan.forEach((r,i)=>{const e=document.getElementById('planJ'+i);if(e)e.textContent=fmt(whole(r.fleet)*whole(r.days))});staff.forEach((r,i)=>{const e=document.getElementById('staffJ'+i);if(e)e.textContent=fmt(whole(r.count)*whole(r.workdays))});deductions.forEach((r,i)=>{const e=document.getElementById('dedJ'+i);if(e)e.textContent=fmt(m.dedItems[i]||0)});planDays.textContent=fmt(m.days);planTotal.textContent=fmt(m.need);staffCount.textContent=fmt(m.count);staffTotal.textContent=fmt(m.gross);dedTotal.textContent=fmt(m.deds);needKpi.textContent=fmt(m.need);grossKpi.textContent=fmt(m.gross);netKpi.textContent=fmt(m.net);balanceKpi.textContent=(m.balance>=0?'+':'')+fmt(m.balance);rNeed.textContent=fmt(m.need);rGross.textContent=fmt(m.gross);rDeds.textContent=fmt(m.deds);rNet.textContent=fmt(m.net);coverage.textContent=fmt(m.cov,1)+'%';rBalance.textContent=(m.balance>=0?'+':'')+fmt(m.balance);balanceCard.className='card '+(m.balance>=0?'positive':'negative');resultAlert.className='alert '+(m.balance>=0?'ok':'bad');resultAlert.textContent=m.balance>=0?`La dotación cubre el plan con un margen de ${fmt(m.balance)} jornadas (${fmt(m.cov,1)}% de cobertura).`:`Faltan ${fmt(Math.abs(m.balance))} jornadas para cubrir el plan (${fmt(m.cov,1)}% de cobertura).`;return m}
-function addPlanRow(){plan.push({type:'Hábil',desc:'Nuevo período',fleet:0,days:0});renderPlan();calculate()}function addStaffRow(){staff.push({count:0,workdays:0});renderStaff();calculate()}function addDeductionRow(){deductions.push({name:DED_CONCEPTS[0],kind:'days',value:0});renderDeds();calculate()}function removePlan(i){plan.splice(i,1);renderPlan();calculate()}function removeStaff(i){staff.splice(i,1);renderStaff();calculate()}function removeDed(i){deductions.splice(i,1);renderDeds();calculate()}
+function calculate(){const m=computeMetricsData();plan.forEach((r,i)=>{const e=document.getElementById('planJ'+i);if(e)e.textContent=fmt(whole(r.fleet)*whole(r.days))});staff.forEach((r,i)=>{const e=document.getElementById('staffJ'+i);if(e)e.textContent=fmt(whole(r.count)*whole(r.workdays))});deductions.forEach((r,i)=>{const e=document.getElementById('dedJ'+i);if(e)e.textContent=fmt(m.dedItems[i]||0)});planDays.textContent=fmt(m.days);planTotal.textContent=fmt(m.need);staffCount.textContent=fmt(m.count);staffTotal.textContent=fmt(m.gross);
+const sf6=staff.filter(r=>staffFrancos(r)===6).reduce((a,r)=>a+whole(r.count),0);
+const sf7=staff.filter(r=>staffFrancos(r)===7).reduce((a,r)=>a+whole(r.count),0);
+const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross'),ss6=document.getElementById('staffSummary6Count'),ss7=document.getElementById('staffSummary7Count');
+if(ssc)ssc.textContent=fmt(m.count);if(ssg)ssg.textContent=fmt(m.gross);if(ss6)ss6.textContent=fmt(sf6);if(ss7)ss7.textContent=fmt(sf7);
+dedTotal.textContent=fmt(m.deds);needKpi.textContent=fmt(m.need);grossKpi.textContent=fmt(m.gross);netKpi.textContent=fmt(m.net);balanceKpi.textContent=(m.balance>=0?'+':'')+fmt(m.balance);rNeed.textContent=fmt(m.need);rGross.textContent=fmt(m.gross);rDeds.textContent=fmt(m.deds);rNet.textContent=fmt(m.net);coverage.textContent=fmt(m.cov,1)+'%';rBalance.textContent=(m.balance>=0?'+':'')+fmt(m.balance);balanceCard.className='card '+(m.balance>=0?'positive':'negative');resultAlert.className='alert '+(m.balance>=0?'ok':'bad');resultAlert.textContent=m.balance>=0?`La dotación cubre el plan con un margen de ${fmt(m.balance)} jornadas (${fmt(m.cov,1)}% de cobertura).`:`Faltan ${fmt(Math.abs(m.balance))} jornadas para cubrir el plan (${fmt(m.cov,1)}% de cobertura).`;return m}
+function addPlanRow(){plan.push({type:'Hábil',desc:'Nuevo período',fleet:0,days:0});renderPlan();calculate()}function addStaffRow(){staff.push({count:0,workdays:0,francos:6});renderStaff();calculate()}function addDeductionRow(){deductions.push({name:DED_CONCEPTS[0],kind:'days',value:0});renderDeds();calculate()}function removePlan(i){plan.splice(i,1);renderPlan();calculate()}function removeStaff(i){staff.splice(i,1);renderStaff();calculate()}function removeDed(i){deductions.splice(i,1);renderDeds();calculate()}
 function snapshot(){return{id:currentId||crypto.randomUUID(),name:budgetName.value.trim()||'Presupuesto sin nombre',period:period.value,status:document.getElementById('status').value,plan:structuredClone(plan),staff:structuredClone(staff),deductions:structuredClone(deductions),metrics:calculate(),updatedAt:new Date().toISOString()}}function getSaved(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}
 function saveBudget(duplicate){let list=getSaved();if(duplicate)currentId=null;let s=snapshot();let idx=list.findIndex(x=>x.id===s.id);if(idx>=0)list[idx]=s;else list.unshift(s);localStorage.setItem(KEY,JSON.stringify(list));currentId=s.id;if(duplicate)budgetName.value=s.name+' - copia';renderSaved();if(confirm('Presupuesto guardado correctamente. ¿Querés descargar ahora el PDF para presentar?'))downloadPDFFromSnapshot(s)}
 function loadBudget(id){let s=getSaved().find(x=>x.id===id);if(!s)return;currentId=s.id;budgetName.value=s.name;period.value=s.period;document.getElementById('status').value=s.status||'Borrador';plan=structuredClone(s.plan);staff=structuredClone(s.staff);deductions=structuredClone(s.deductions);renderAll();window.scrollTo({top:0,behavior:'smooth'})}
 function deleteBudget(id){if(!confirm('¿Eliminar este presupuesto guardado?'))return;localStorage.setItem(KEY,JSON.stringify(getSaved().filter(x=>x.id!==id)));if(currentId===id)currentId=null;renderSaved()}
 function renderSaved(){let list=getSaved();savedList.innerHTML=list.length?list.map(s=>{const m=computeMetricsData(s.plan||[],s.staff||[],s.deductions||[]);return `<div class="saved-item"><div><b>${esc(s.name)} <span class="badge">${esc(s.status||'Borrador')}</span></b><span>${s.period||''} · Saldo ${m.balance>=0?'+':''}${fmt(m.balance)} jornadas · actualizado ${new Date(s.updatedAt).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="loadBudget('${s.id}')">Abrir</button><button class="btn pdf" onclick="downloadSavedPDF('${s.id}')">PDF</button><button class="btn danger" onclick="deleteBudget('${s.id}')">Eliminar</button></div></div>`}).join(''):'<div class="footer-note">Todavía no hay presupuestos guardados.</div>'}
-function newBudget(){currentId=null;budgetName.value='Nuevo presupuesto';document.getElementById('status').value='Borrador';plan=[{type:'Hábil',desc:'Plan normal',fleet:0,days:0},{type:'Sábado',desc:'Plan sábado',fleet:0,days:0},{type:'Domingo',desc:'Plan domingo',fleet:0,days:0}];staff=[{count:0,workdays:0}];deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5}];renderAll();window.scrollTo({top:0,behavior:'smooth'})}
+function newBudget(){currentId=null;budgetName.value='Nuevo presupuesto';document.getElementById('status').value='Borrador';plan=[{type:'Hábil',desc:'Plan normal',fleet:0,days:0},{type:'Sábado',desc:'Plan sábado',fleet:0,days:0},{type:'Domingo',desc:'Plan domingo',fleet:0,days:0}];staff=[{count:0,workdays:0,francos:6}];deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5}];renderAll();window.scrollTo({top:0,behavior:'smooth'})}
 function downloadPDF(){downloadPDFFromSnapshot(snapshot())}function downloadSavedPDF(id){let s=getSaved().find(x=>x.id===id);if(s)downloadPDFFromSnapshot(s)}function periodLabel(p){if(!p)return'Sin período';let[y,m]=p.split('-').map(Number);let d=new Date(Date.UTC(y,m-1,1));let t=new Intl.DateTimeFormat('es-AR',{month:'long',year:'numeric',timeZone:'UTC'}).format(d);return t.charAt(0).toUpperCase()+t.slice(1)}function safeFileName(s){return String(s||'presupuesto').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'')||'presupuesto'}
 function downloadPDFFromSnapshot(s){
   if(!window.jspdf||!window.jspdf.jsPDF){
@@ -1857,6 +1947,7 @@ function downloadPDFFromSnapshot(s){
   const staffRows=(s.staff||[]).map(r=>[
     fmt(whole(r.count)),
     fmt(whole(r.workdays)),
+    fmt(staffFrancos(r)),
     fmt(whole(r.count)*whole(r.workdays))
   ]);
 
@@ -2008,14 +2099,15 @@ function downloadPDFFromSnapshot(s){
   doc.autoTable({
     ...common,
     startY:cursor,
-    head:[['Conductores','Jornadas por conductor','Disponibles']],
+    head:[['Conductores','Jornadas por conductor','Francos','Disponibles']],
     body:staffRows,
-    foot:[[fmt(M.count),'Total',fmt(M.gross)]],
+    foot:[[fmt(M.count),'Total','',fmt(M.gross)]],
     footStyles:{fillColor:soft2,textColor:ink,fontStyle:'bold'},
     columnStyles:{
-      0:{halign:'center'},
-      1:{halign:'center'},
-      2:{halign:'right'}
+      0:{halign:'center',cellWidth:35},
+      1:{halign:'center',cellWidth:55},
+      2:{halign:'center',cellWidth:35},
+      3:{halign:'right',cellWidth:57}
     }
   });
 
