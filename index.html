@@ -1990,6 +1990,9 @@ function downloadPDFFromSnapshot(s){
     fmt(whole(r.count)*whole(r.workdays))
   ]);
 
+  const staff6=(s.staff||[]).filter(r=>staffFrancos(r)===6).reduce((a,r)=>a+whole(r.count),0);
+  const staff7=(s.staff||[]).filter(r=>staffFrancos(r)===7).reduce((a,r)=>a+whole(r.count),0);
+
   const incidenceRows=(s.deductions||[]).map(r=>{
     const raw=r.kind==='percent'?M.need*val(r.value)/100:val(r.value);
     const discount=deductionDays(raw,r.kind);
@@ -2148,7 +2151,33 @@ function downloadPDFFromSnapshot(s){
     }
   });
 
-  cursor=doc.lastAutoTable.finalY+sectionGap;
+  cursor=doc.lastAutoTable.finalY+2.5;
+
+  // Resumen de dotación compacto
+  const sumGap=2;
+  const sumW=(contentW-sumGap*3)/4;
+  const sumH=11;
+  const staffSummary=[
+    {label:'Conductores',value:fmt(M.count),fill:soft,text:ink},
+    {label:'Jornadas',value:fmt(M.gross),fill:soft,text:ink},
+    {label:'6 francos',value:fmt(staff6),fill:greenSoft,text:green},
+    {label:'7 francos',value:fmt(staff7),fill:[255,246,237],text:[168,82,16]}
+  ];
+  staffSummary.forEach((c,i)=>{
+    const x=left+i*(sumW+sumGap);
+    doc.setFillColor(...c.fill);
+    doc.setDrawColor(...line);
+    doc.roundedRect(x,cursor,sumW,sumH,1.4,1.4,'FD');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(6.1);
+    doc.setTextColor(...muted);
+    doc.text(c.label.toUpperCase(),x+2.4,cursor+3.8);
+    doc.setFontSize(10.5);
+    doc.setTextColor(...c.text);
+    doc.text(c.value,x+sumW-2.4,cursor+8.2,{align:'right'});
+  });
+
+  cursor+=sumH+sectionGap;
 
   // Incidencias
   cursor=addSectionTitle('Incidencias',cursor);
