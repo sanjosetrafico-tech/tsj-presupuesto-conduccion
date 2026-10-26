@@ -1305,16 +1305,16 @@ function renderKmBudget(){
   </tr>`).join('');
   m.innerHTML=kmBudgetRows.map((r,i)=>`<tr>
     <td><b>${esc(r.line)}</b></td>
-    <td>${kmInput(i,'qHab',r.qHab)}</td><td>${kmInput(i,'flotaGas',r.flotaGas)}</td><td>${kmInput(i,'flotaGnc',r.flotaGnc)}</td><td>${kmInput(i,'prodHab',r.prodHab)}</td><td>${kmInput(i,'improHab',r.improHab)}</td><td class="km-total-cell">${kmFmt(kmN(r.prodHab)+kmN(r.improHab),3)}</td>
-    <td>${kmInput(i,'qSab',r.qSab)}</td><td>${kmInput(i,'flotaSab',r.flotaSab)}</td><td>${kmInput(i,'prodSab',r.prodSab)}</td><td>${kmInput(i,'improSab',r.improSab)}</td><td class="km-total-cell">${kmFmt(kmN(r.prodSab)+kmN(r.improSab),3)}</td>
-    <td>${kmInput(i,'qDom',r.qDom)}</td><td>${kmInput(i,'flotaDom',r.flotaDom)}</td><td>${kmInput(i,'prodDom',r.prodDom)}</td><td>${kmInput(i,'improDom',r.improDom)}</td><td class="km-total-cell">${kmFmt(kmN(r.prodDom)+kmN(r.improDom),3)}</td>
+    <td>${kmInput(i,'qHab',r.qHab)}</td><td>${kmInput(i,'flotaGas',r.flotaGas)}</td><td>${kmInput(i,'flotaGnc',r.flotaGnc)}</td><td>${kmInput(i,'prodHab',r.prodHab)}</td><td>${kmInput(i,'improHab',r.improHab)}</td><td class="km-total-cell" id="kmHabRowTotal${i}">${kmFmt(kmN(r.prodHab)+kmN(r.improHab),3)}</td>
+    <td>${kmInput(i,'qSab',r.qSab)}</td><td>${kmInput(i,'flotaSab',r.flotaSab)}</td><td>${kmInput(i,'prodSab',r.prodSab)}</td><td>${kmInput(i,'improSab',r.improSab)}</td><td class="km-total-cell" id="kmSabRowTotal${i}">${kmFmt(kmN(r.prodSab)+kmN(r.improSab),3)}</td>
+    <td>${kmInput(i,'qDom',r.qDom)}</td><td>${kmInput(i,'flotaDom',r.flotaDom)}</td><td>${kmInput(i,'prodDom',r.prodDom)}</td><td>${kmInput(i,'improDom',r.improDom)}</td><td class="km-total-cell" id="kmDomRowTotal${i}">${kmFmt(kmN(r.prodDom)+kmN(r.improDom),3)}</td>
   </tr>`).join('');
   updateKmBudget();
 }
 function updateKmBudget(){
   if(!kmBudgetRows.length)return;
   const t={qHab:0,gas:0,gnc:0,pHab:0,iHab:0,qSab:0,fSab:0,pSab:0,iSab:0,qDom:0,fDom:0,pDom:0,iDom:0};
-  kmBudgetRows.forEach(r=>{t.qHab+=kmN(r.qHab);t.gas+=kmN(r.flotaGas);t.gnc+=kmN(r.flotaGnc);t.pHab+=kmN(r.prodHab);t.iHab+=kmN(r.improHab);t.qSab+=kmN(r.qSab);t.fSab+=kmN(r.flotaSab);t.pSab+=kmN(r.prodSab);t.iSab+=kmN(r.improSab);t.qDom+=kmN(r.qDom);t.fDom+=kmN(r.flotaDom);t.pDom+=kmN(r.prodDom);t.iDom+=kmN(r.improDom)});
+  kmBudgetRows.forEach((r,i)=>{t.qHab+=kmN(r.qHab);t.gas+=kmN(r.flotaGas);t.gnc+=kmN(r.flotaGnc);t.pHab+=kmN(r.prodHab);t.iHab+=kmN(r.improHab);t.qSab+=kmN(r.qSab);t.fSab+=kmN(r.flotaSab);t.pSab+=kmN(r.prodSab);t.iSab+=kmN(r.improSab);t.qDom+=kmN(r.qDom);t.fDom+=kmN(r.flotaDom);t.pDom+=kmN(r.prodDom);t.iDom+=kmN(r.improDom);const h=document.getElementById('kmHabRowTotal'+i),s=document.getElementById('kmSabRowTotal'+i),d=document.getElementById('kmDomRowTotal'+i);if(h)h.textContent=kmFmt(kmN(r.prodHab)+kmN(r.improHab),3);if(s)s.textContent=kmFmt(kmN(r.prodSab)+kmN(r.improSab),3);if(d)d.textContent=kmFmt(kmN(r.prodDom)+kmN(r.improDom),3)});
   const dH=kmI(document.getElementById('kmDaysHab')?.value),dS=kmI(document.getElementById('kmDaysSab')?.value),dD=kmI(document.getElementById('kmDaysDom')?.value);
   const modelH=t.pHab+t.iHab,modelS=t.pSab+t.iSab,modelD=t.pDom+t.iDom;
   const monthProd=t.pHab*dH+t.pSab*dS+t.pDom*dD,monthImpro=t.iHab*dH+t.iSab*dS+t.iDom*dD,monthTotal=monthProd+monthImpro;
@@ -1335,12 +1335,12 @@ function setKmState(s){const e=document.getElementById('kmSavedState');if(e)e.te
 function markKmDirty(){setKmState('Cambios sin guardar')}
 function saveKmBudget(){
   const p=document.getElementById('kmPeriod')?.value;if(!p)return;
-  const all=getKmBudgets();all[p]={period:p,rows:kmClone(kmBudgetRows),days:{hab:kmI(kmDaysHab.value),sab:kmI(kmDaysSab.value),dom:kmI(kmDaysDom.value)},updatedAt:new Date().toISOString()};setKmBudgets(all);setKmState('Guardado '+new Date(all[p].updatedAt).toLocaleString('es-AR'));renderKmSavedMonths()
+  const all=getKmBudgets();const h=document.getElementById('kmDaysHab'),s=document.getElementById('kmDaysSab'),d=document.getElementById('kmDaysDom');all[p]={period:p,rows:kmClone(kmBudgetRows),days:{hab:kmI(h?.value),sab:kmI(s?.value),dom:kmI(d?.value)},updatedAt:new Date().toISOString()};setKmBudgets(all);setKmState('Guardado '+new Date(all[p].updatedAt).toLocaleString('es-AR'));renderKmSavedMonths()
 }
 function renderKmSavedMonths(){const w=document.getElementById('kmSavedMonths'),p=document.getElementById('kmPeriod')?.value;if(!w)return;const a=getKmBudgets(),ks=Object.keys(a).sort();w.innerHTML=ks.length?ks.map(k=>`<button class="monthly-month-chip ${k===p?'active':''}" onclick="loadKmBudget('${k}')">${monthlyPeriodLabel(k)}</button>`).join(''):'<span style="color:var(--muted);font-size:11px">Todavía no hay presupuestos guardados.</span>'}
 function moveKmPeriod(d){const e=document.getElementById('kmPeriod');if(!e)return;loadKmBudget(shiftMonthKey(e.value||'2026-11',d))}
 function createNextKmBudget(){const e=document.getElementById('kmPeriod');if(!e)return;const cur=e.value||'2026-11',next=shiftMonthKey(cur,1),all=getKmBudgets();if(all[next]){loadKmBudget(next);return}e.value=next;kmBudgetRows=kmClone(kmBudgetRows);setKmState('Nuevo mes basado en '+monthlyPeriodLabel(cur)+' · sin guardar');renderKmBudget();renderKmSavedMonths()}
-function copyPreviousKmBudget(){const e=document.getElementById('kmPeriod');if(!e)return;const prev=shiftMonthKey(e.value||'2026-11',-1),all=getKmBudgets();if(!all[prev]){alert('No hay presupuesto KM guardado para '+monthlyPeriodLabel(prev)+'.');return}kmBudgetRows=kmClone(all[prev].rows);const d=all[prev].days||{};kmDaysHab.value=d.hab??19;kmDaysSab.value=d.sab??4;kmDaysDom.value=d.dom??7;renderKmBudget();setKmState('Copiado de '+monthlyPeriodLabel(prev)+' · sin guardar')}
+function copyPreviousKmBudget(){const e=document.getElementById('kmPeriod');if(!e)return;const prev=shiftMonthKey(e.value||'2026-11',-1),all=getKmBudgets();if(!all[prev]){alert('No hay presupuesto KM guardado para '+monthlyPeriodLabel(prev)+'.');return}kmBudgetRows=kmClone(all[prev].rows);const d=all[prev].days||{};const hEl=document.getElementById('kmDaysHab'),sEl=document.getElementById('kmDaysSab'),dEl=document.getElementById('kmDaysDom');if(hEl)hEl.value=d.hab??19;if(sEl)sEl.value=d.sab??4;if(dEl)dEl.value=d.dom??7;renderKmBudget();setKmState('Copiado de '+monthlyPeriodLabel(prev)+' · sin guardar')}
 function initKmBudget(){const e=document.getElementById('kmPeriod');if(!e||e.dataset.ready)return;e.dataset.ready='1';e.addEventListener('change',()=>loadKmBudget(e.value));loadKmBudget(e.value||'2026-11')}
 
 const MONTHLY_PLAN_KEY='tsj_plan_mensual_v1';
