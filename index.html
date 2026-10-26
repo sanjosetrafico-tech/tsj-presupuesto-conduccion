@@ -1289,7 +1289,7 @@ h1{
                 <th colspan="5" class="group-dom">Domingo</th>
               </tr>
               <tr>
-                <th class="sub-hab">Q Vtas</th><th class="sub-hab">Flota Gas</th><th class="sub-hab">Flota GNC</th><th class="sub-hab">KM Prod</th><th class="sub-hab">KM Impro</th><th class="sub-hab">KM Total</th>
+                <th class="sub-hab">Q Vtas</th><th class="sub-hab">Flota OIL</th><th class="sub-hab">Flota GNC</th><th class="sub-hab">KM Prod</th><th class="sub-hab">KM Impro</th><th class="sub-hab">KM Total</th>
                 <th class="sub-sab">Q Vtas</th><th class="sub-sab">Flota</th><th class="sub-sab">KM Prod</th><th class="sub-sab">KM Impro</th><th class="sub-sab">KM Total</th>
                 <th class="sub-dom">Q Vtas</th><th class="sub-dom">Flota</th><th class="sub-dom">KM Prod</th><th class="sub-dom">KM Impro</th><th class="sub-dom">KM Total</th>
               </tr>
@@ -1342,7 +1342,7 @@ function getKmBudgets(){try{return JSON.parse(localStorage.getItem(KM_BUDGET_KEY
 function setKmBudgets(v){localStorage.setItem(KM_BUDGET_KEY,JSON.stringify(v))}
 function kmN(v){return Number(v)||0}
 function kmI(v){return Math.max(0,Math.floor(Number(v)||0))}
-function kmFmt(v,d=2){return new Intl.NumberFormat('es-AR',{minimumFractionDigits:0,maximumFractionDigits:d}).format(Number(v)||0)}
+function kmFmt(v,d=2){return new Intl.NumberFormat('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}).format(Number(v)||0)}
 function loadKmBudget(period){
   const input=document.getElementById('kmPeriod'); if(!input)return;
   const key=period||input.value||'2026-11'; input.value=key;
@@ -1356,46 +1356,47 @@ function loadKmBudget(period){
   document.getElementById('kmDaysDom').value=days.dom??0;
   renderKmBudget(); renderKmSavedMonths();
 }
-function kmInput(i,k,v,cls=''){return `<input class="${cls}" type="number" step="0.001" min="0" value="${kmN(v)}" oninput="kmBudgetRows[${i}].${k}=kmN(this.value);updateKmBudget();markKmDirty()">`}
+function kmInputInt(i,k,v,cls=''){return `<input class="${cls}" type="number" step="1" min="0" value="${kmI(v)}" oninput="kmBudgetRows[${i}].${k}=kmI(this.value);updateKmBudget();markKmDirty()">`}
+function kmInputDec(i,k,v,cls=''){return `<input class="${cls}" type="number" step="0.01" min="0" value="${kmN(v).toFixed(2)}" oninput="kmBudgetRows[${i}].${k}=kmN(this.value);updateKmBudget();markKmDirty()" onblur="this.value=kmN(this.value).toFixed(2)">`}
 function renderKmBudget(){
   const b=document.getElementById('kmBaseBody'),m=document.getElementById('kmModelBody'); if(!b||!m)return;
   b.innerHTML=kmBudgetRows.map((r,i)=>`<tr>
     <td><input class="km-line" value="${esc(r.line)}" oninput="kmBudgetRows[${i}].line=this.value;renderKmBudget();markKmDirty()"></td>
-    <td>${kmInput(i,'ida',r.ida)}</td><td>${kmInput(i,'vta',r.vta)}</td><td>${kmInput(i,'prod',r.prod)}</td>
-    <td>${kmInput(i,'tome',r.tome)}</td><td>${kmInput(i,'deje',r.deje)}</td><td>${kmInput(i,'impro',r.impro)}</td>
-    <td>${kmInput(i,'gncTome',r.gncTome)}</td><td>${kmInput(i,'gncDeje',r.gncDeje)}</td><td>${kmInput(i,'gncImpro',r.gncImpro)}</td>
+    <td>${kmInputDec(i,'ida',r.ida)}</td><td>${kmInputDec(i,'vta',r.vta)}</td><td>${kmInputDec(i,'prod',r.prod)}</td>
+    <td>${kmInputDec(i,'tome',r.tome)}</td><td>${kmInputDec(i,'deje',r.deje)}</td><td>${kmInputDec(i,'impro',r.impro)}</td>
+    <td>${kmInputDec(i,'gncTome',r.gncTome)}</td><td>${kmInputDec(i,'gncDeje',r.gncDeje)}</td><td>${kmInputDec(i,'gncImpro',r.gncImpro)}</td>
   </tr>`).join('');
   m.innerHTML=kmBudgetRows.map((r,i)=>`<tr>
     <td><b>${esc(r.line)}</b></td>
-    <td>${kmInput(i,'qHab',r.qHab)}</td><td>${kmInput(i,'flotaGas',r.flotaGas)}</td><td>${kmInput(i,'flotaGnc',r.flotaGnc)}</td><td>${kmInput(i,'prodHab',r.prodHab)}</td><td>${kmInput(i,'improHab',r.improHab)}</td><td class="km-total-cell" id="kmHabRowTotal${i}">${kmFmt(kmN(r.prodHab)+kmN(r.improHab),3)}</td>
-    <td>${kmInput(i,'qSab',r.qSab)}</td><td>${kmInput(i,'flotaSab',r.flotaSab)}</td><td>${kmInput(i,'prodSab',r.prodSab)}</td><td>${kmInput(i,'improSab',r.improSab)}</td><td class="km-total-cell" id="kmSabRowTotal${i}">${kmFmt(kmN(r.prodSab)+kmN(r.improSab),3)}</td>
-    <td>${kmInput(i,'qDom',r.qDom)}</td><td>${kmInput(i,'flotaDom',r.flotaDom)}</td><td>${kmInput(i,'prodDom',r.prodDom)}</td><td>${kmInput(i,'improDom',r.improDom)}</td><td class="km-total-cell" id="kmDomRowTotal${i}">${kmFmt(kmN(r.prodDom)+kmN(r.improDom),3)}</td>
+    <td>${kmInputInt(i,'qHab',r.qHab)}</td><td>${kmInputInt(i,'flotaGas',r.flotaGas)}</td><td>${kmInputInt(i,'flotaGnc',r.flotaGnc)}</td><td>${kmInputDec(i,'prodHab',r.prodHab)}</td><td>${kmInputDec(i,'improHab',r.improHab)}</td><td class="km-total-cell" id="kmHabRowTotal${i}">${kmFmt(kmN(r.prodHab)+kmN(r.improHab),2)}</td>
+    <td>${kmInputInt(i,'qSab',r.qSab)}</td><td>${kmInputInt(i,'flotaSab',r.flotaSab)}</td><td>${kmInputDec(i,'prodSab',r.prodSab)}</td><td>${kmInputDec(i,'improSab',r.improSab)}</td><td class="km-total-cell" id="kmSabRowTotal${i}">${kmFmt(kmN(r.prodSab)+kmN(r.improSab),2)}</td>
+    <td>${kmInputInt(i,'qDom',r.qDom)}</td><td>${kmInputInt(i,'flotaDom',r.flotaDom)}</td><td>${kmInputDec(i,'prodDom',r.prodDom)}</td><td>${kmInputDec(i,'improDom',r.improDom)}</td><td class="km-total-cell" id="kmDomRowTotal${i}">${kmFmt(kmN(r.prodDom)+kmN(r.improDom),2)}</td>
   </tr>`).join('');
   updateKmBudget();
 }
 function updateKmBudget(){
   if(!kmBudgetRows.length)return;
   const t={qHab:0,gas:0,gnc:0,pHab:0,iHab:0,qSab:0,fSab:0,pSab:0,iSab:0,qDom:0,fDom:0,pDom:0,iDom:0};
-  kmBudgetRows.forEach((r,i)=>{t.qHab+=kmN(r.qHab);t.gas+=kmN(r.flotaGas);t.gnc+=kmN(r.flotaGnc);t.pHab+=kmN(r.prodHab);t.iHab+=kmN(r.improHab);t.qSab+=kmN(r.qSab);t.fSab+=kmN(r.flotaSab);t.pSab+=kmN(r.prodSab);t.iSab+=kmN(r.improSab);t.qDom+=kmN(r.qDom);t.fDom+=kmN(r.flotaDom);t.pDom+=kmN(r.prodDom);t.iDom+=kmN(r.improDom);const h=document.getElementById('kmHabRowTotal'+i),s=document.getElementById('kmSabRowTotal'+i),d=document.getElementById('kmDomRowTotal'+i);if(h)h.textContent=kmFmt(kmN(r.prodHab)+kmN(r.improHab),3);if(s)s.textContent=kmFmt(kmN(r.prodSab)+kmN(r.improSab),3);if(d)d.textContent=kmFmt(kmN(r.prodDom)+kmN(r.improDom),3)});
+  kmBudgetRows.forEach((r,i)=>{t.qHab+=kmN(r.qHab);t.gas+=kmN(r.flotaGas);t.gnc+=kmN(r.flotaGnc);t.pHab+=kmN(r.prodHab);t.iHab+=kmN(r.improHab);t.qSab+=kmN(r.qSab);t.fSab+=kmN(r.flotaSab);t.pSab+=kmN(r.prodSab);t.iSab+=kmN(r.improSab);t.qDom+=kmN(r.qDom);t.fDom+=kmN(r.flotaDom);t.pDom+=kmN(r.prodDom);t.iDom+=kmN(r.improDom);const h=document.getElementById('kmHabRowTotal'+i),s=document.getElementById('kmSabRowTotal'+i),d=document.getElementById('kmDomRowTotal'+i);if(h)h.textContent=kmFmt(kmN(r.prodHab)+kmN(r.improHab),2);if(s)s.textContent=kmFmt(kmN(r.prodSab)+kmN(r.improSab),2);if(d)d.textContent=kmFmt(kmN(r.prodDom)+kmN(r.improDom),2)});
   const dH=kmI(document.getElementById('kmDaysHab')?.value),dS=kmI(document.getElementById('kmDaysSab')?.value),dD=kmI(document.getElementById('kmDaysDom')?.value);
   const modelH=t.pHab+t.iHab,modelS=t.pSab+t.iSab,modelD=t.pDom+t.iDom;
   const monthH=modelH*dH,monthS=modelS*dS,monthD=modelD*dD;
   const monthProd=t.pHab*dH+t.pSab*dS+t.pDom*dD,monthImpro=t.iHab*dH+t.iSab*dS+t.iDom*dD,monthTotal=monthProd+monthImpro;
   const set=(id,v,d=2)=>{const e=document.getElementById(id);if(e)e.textContent=kmFmt(v,d)};
-  set('kmQHab',t.qHab,0);set('kmFlotaGasHab',t.gas,0);set('kmFlotaGncHab',t.gnc,0);set('kmProdHab',t.pHab,3);set('kmImproHab',t.iHab,3);set('kmTotalHab',modelH,3);
-  set('kmQSab',t.qSab,0);set('kmFlotaSab',t.fSab,0);set('kmProdSab',t.pSab,3);set('kmImproSab',t.iSab,3);set('kmTotalSab',modelS,3);
-  set('kmQDom',t.qDom,0);set('kmFlotaDom',t.fDom,0);set('kmProdDom',t.pDom,3);set('kmImproDom',t.iDom,3);set('kmTotalDom',modelD,3);
-  set('kmModelHab',modelH,3);set('kmModelSab',modelS,3);set('kmModelDom',modelD,3);
+  set('kmQHab',t.qHab,0);set('kmFlotaGasHab',t.gas,0);set('kmFlotaGncHab',t.gnc,0);set('kmProdHab',t.pHab,2);set('kmImproHab',t.iHab,2);set('kmTotalHab',modelH,2);
+  set('kmQSab',t.qSab,0);set('kmFlotaSab',t.fSab,0);set('kmProdSab',t.pSab,2);set('kmImproSab',t.iSab,2);set('kmTotalSab',modelS,2);
+  set('kmQDom',t.qDom,0);set('kmFlotaDom',t.fDom,0);set('kmProdDom',t.pDom,2);set('kmImproDom',t.iDom,2);set('kmTotalDom',modelD,2);
+  set('kmModelHab',modelH,2);set('kmModelSab',modelS,2);set('kmModelDom',modelD,2);
   set('kmDaysTotal',dH+dS+dD,0);
   set('kmMonthProd',Math.round(monthProd),0);set('kmMonthImpro',Math.round(monthImpro),0);set('kmMonthTotal',Math.round(monthTotal),0);
   const mh=document.getElementById('kmModelHabMonth'),ms=document.getElementById('kmModelSabMonth'),md=document.getElementById('kmModelDomMonth');
-  if(mh)mh.textContent=kmFmt(modelH,3)+' km/día × '+dH+' jornadas = '+kmFmt(monthH,3)+' km mes';
-  if(ms)ms.textContent=kmFmt(modelS,3)+' km/día × '+dS+' jornadas = '+kmFmt(monthS,3)+' km mes';
-  if(md)md.textContent=kmFmt(modelD,3)+' km/día × '+dD+' jornadas = '+kmFmt(monthD,3)+' km mes';
+  if(mh)mh.textContent=kmFmt(modelH,2)+' km/día × '+dH+' jornadas = '+kmFmt(monthH,2)+' km mes';
+  if(ms)ms.textContent=kmFmt(modelS,2)+' km/día × '+dS+' jornadas = '+kmFmt(monthS,2)+' km mes';
+  if(md)md.textContent=kmFmt(modelD,2)+' km/día × '+dD+' jornadas = '+kmFmt(monthD,2)+' km mes';
   const hs=document.getElementById('kmModelHabSplit'),ss=document.getElementById('kmModelSabSplit'),ds=document.getElementById('kmModelDomSplit');
-  if(hs)hs.textContent=kmFmt(t.pHab,3)+' prod / '+kmFmt(t.iHab,3)+' impro';
-  if(ss)ss.textContent=kmFmt(t.pSab,3)+' prod / '+kmFmt(t.iSab,3)+' impro';
-  if(ds)ds.textContent=kmFmt(t.pDom,3)+' prod / '+kmFmt(t.iDom,3)+' impro';
+  if(hs)hs.textContent=kmFmt(t.pHab,2)+' prod / '+kmFmt(t.iHab,2)+' impro';
+  if(ss)ss.textContent=kmFmt(t.pSab,2)+' prod / '+kmFmt(t.iSab,2)+' impro';
+  if(ds)ds.textContent=kmFmt(t.pDom,2)+' prod / '+kmFmt(t.iDom,2)+' impro';
   const p=document.getElementById('kmPeriod')?.value||'2026-11',lab=document.getElementById('kmSummaryPeriod');
   if(lab)lab.textContent=monthlyPeriodLabel(p).toUpperCase().replace(' DE ',' ');
 }
