@@ -1156,6 +1156,45 @@ h1{
 @media(max-width:1050px){.staff-layout{grid-template-columns:1fr}.staff-summary{min-height:0}}
 @media(max-width:620px){.staff-summary-top,.staff-summary-bottom{grid-template-columns:1fr}}
 
+
+/* Plan de servicio + Dotación: dos columnas */
+.budget-main-split{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:14px;
+  align-items:start;
+  margin-bottom:14px;
+}
+.budget-main-split > .panel{
+  margin-bottom:0!important;
+  min-width:0;
+}
+.budget-main-split .staff-layout{
+  grid-template-columns:1fr!important;
+}
+.budget-main-split .staff-summary{
+  margin-top:0;
+}
+.budget-main-split .staff-table{
+  min-width:620px;
+}
+.budget-main-split .plan-service-panel table{
+  min-width:620px;
+}
+@media(max-width:1250px){
+  .budget-main-split{
+    grid-template-columns:1fr;
+  }
+  .budget-main-split .staff-layout{
+    grid-template-columns:minmax(0,1.55fr) minmax(320px,.95fr)!important;
+  }
+}
+@media(max-width:1050px){
+  .budget-main-split .staff-layout{
+    grid-template-columns:1fr!important;
+  }
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
@@ -1287,6 +1326,7 @@ h1{
       </div>
     </div>
     <section class="cards"><div class="card"><div class="label">Jornadas necesarias</div><div class="value" id="needKpi">0</div><div class="hint">Plan de servicio del mes</div></div><div class="card"><div class="label">Disponibilidad bruta</div><div class="value" id="grossKpi">0</div><div class="hint">Antes de licencias y ausentismo</div></div><div class="card"><div class="label">Disponibilidad neta</div><div class="value" id="netKpi">0</div><div class="hint">Luego de incidencias</div></div><div class="card positive" id="balanceCard"><div class="label">Saldo mensual</div><div class="value" id="balanceKpi">0</div><div class="hint">Jornadas de margen</div></div></section>
+  <div class="budget-main-split">
   <section class="panel plan-service-panel"><div class="panel-head"><div><h2>Plan de servicio</h2><p class="help">Podés tener varios tramos hábiles dentro del mismo mes.</p></div><button class="btn soft" onclick="addPlanRow()">+ Agregar período</button></div><table><thead><tr><th>Tipo</th><th>Descripción</th><th>Flota</th><th>Días</th><th>Jornadas</th><th></th></tr></thead><tbody id="planBody"></tbody><tfoot><tr class="total-row"><td colspan="3">Total</td><td class="num" id="planDays">0</td><td class="num" id="planTotal">0</td><td></td></tr></tfoot></table></section>
 
   <section class="panel staff-panel">
@@ -1330,6 +1370,7 @@ h1{
       </aside>
     </div>
   </section>
+  </div>
   <div class="grid"><section class="panel"><div class="panel-head"><div><h2>Incidencias</h2><p class="help">Las porcentuales se aplican sobre las jornadas necesarias.</p></div><button class="btn soft" onclick="addDeductionRow()">+ Agregar concepto</button></div><table><thead><tr><th>Concepto</th><th>Tipo</th><th>Valor</th><th>Descuento</th><th></th></tr></thead><tbody id="dedBody"></tbody><tfoot><tr class="total-row"><td colspan="3">Total descuentos</td><td class="num" id="dedTotal">0</td><td></td></tr></tfoot></table><div class="footer-note">Las jornadas se muestran siempre como números enteros. El saldo y la disponibilidad se ajustan hacia abajo.</div></section>
   <section class="panel"><div class="panel-head"><div><h2>Resultado del escenario</h2><p class="help">Se actualiza automáticamente con cada cambio.</p></div></div><div class="kpi-line"><span>Jornadas necesarias</span><strong id="rNeed">0</strong></div><div class="kpi-line"><span>Disponibilidad bruta</span><strong id="rGross">0</strong></div><div class="kpi-line"><span>Descuentos</span><strong id="rDeds">0</strong></div><div class="kpi-line"><span>Disponibilidad neta</span><strong id="rNet">0</strong></div><div class="kpi-line"><span>Cobertura</span><strong id="coverage">0%</strong></div><div class="kpi-line"><span>Saldo</span><strong id="rBalance">0</strong></div><div id="resultAlert" class="alert ok"></div><div class="section-actions" style="margin-top:14px"><button class="btn primary" onclick="saveBudget(false)">Guardar presupuesto</button><button class="btn pdf" onclick="downloadPDF()">Descargar PDF</button><button class="btn ghost" onclick="saveBudget(true)">Duplicar escenario</button><button class="btn ghost" onclick="newBudget()">Nuevo</button></div></section></div>
   <section class="panel" id="historial"><div class="panel-head"><div><h2>Presupuestos guardados</h2><p class="help">Se guardan en este navegador. Podés abrirlos y seguir simulando.</p></div><button class="btn ghost" onclick="exportJSON()">Exportar respaldo</button></div><div class="saved-list" id="savedList"></div></section>
