@@ -1021,6 +1021,51 @@ h1{
 @media(max-width:900px){.km-jornadas-grid{grid-template-columns:repeat(3,1fr)}.km-formula{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);padding:10px 0 0}}
 @media(max-width:560px){.km-jornadas-grid{grid-template-columns:1fr}.km-formula{grid-column:auto}.km-jornadas-head{align-items:flex-start}.km-jornadas-total{min-width:80px}}
 
+
+/* KM modelo simplificado: vueltas + flota + total calculado */
+.km-model-table{min-width:980px!important}
+.km-model-table th:first-child,.km-model-table td:first-child{width:90px!important}
+.km-model-table .q-vtas-head{font-weight:950!important;letter-spacing:.05em!important}
+.km-model-table tbody td:nth-child(2),
+.km-model-table tbody td:nth-child(6),
+.km-model-table tbody td:nth-child(9){
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.035);
+}
+.km-model-table .km-q-input{
+  width:84px!important;
+  height:34px!important;
+  font-size:13px!important;
+  font-weight:950!important;
+  border:2px solid currentColor!important;
+}
+.km-model-table tbody td:nth-child(2){color:#0b9b73}
+.km-model-table tbody td:nth-child(6){color:#d77817}
+.km-model-table tbody td:nth-child(9){color:#7b6aa6}
+.km-model-table .km-total-cell{
+  font-size:12px!important;
+  font-weight:950!important;
+}
+.km-base-table .km-calc-cell{
+  font-weight:900;
+  background:#faf8f9!important;
+  color:#514b50;
+}
+.km-model-table tbody td:nth-child(n+2):nth-child(-n+5),
+.km-model-table tfoot td:nth-child(n+2):nth-child(-n+5){background:#f8fcfa!important}
+.km-model-table tbody td:nth-child(n+6):nth-child(-n+8),
+.km-model-table tfoot td:nth-child(n+6):nth-child(-n+8){background:#fffbf6!important}
+.km-model-table tbody td:nth-child(n+9):nth-child(-n+11),
+.km-model-table tfoot td:nth-child(n+9):nth-child(-n+11){background:#fbf9fd!important}
+
+
+/* Final column grouping for simplified model table */
+.km-model-table tbody td:nth-child(n+2):nth-child(-n+5),
+.km-model-table tfoot td:nth-child(n+2):nth-child(-n+5){background:#f8fcfa!important}
+.km-model-table tbody td:nth-child(n+6):nth-child(-n+8),
+.km-model-table tfoot td:nth-child(n+6):nth-child(-n+8){background:#fffbf6!important}
+.km-model-table tbody td:nth-child(n+9):nth-child(-n+11),
+.km-model-table tfoot td:nth-child(n+9):nth-child(-n+11){background:#fbf9fd!important}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
@@ -1248,8 +1293,43 @@ h1{
       <section class="panel km-section-panel">
         <div class="panel-head">
           <div>
+            <h2>KM por modelo de servicio</h2>
+            <p class="help">La cantidad de vueltas define los KM productivos. La flota define los KM improductivos. El KM total se calcula automáticamente desde la base de distancias.</p>
+          </div>
+        </div>
+        <div class="km-table-wrap">
+          <table class="km-model-table">
+            <thead>
+              <tr class="km-group-head">
+                <th rowspan="2">Línea</th>
+                <th colspan="4" class="group-hab">Hábil</th>
+                <th colspan="3" class="group-sab">Sábado</th>
+                <th colspan="3" class="group-dom">Domingo</th>
+              </tr>
+              <tr>
+                <th class="sub-hab q-vtas-head">Q Vtas</th><th class="sub-hab">Flota OIL</th><th class="sub-hab">Flota GNC</th><th class="sub-hab">KM Total</th>
+                <th class="sub-sab q-vtas-head">Q Vtas</th><th class="sub-sab">Flota</th><th class="sub-sab">KM Total</th>
+                <th class="sub-dom q-vtas-head">Q Vtas</th><th class="sub-dom">Flota</th><th class="sub-dom">KM Total</th>
+              </tr>
+            </thead>
+            <tbody id="kmModelBody"></tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td>Total</td>
+                <td id="kmQHab">0</td><td id="kmFlotaGasHab">0</td><td id="kmFlotaGncHab">0</td><td id="kmTotalHab">0</td>
+                <td id="kmQSab">0</td><td id="kmFlotaSab">0</td><td id="kmTotalSab">0</td>
+                <td id="kmQDom">0</td><td id="kmFlotaDom">0</td><td id="kmTotalDom">0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel km-section-panel">
+        <div class="panel-head">
+          <div>
             <h2>Distancias por línea / ramal</h2>
-            <p class="help">Datos base de recorrido y kilómetros improductivos. Todos los valores son editables.</p>
+            <p class="help">Base de datos de distancias utilizada para calcular automáticamente los KM de cada modelo de servicio.</p>
           </div>
         </div>
         <div class="km-table-wrap">
@@ -1262,47 +1342,12 @@ h1{
                 <th colspan="3" class="km-gnc-head">KM impro GNC</th>
               </tr>
               <tr>
-                <th>Km Ida</th><th>Km Vta</th><th>Total</th>
-                <th>Km Tome</th><th>Km Deje</th><th>Total</th>
-                <th>Km Tome</th><th>Km Deje</th><th>Total</th>
+                <th>Km Ida</th><th>Km Vta</th><th>Total calc.</th>
+                <th>Km Tome</th><th>Km Deje</th><th>Total calc.</th>
+                <th>Km Tome</th><th>Km Deje</th><th>Total calc.</th>
               </tr>
             </thead>
             <tbody id="kmBaseBody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="panel km-section-panel">
-        <div class="panel-head">
-          <div>
-            <h2>KM por modelo de servicio</h2>
-            <p class="help">Vueltas, flota y kilómetros diarios por Hábil, Sábado y Domingo.</p>
-          </div>
-        </div>
-        <div class="km-table-wrap">
-          <table class="km-model-table">
-            <thead>
-              <tr class="km-group-head">
-                <th rowspan="2">Línea</th>
-                <th colspan="6" class="group-hab">Hábil</th>
-                <th colspan="5" class="group-sab">Sábado</th>
-                <th colspan="5" class="group-dom">Domingo</th>
-              </tr>
-              <tr>
-                <th class="sub-hab">Q Vtas</th><th class="sub-hab">Flota OIL</th><th class="sub-hab">Flota GNC</th><th class="sub-hab">KM Prod</th><th class="sub-hab">KM Impro</th><th class="sub-hab">KM Total</th>
-                <th class="sub-sab">Q Vtas</th><th class="sub-sab">Flota</th><th class="sub-sab">KM Prod</th><th class="sub-sab">KM Impro</th><th class="sub-sab">KM Total</th>
-                <th class="sub-dom">Q Vtas</th><th class="sub-dom">Flota</th><th class="sub-dom">KM Prod</th><th class="sub-dom">KM Impro</th><th class="sub-dom">KM Total</th>
-              </tr>
-            </thead>
-            <tbody id="kmModelBody"></tbody>
-            <tfoot>
-              <tr class="total-row">
-                <td>Total</td>
-                <td id="kmQHab">0</td><td id="kmFlotaGasHab">0</td><td id="kmFlotaGncHab">0</td><td id="kmProdHab">0</td><td id="kmImproHab">0</td><td id="kmTotalHab">0</td>
-                <td id="kmQSab">0</td><td id="kmFlotaSab">0</td><td id="kmProdSab">0</td><td id="kmImproSab">0</td><td id="kmTotalSab">0</td>
-                <td id="kmQDom">0</td><td id="kmFlotaDom">0</td><td id="kmProdDom">0</td><td id="kmImproDom">0</td><td id="kmTotalDom">0</td>
-              </tr>
-            </tfoot>
           </table>
         </div>
       </section>
@@ -1360,43 +1405,88 @@ function kmInputInt(i,k,v,cls=''){return `<input class="${cls}" type="number" st
 function kmInputDec(i,k,v,cls=''){return `<input class="${cls}" type="number" step="0.01" min="0" value="${kmN(v).toFixed(2)}" oninput="kmBudgetRows[${i}].${k}=kmN(this.value);updateKmBudget();markKmDirty()" onblur="this.value=kmN(this.value).toFixed(2)">`}
 function renderKmBudget(){
   const b=document.getElementById('kmBaseBody'),m=document.getElementById('kmModelBody'); if(!b||!m)return;
+  kmBudgetRows.forEach(r=>{
+    r.prod=kmN(r.ida)+kmN(r.vta);
+    r.impro=kmN(r.tome)+kmN(r.deje);
+    r.gncImpro=kmN(r.gncTome)+kmN(r.gncDeje);
+  });
   b.innerHTML=kmBudgetRows.map((r,i)=>`<tr>
     <td><input class="km-line" value="${esc(r.line)}" oninput="kmBudgetRows[${i}].line=this.value;renderKmBudget();markKmDirty()"></td>
-    <td>${kmInputDec(i,'ida',r.ida)}</td><td>${kmInputDec(i,'vta',r.vta)}</td><td>${kmInputDec(i,'prod',r.prod)}</td>
-    <td>${kmInputDec(i,'tome',r.tome)}</td><td>${kmInputDec(i,'deje',r.deje)}</td><td>${kmInputDec(i,'impro',r.impro)}</td>
-    <td>${kmInputDec(i,'gncTome',r.gncTome)}</td><td>${kmInputDec(i,'gncDeje',r.gncDeje)}</td><td>${kmInputDec(i,'gncImpro',r.gncImpro)}</td>
+    <td>${kmInputDec(i,'ida',r.ida)}</td><td>${kmInputDec(i,'vta',r.vta)}</td><td class="km-calc-cell">${kmFmt(r.prod,2)}</td>
+    <td>${kmInputDec(i,'tome',r.tome)}</td><td>${kmInputDec(i,'deje',r.deje)}</td><td class="km-calc-cell">${kmFmt(r.impro,2)}</td>
+    <td>${kmInputDec(i,'gncTome',r.gncTome)}</td><td>${kmInputDec(i,'gncDeje',r.gncDeje)}</td><td class="km-calc-cell">${kmFmt(r.gncImpro,2)}</td>
   </tr>`).join('');
   m.innerHTML=kmBudgetRows.map((r,i)=>`<tr>
     <td><b>${esc(r.line)}</b></td>
-    <td>${kmInputInt(i,'qHab',r.qHab)}</td><td>${kmInputInt(i,'flotaGas',r.flotaGas)}</td><td>${kmInputInt(i,'flotaGnc',r.flotaGnc)}</td><td>${kmInputDec(i,'prodHab',r.prodHab)}</td><td>${kmInputDec(i,'improHab',r.improHab)}</td><td class="km-total-cell" id="kmHabRowTotal${i}">${kmFmt(kmN(r.prodHab)+kmN(r.improHab),2)}</td>
-    <td>${kmInputInt(i,'qSab',r.qSab)}</td><td>${kmInputInt(i,'flotaSab',r.flotaSab)}</td><td>${kmInputDec(i,'prodSab',r.prodSab)}</td><td>${kmInputDec(i,'improSab',r.improSab)}</td><td class="km-total-cell" id="kmSabRowTotal${i}">${kmFmt(kmN(r.prodSab)+kmN(r.improSab),2)}</td>
-    <td>${kmInputInt(i,'qDom',r.qDom)}</td><td>${kmInputInt(i,'flotaDom',r.flotaDom)}</td><td>${kmInputDec(i,'prodDom',r.prodDom)}</td><td>${kmInputDec(i,'improDom',r.improDom)}</td><td class="km-total-cell" id="kmDomRowTotal${i}">${kmFmt(kmN(r.prodDom)+kmN(r.improDom),2)}</td>
+    <td>${kmInputInt(i,'qHab',r.qHab,'km-q-input')}</td>
+    <td>${kmInputInt(i,'flotaGas',r.flotaGas)}</td>
+    <td>${kmInputInt(i,'flotaGnc',r.flotaGnc)}</td>
+    <td class="km-total-cell" id="kmHabRowTotal${i}">0,00</td>
+    <td>${kmInputInt(i,'qSab',r.qSab,'km-q-input')}</td>
+    <td>${kmInputInt(i,'flotaSab',r.flotaSab)}</td>
+    <td class="km-total-cell" id="kmSabRowTotal${i}">0,00</td>
+    <td>${kmInputInt(i,'qDom',r.qDom,'km-q-input')}</td>
+    <td>${kmInputInt(i,'flotaDom',r.flotaDom)}</td>
+    <td class="km-total-cell" id="kmDomRowTotal${i}">0,00</td>
   </tr>`).join('');
   updateKmBudget();
 }
 function updateKmBudget(){
   if(!kmBudgetRows.length)return;
-  const t={qHab:0,gas:0,gnc:0,pHab:0,iHab:0,qSab:0,fSab:0,pSab:0,iSab:0,qDom:0,fDom:0,pDom:0,iDom:0};
-  kmBudgetRows.forEach((r,i)=>{t.qHab+=kmN(r.qHab);t.gas+=kmN(r.flotaGas);t.gnc+=kmN(r.flotaGnc);t.pHab+=kmN(r.prodHab);t.iHab+=kmN(r.improHab);t.qSab+=kmN(r.qSab);t.fSab+=kmN(r.flotaSab);t.pSab+=kmN(r.prodSab);t.iSab+=kmN(r.improSab);t.qDom+=kmN(r.qDom);t.fDom+=kmN(r.flotaDom);t.pDom+=kmN(r.prodDom);t.iDom+=kmN(r.improDom);const h=document.getElementById('kmHabRowTotal'+i),s=document.getElementById('kmSabRowTotal'+i),d=document.getElementById('kmDomRowTotal'+i);if(h)h.textContent=kmFmt(kmN(r.prodHab)+kmN(r.improHab),2);if(s)s.textContent=kmFmt(kmN(r.prodSab)+kmN(r.improSab),2);if(d)d.textContent=kmFmt(kmN(r.prodDom)+kmN(r.improDom),2)});
+  const t={qHab:0,oil:0,gnc:0,pHab:0,iHab:0,qSab:0,fSab:0,pSab:0,iSab:0,qDom:0,fDom:0,pDom:0,iDom:0};
+  kmBudgetRows.forEach((r,i)=>{
+    const prodBase=kmN(r.ida)+kmN(r.vta);
+    const improOil=kmN(r.tome)+kmN(r.deje);
+    const improGnc=kmN(r.gncTome)+kmN(r.gncDeje);
+    r.prod=prodBase;r.impro=improOil;r.gncImpro=improGnc;
+
+    const pHab=kmI(r.qHab)*prodBase;
+    const iHab=kmI(r.flotaGas)*improOil+kmI(r.flotaGnc)*improGnc;
+    const pSab=kmI(r.qSab)*prodBase;
+    const iSab=kmI(r.flotaSab)*improOil;
+    const pDom=kmI(r.qDom)*prodBase;
+    const iDom=kmI(r.flotaDom)*improOil;
+
+    r.prodHab=pHab;r.improHab=iHab;
+    r.prodSab=pSab;r.improSab=iSab;
+    r.prodDom=pDom;r.improDom=iDom;
+
+    t.qHab+=kmI(r.qHab);t.oil+=kmI(r.flotaGas);t.gnc+=kmI(r.flotaGnc);t.pHab+=pHab;t.iHab+=iHab;
+    t.qSab+=kmI(r.qSab);t.fSab+=kmI(r.flotaSab);t.pSab+=pSab;t.iSab+=iSab;
+    t.qDom+=kmI(r.qDom);t.fDom+=kmI(r.flotaDom);t.pDom+=pDom;t.iDom+=iDom;
+
+    const h=document.getElementById('kmHabRowTotal'+i),s=document.getElementById('kmSabRowTotal'+i),d=document.getElementById('kmDomRowTotal'+i);
+    if(h)h.textContent=kmFmt(pHab+iHab,2);
+    if(s)s.textContent=kmFmt(pSab+iSab,2);
+    if(d)d.textContent=kmFmt(pDom+iDom,2);
+  });
+
   const dH=kmI(document.getElementById('kmDaysHab')?.value),dS=kmI(document.getElementById('kmDaysSab')?.value),dD=kmI(document.getElementById('kmDaysDom')?.value);
   const modelH=t.pHab+t.iHab,modelS=t.pSab+t.iSab,modelD=t.pDom+t.iDom;
   const monthH=modelH*dH,monthS=modelS*dS,monthD=modelD*dD;
-  const monthProd=t.pHab*dH+t.pSab*dS+t.pDom*dD,monthImpro=t.iHab*dH+t.iSab*dS+t.iDom*dD,monthTotal=monthProd+monthImpro;
+  const monthProd=t.pHab*dH+t.pSab*dS+t.pDom*dD;
+  const monthImpro=t.iHab*dH+t.iSab*dS+t.iDom*dD;
+  const monthTotal=monthProd+monthImpro;
+
   const set=(id,v,d=2)=>{const e=document.getElementById(id);if(e)e.textContent=kmFmt(v,d)};
-  set('kmQHab',t.qHab,0);set('kmFlotaGasHab',t.gas,0);set('kmFlotaGncHab',t.gnc,0);set('kmProdHab',t.pHab,2);set('kmImproHab',t.iHab,2);set('kmTotalHab',modelH,2);
-  set('kmQSab',t.qSab,0);set('kmFlotaSab',t.fSab,0);set('kmProdSab',t.pSab,2);set('kmImproSab',t.iSab,2);set('kmTotalSab',modelS,2);
-  set('kmQDom',t.qDom,0);set('kmFlotaDom',t.fDom,0);set('kmProdDom',t.pDom,2);set('kmImproDom',t.iDom,2);set('kmTotalDom',modelD,2);
+  set('kmQHab',t.qHab,0);set('kmFlotaGasHab',t.oil,0);set('kmFlotaGncHab',t.gnc,0);set('kmTotalHab',modelH,2);
+  set('kmQSab',t.qSab,0);set('kmFlotaSab',t.fSab,0);set('kmTotalSab',modelS,2);
+  set('kmQDom',t.qDom,0);set('kmFlotaDom',t.fDom,0);set('kmTotalDom',modelD,2);
+
   set('kmModelHab',modelH,2);set('kmModelSab',modelS,2);set('kmModelDom',modelD,2);
   set('kmDaysTotal',dH+dS+dD,0);
   set('kmMonthProd',Math.round(monthProd),0);set('kmMonthImpro',Math.round(monthImpro),0);set('kmMonthTotal',Math.round(monthTotal),0);
+
   const mh=document.getElementById('kmModelHabMonth'),ms=document.getElementById('kmModelSabMonth'),md=document.getElementById('kmModelDomMonth');
   if(mh)mh.textContent=kmFmt(modelH,2)+' km/día × '+dH+' jornadas = '+kmFmt(monthH,2)+' km mes';
   if(ms)ms.textContent=kmFmt(modelS,2)+' km/día × '+dS+' jornadas = '+kmFmt(monthS,2)+' km mes';
   if(md)md.textContent=kmFmt(modelD,2)+' km/día × '+dD+' jornadas = '+kmFmt(monthD,2)+' km mes';
+
   const hs=document.getElementById('kmModelHabSplit'),ss=document.getElementById('kmModelSabSplit'),ds=document.getElementById('kmModelDomSplit');
   if(hs)hs.textContent=kmFmt(t.pHab,2)+' prod / '+kmFmt(t.iHab,2)+' impro';
   if(ss)ss.textContent=kmFmt(t.pSab,2)+' prod / '+kmFmt(t.iSab,2)+' impro';
   if(ds)ds.textContent=kmFmt(t.pDom,2)+' prod / '+kmFmt(t.iDom,2)+' impro';
+
   const p=document.getElementById('kmPeriod')?.value||'2026-11',lab=document.getElementById('kmSummaryPeriod');
   if(lab)lab.textContent=monthlyPeriodLabel(p).toUpperCase().replace(' DE ',' ');
 }
