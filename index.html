@@ -837,6 +837,101 @@ h1{
   .monthly-month{flex:1 1 150px}
 }
 
+
+/* Refinamiento Plan mensual: tabla compacta + modelos diferenciados */
+.monthly-head{align-items:center}
+.monthly-actions{gap:6px}
+.monthly-nav-btn{width:36px!important;min-width:36px!important;padding:8px 0!important;font-size:18px!important;line-height:1!important}
+.monthly-saved-nav{display:flex;align-items:center;gap:10px;min-height:30px;margin-top:-4px}
+.monthly-saved-nav>span{color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.monthly-saved-months{display:flex;gap:6px;flex-wrap:wrap}
+.monthly-month-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;color:#5e575c;cursor:pointer}
+.monthly-month-chip:hover{border-color:#bdb5ba;color:var(--ink)}
+.monthly-month-chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
+
+.monthly-summary-card:nth-child(1){border-top:4px solid #0b9b73;background:#f7fcfa}
+.monthly-summary-card:nth-child(2){border-top:4px solid #d77817;background:#fffaf4}
+.monthly-summary-card:nth-child(3){border-top:4px solid #7b6aa6;background:#faf8fd}
+
+.monthly-table-panel{
+  width:min(100%,1180px);
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.monthly-table-wrap{overflow:auto;background:#fff}
+.monthly-table{
+  width:100%!important;
+  min-width:880px!important;
+  table-layout:fixed!important;
+}
+.monthly-table th:first-child,
+.monthly-table td:first-child{width:130px!important}
+.monthly-table th:last-child,
+.monthly-table td:last-child{width:44px!important}
+.monthly-table th:not(:first-child):not(:last-child),
+.monthly-table td:not(:first-child):not(:last-child){width:112px!important}
+
+.monthly-table th,.monthly-table td{
+  padding:7px 8px!important;
+  height:42px!important;
+}
+.monthly-table td input{
+  height:30px!important;
+  min-height:30px!important;
+  padding:5px 7px!important;
+}
+.monthly-table .monthly-line-input{
+  min-width:0!important;
+  width:100%!important;
+  font-weight:850!important;
+}
+.monthly-table input[type="number"]{
+  min-width:0!important;
+  width:74px!important;
+  margin:0 auto!important;
+  display:block!important;
+  text-align:center!important;
+}
+
+/* Hábil */
+.monthly-table .group-hab{background:#e9f6f1!important;color:#18725a!important;border-left:3px solid #0b9b73!important}
+.monthly-table .sub-hab{background:#f3faf7!important}
+.monthly-table tbody td:nth-child(2),
+.monthly-table tbody td:nth-child(3),
+.monthly-table tfoot td:nth-child(2),
+.monthly-table tfoot td:nth-child(3){background:#f8fcfa!important}
+.monthly-table tbody td:nth-child(2),
+.monthly-table tfoot td:nth-child(2){border-left:3px solid #b8dfd2!important}
+
+/* Sábado */
+.monthly-table .group-sab{background:#fff0df!important;color:#9d5c1b!important;border-left:3px solid #d77817!important}
+.monthly-table .sub-sab{background:#fff8ef!important}
+.monthly-table tbody td:nth-child(4),
+.monthly-table tbody td:nth-child(5),
+.monthly-table tfoot td:nth-child(4),
+.monthly-table tfoot td:nth-child(5){background:#fffbf6!important}
+.monthly-table tbody td:nth-child(4),
+.monthly-table tfoot td:nth-child(4){border-left:3px solid #f1d2ad!important}
+
+/* Domingo */
+.monthly-table .group-dom{background:#eee9f7!important;color:#66548c!important;border-left:3px solid #7b6aa6!important}
+.monthly-table .sub-dom{background:#f7f4fb!important}
+.monthly-table tbody td:nth-child(6),
+.monthly-table tbody td:nth-child(7),
+.monthly-table tfoot td:nth-child(6),
+.monthly-table tfoot td:nth-child(7){background:#fbf9fd!important}
+.monthly-table tbody td:nth-child(6),
+.monthly-table tfoot td:nth-child(6){border-left:3px solid #d8cfea!important}
+
+.monthly-table .monthly-group-head th{font-size:12px!important;font-weight:900!important;letter-spacing:.02em!important}
+.monthly-table thead tr:nth-child(2) th{font-size:9px!important}
+.monthly-table tfoot td{font-weight:900!important}
+
+@media(max-width:900px){
+  .monthly-table-panel{width:100%}
+  .monthly-actions{width:100%}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
@@ -878,11 +973,18 @@ h1{
           <p>Flota prevista por línea / ramal y turno para cada modelo de servicio.</p>
         </div>
         <div class="monthly-actions">
+          <button class="btn ghost monthly-nav-btn" type="button" onclick="moveMonthlyPeriod(-1)" aria-label="Mes anterior">‹</button>
           <input id="monthlyPeriod" class="monthly-month" type="month" value="2026-11" aria-label="Mes del plan mensual">
+          <button class="btn ghost monthly-nav-btn" type="button" onclick="moveMonthlyPeriod(1)" aria-label="Mes siguiente">›</button>
           <button class="btn ghost" type="button" onclick="copyPreviousMonthlyPlan()">Copiar mes anterior</button>
+          <button class="btn soft" type="button" onclick="createNextMonthlyPlan()">+ Crear mes siguiente</button>
           <button class="btn soft" type="button" onclick="addMonthlyLine()">+ Agregar línea</button>
           <button class="btn primary" type="button" onclick="saveMonthlyPlan()">Guardar plan</button>
         </div>
+      </div>
+      <div class="monthly-saved-nav">
+        <span>Planes guardados</span>
+        <div id="monthlySavedMonths" class="monthly-saved-months"></div>
       </div>
 
       <section class="monthly-summary">
@@ -914,18 +1016,18 @@ h1{
             <thead>
               <tr class="monthly-group-head">
                 <th rowspan="2">Línea</th>
-                <th colspan="2">Hábil</th>
-                <th colspan="2">Sábado</th>
-                <th colspan="2">Domingo</th>
+                <th colspan="2" class="group-hab">Hábil</th>
+                <th colspan="2" class="group-sab">Sábado</th>
+                <th colspan="2" class="group-dom">Domingo</th>
                 <th rowspan="2"></th>
               </tr>
               <tr>
-                <th>Flota TM</th>
-                <th>Flota TT</th>
-                <th>Flota TM</th>
-                <th>Flota TT</th>
-                <th>Flota TM</th>
-                <th>Flota TT</th>
+                <th class="sub-hab">Flota TM</th>
+                <th class="sub-hab">Flota TT</th>
+                <th class="sub-sab">Flota TM</th>
+                <th class="sub-sab">Flota TT</th>
+                <th class="sub-dom">Flota TM</th>
+                <th class="sub-dom">Flota TT</th>
               </tr>
             </thead>
             <tbody id="monthlyPlanBody"></tbody>
@@ -1037,6 +1139,7 @@ function loadMonthlyPlan(period){
     updateMonthlySavedState('Nuevo mes · sin guardar');
   }
   renderMonthlyPlan();
+  renderMonthlySavedMonths();
 }
 function renderMonthlyPlan(){
   const body=document.getElementById('monthlyPlanBody');
@@ -1044,12 +1147,12 @@ function renderMonthlyPlan(){
   body.innerHTML=monthlyPlanRows.map((r,i)=>`
     <tr>
       <td><input class="monthly-line-input" value="${esc(r.line||'')}" oninput="monthlyPlanRows[${i}].line=this.value;markMonthlyDirty()"></td>
-      <td><input type="number" min="0" step="1" value="${monthlyNum(r.habTM)}" oninput="monthlyPlanRows[${i}].habTM=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
-      <td><input type="number" min="0" step="1" value="${monthlyNum(r.habTT)}" oninput="monthlyPlanRows[${i}].habTT=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
-      <td><input type="number" min="0" step="1" value="${monthlyNum(r.sabTM)}" oninput="monthlyPlanRows[${i}].sabTM=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
-      <td><input type="number" min="0" step="1" value="${monthlyNum(r.sabTT)}" oninput="monthlyPlanRows[${i}].sabTT=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
-      <td><input type="number" min="0" step="1" value="${monthlyNum(r.domTM)}" oninput="monthlyPlanRows[${i}].domTM=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
-      <td><input type="number" min="0" step="1" value="${monthlyNum(r.domTT)}" oninput="monthlyPlanRows[${i}].domTT=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
+      <td class="cell-hab"><input type="number" min="0" step="1" value="${monthlyNum(r.habTM)}" oninput="monthlyPlanRows[${i}].habTM=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
+      <td class="cell-hab"><input type="number" min="0" step="1" value="${monthlyNum(r.habTT)}" oninput="monthlyPlanRows[${i}].habTT=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
+      <td class="cell-sab"><input type="number" min="0" step="1" value="${monthlyNum(r.sabTM)}" oninput="monthlyPlanRows[${i}].sabTM=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
+      <td class="cell-sab"><input type="number" min="0" step="1" value="${monthlyNum(r.sabTT)}" oninput="monthlyPlanRows[${i}].sabTT=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
+      <td class="cell-dom"><input type="number" min="0" step="1" value="${monthlyNum(r.domTM)}" oninput="monthlyPlanRows[${i}].domTM=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
+      <td class="cell-dom"><input type="number" min="0" step="1" value="${monthlyNum(r.domTT)}" oninput="monthlyPlanRows[${i}].domTT=monthlyNum(this.value);calculateMonthlyPlan();markMonthlyDirty()"></td>
       <td><button class="icon-btn" type="button" onclick="removeMonthlyLine(${i})">×</button></td>
     </tr>`).join('');
   calculateMonthlyPlan();
@@ -1078,6 +1181,7 @@ function saveMonthlyPlan(){
   all[period]={period,rows:monthlyClone(monthlyPlanRows),updatedAt:new Date().toISOString()};
   setMonthlyPlans(all);
   updateMonthlySavedState('Guardado '+new Date(all[period].updatedAt).toLocaleString('es-AR'));
+  renderMonthlySavedMonths();
 }
 function addMonthlyLine(){
   monthlyPlanRows.push({line:'Nueva',habTM:0,habTT:0,sabTM:0,sabTT:0,domTM:0,domTT:0});
@@ -1086,6 +1190,47 @@ function addMonthlyLine(){
 function removeMonthlyLine(i){
   monthlyPlanRows.splice(i,1);renderMonthlyPlan();markMonthlyDirty();
 }
+
+function shiftMonthKey(period,delta){
+  if(!period)return '';
+  const [y,m]=period.split('-').map(Number);
+  const d=new Date(y,m-1+delta,1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function moveMonthlyPeriod(delta){
+  const input=document.getElementById('monthlyPeriod');
+  if(!input)return;
+  const next=shiftMonthKey(input.value||'2026-11',delta);
+  loadMonthlyPlan(next);
+}
+function createNextMonthlyPlan(){
+  const input=document.getElementById('monthlyPeriod');
+  if(!input)return;
+  const current=input.value||'2026-11';
+  const next=shiftMonthKey(current,1);
+  const all=getMonthlyPlans();
+  if(all[next]?.rows){
+    loadMonthlyPlan(next);
+    return;
+  }
+  monthlyPlanRows=monthlyClone(monthlyPlanRows.length?monthlyPlanRows:monthlyZeroTemplate());
+  input.value=next;
+  renderMonthlyPlan();
+  updateMonthlySavedState('Nuevo mes basado en '+monthlyPeriodLabel(current)+' · sin guardar');
+  renderMonthlySavedMonths();
+}
+function renderMonthlySavedMonths(){
+  const wrap=document.getElementById('monthlySavedMonths');
+  const input=document.getElementById('monthlyPeriod');
+  if(!wrap||!input)return;
+  const current=input.value;
+  const saved=getMonthlyPlans();
+  const keys=Object.keys(saved).sort();
+  wrap.innerHTML=keys.length
+    ?keys.map(k=>`<button class="monthly-month-chip ${k===current?'active':''}" type="button" onclick="loadMonthlyPlan('${k}')">${monthlyPeriodLabel(k)}</button>`).join('')
+    :'<span style="color:var(--muted);font-size:11px">Todavía no hay meses guardados.</span>';
+}
+
 function previousMonthKey(period){
   if(!period)return '';
   const [y,m]=period.split('-').map(Number);
