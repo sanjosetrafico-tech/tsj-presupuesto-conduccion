@@ -1930,10 +1930,7 @@ function downloadPDFFromSnapshot(s){
   const redSoft=[255,239,237];
   const black=[24,21,24];
   const M=computeMetricsData(s.plan||[],s.staff||[],s.deductions||[]);
-  const pageW=210;
-  const left=14;
-  const right=196;
-  const contentW=182;
+  const left=14,right=196,contentW=182;
 
   const planRows=(s.plan||[]).map(r=>[
     r.type||'',
@@ -1962,112 +1959,106 @@ function downloadPDFFromSnapshot(s){
     ];
   });
 
+  const totalDataRows=planRows.length+staffRows.length+incidenceRows.length;
+  const dense=totalDataRows>11;
+  const tableFont=dense?6.7:7.3;
+  const tablePad=dense?1.15:1.45;
+  const sectionGap=dense?4:5;
+
   function addSectionTitle(title,y){
     doc.setFillColor(...soft2);
-    doc.roundedRect(left,y,contentW,8,1.5,1.5,'F');
+    doc.roundedRect(left,y,contentW,6.5,1.2,1.2,'F');
     doc.setFont('helvetica','bold');
-    doc.setFontSize(10);
+    doc.setFontSize(9.2);
     doc.setTextColor(...ink);
-    doc.text(title,left+4,y+5.4);
-    return y+11;
+    doc.text(title,left+4,y+4.5);
+    return y+8.5;
   }
 
-  function needPage(y,needed=40){
-    if(y+needed>275){
-      doc.addPage();
-      return 18;
-    }
-    return y;
-  }
-
-  // Encabezado
-  try{
-    doc.addImage(document.querySelector('.brand img').src,'PNG',14,10,30,18);
-  }catch(e){}
+  // Encabezado compacto
+  try{doc.addImage(document.querySelector('.brand img').src,'PNG',14,7,25,15)}catch(e){}
 
   doc.setFont('helvetica','bold');
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.setTextColor(...ink);
-  doc.text('Presupuesto mensual de conducción',50,16);
+  doc.text('Presupuesto mensual de conducción',44,13);
 
   doc.setFont('helvetica','normal');
-  doc.setFontSize(9.5);
+  doc.setFontSize(8.2);
   doc.setTextColor(...muted);
-  doc.text('Transporte San José S.A.',50,22);
-  doc.text(periodLabel(s.period),50,27);
+  doc.text('Transporte San José S.A. · '+periodLabel(s.period),44,18.5);
 
-  // Estado a la derecha
   doc.setFillColor(...black);
-  doc.roundedRect(158,11,38,11,2,2,'F');
+  doc.roundedRect(161,7.5,35,9,2,2,'F');
   doc.setFont('helvetica','bold');
-  doc.setFontSize(8.5);
+  doc.setFontSize(7.6);
   doc.setTextColor(255,255,255);
-  doc.text(String(s.status||'Borrador').toUpperCase(),177,18,{align:'center'});
+  doc.text(String(s.status||'Borrador').toUpperCase(),178.5,13.3,{align:'center'});
 
   doc.setDrawColor(...line);
-  doc.setLineWidth(.4);
-  doc.line(left,34,right,34);
+  doc.setLineWidth(.35);
+  doc.line(left,25,right,25);
 
   doc.setFont('helvetica','bold');
-  doc.setFontSize(11);
+  doc.setFontSize(9.7);
   doc.setTextColor(...ink);
-  doc.text(s.name||'Presupuesto',left,42);
+  doc.text(s.name||'Presupuesto',left,31);
 
   doc.setFont('helvetica','normal');
-  doc.setFontSize(8.5);
+  doc.setFontSize(7.4);
   doc.setTextColor(...muted);
-  doc.text('Emitido: '+new Date().toLocaleString('es-AR'),right,42,{align:'right'});
+  doc.text('Emitido: '+new Date().toLocaleString('es-AR'),right,31,{align:'right'});
 
-  // Resumen KPI
-  const cardY=49;
-  const gap=3;
-  const cardW=(contentW-gap*3)/4;
+  // KPIs compactos
+  const cardY=36,gap=3,cardW=(contentW-gap*3)/4;
   const cards=[
-    {label:'Jornadas necesarias',value:fmt(M.need),hint:'Plan del mes'},
-    {label:'Disponibilidad bruta',value:fmt(M.gross),hint:'Antes de incidencias'},
-    {label:'Disponibilidad neta',value:fmt(M.net),hint:'Luego de incidencias'},
-    {label:'Saldo mensual',value:(M.balance>=0?'+':'')+fmt(M.balance),hint:'Jornadas de margen',accent:true}
+    {label:'Jornadas necesarias',value:fmt(M.need)},
+    {label:'Disponibilidad bruta',value:fmt(M.gross)},
+    {label:'Disponibilidad neta',value:fmt(M.net)},
+    {label:'Saldo mensual',value:(M.balance>=0?'+':'')+fmt(M.balance),accent:true}
   ];
-
   cards.forEach((c,i)=>{
     const x=left+i*(cardW+gap);
     const fill=c.accent?(M.balance>=0?greenSoft:redSoft):soft;
     doc.setFillColor(...fill);
     doc.setDrawColor(...line);
-    doc.roundedRect(x,cardY,cardW,25,2,2,'FD');
-
+    doc.roundedRect(x,cardY,cardW,17,1.6,1.6,'FD');
     doc.setFont('helvetica','bold');
-    doc.setFontSize(7.2);
+    doc.setFontSize(6.3);
     doc.setTextColor(...muted);
-    doc.text(c.label.toUpperCase(),x+3,cardY+6);
-
-    doc.setFontSize(15);
+    doc.text(c.label.toUpperCase(),x+2.7,cardY+5);
+    doc.setFontSize(13);
     doc.setTextColor(...(c.accent?(M.balance>=0?green:red):ink));
-    doc.text(c.value,x+3,cardY+15.5);
-
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(7.2);
-    doc.setTextColor(...muted);
-    doc.text(c.hint,x+3,cardY+21.5);
+    doc.text(c.value,x+2.7,cardY+12.5);
   });
 
-  let cursor=82;
+  let cursor=59;
   const common={
     theme:'grid',
+    pageBreak:'avoid',
+    rowPageBreak:'avoid',
     styles:{
       font:'helvetica',
-      fontSize:8,
-      cellPadding:{top:2.3,right:2.2,bottom:2.3,left:2.2},
+      fontSize:tableFont,
+      cellPadding:{top:tablePad,right:1.8,bottom:tablePad,left:1.8},
       textColor:ink,
       lineColor:line,
-      lineWidth:.2,
-      valign:'middle'
+      lineWidth:.18,
+      valign:'middle',
+      overflow:'linebreak'
     },
     headStyles:{
       fillColor:black,
       textColor:[255,255,255],
       fontStyle:'bold',
-      halign:'center'
+      halign:'center',
+      cellPadding:{top:1.6,right:1.8,bottom:1.6,left:1.8}
+    },
+    footStyles:{
+      fillColor:soft2,
+      textColor:ink,
+      fontStyle:'bold',
+      cellPadding:{top:1.6,right:1.8,bottom:1.6,left:1.8}
     },
     alternateRowStyles:{fillColor:[251,250,250]},
     margin:{left,right:14}
@@ -2080,10 +2071,13 @@ function downloadPDFFromSnapshot(s){
     startY:cursor,
     head:[['Tipo','Descripción','Flota','Días','Jornadas']],
     body:planRows,
-    foot:[['Total','', '',fmt(planDays),fmt(M.need)]],
-    footStyles:{fillColor:soft2,textColor:ink,fontStyle:'bold'},
+    foot:[[
+      {content:'Total',colSpan:3,styles:{halign:'left'}},
+      {content:fmt(planDays),styles:{halign:'center'}},
+      {content:fmt(M.need),styles:{halign:'right'}}
+    ]],
     columnStyles:{
-      0:{cellWidth:27},
+      0:{cellWidth:27,halign:'left'},
       1:{cellWidth:70,halign:'left'},
       2:{cellWidth:25,halign:'center'},
       3:{cellWidth:25,halign:'center'},
@@ -2091,18 +2085,19 @@ function downloadPDFFromSnapshot(s){
     }
   });
 
-  cursor=doc.lastAutoTable.finalY+7;
-  cursor=needPage(cursor,38);
+  cursor=doc.lastAutoTable.finalY+sectionGap;
 
-  // Dotación
+  // Dotación disponible
   cursor=addSectionTitle('Dotación disponible',cursor);
   doc.autoTable({
     ...common,
     startY:cursor,
     head:[['Conductores','Jornadas por conductor','Francos','Disponibles']],
     body:staffRows,
-    foot:[[fmt(M.count),'Total','',fmt(M.gross)]],
-    footStyles:{fillColor:soft2,textColor:ink,fontStyle:'bold'},
+    foot:[[
+      {content:'Total · '+fmt(M.count)+' conductores',colSpan:3,styles:{halign:'left'}},
+      {content:fmt(M.gross),styles:{halign:'right'}}
+    ]],
     columnStyles:{
       0:{halign:'center',cellWidth:35},
       1:{halign:'center',cellWidth:55},
@@ -2111,8 +2106,7 @@ function downloadPDFFromSnapshot(s){
     }
   });
 
-  cursor=doc.lastAutoTable.finalY+7;
-  cursor=needPage(cursor,45);
+  cursor=doc.lastAutoTable.finalY+sectionGap;
 
   // Incidencias
   cursor=addSectionTitle('Incidencias',cursor);
@@ -2121,8 +2115,10 @@ function downloadPDFFromSnapshot(s){
     startY:cursor,
     head:[['Concepto','Tipo','Valor','Descuento']],
     body:incidenceRows,
-    foot:[['Total','','',fmt(M.deds)]],
-    footStyles:{fillColor:soft2,textColor:ink,fontStyle:'bold'},
+    foot:[[
+      {content:'Total',colSpan:3,styles:{halign:'left'}},
+      {content:fmt(M.deds),styles:{halign:'right'}}
+    ]],
     columnStyles:{
       0:{cellWidth:72,halign:'left'},
       1:{cellWidth:38,halign:'center'},
@@ -2131,56 +2127,52 @@ function downloadPDFFromSnapshot(s){
     }
   });
 
-  cursor=doc.lastAutoTable.finalY+8;
-  cursor=needPage(cursor,42);
+  cursor=doc.lastAutoTable.finalY+5;
 
-  // Resultado final
+  // Resultado final compacto
+  const resultH=27;
+  const maxResultY=252;
+  if(cursor>maxResultY) cursor=maxResultY;
   const boxFill=M.balance>=0?greenSoft:redSoft;
   const boxAccent=M.balance>=0?green:red;
   doc.setFillColor(...boxFill);
   doc.setDrawColor(...boxAccent);
-  doc.setLineWidth(.5);
-  doc.roundedRect(left,cursor,contentW,34,2,2,'FD');
+  doc.setLineWidth(.45);
+  doc.roundedRect(left,cursor,contentW,resultH,1.8,1.8,'FD');
 
   doc.setFont('helvetica','bold');
-  doc.setFontSize(10.5);
+  doc.setFontSize(9.5);
   doc.setTextColor(...ink);
-  doc.text('Resultado del presupuesto',left+4,cursor+7);
+  doc.text('Resultado del presupuesto',left+4,cursor+6.5);
 
   doc.setFont('helvetica','normal');
-  doc.setFontSize(8.6);
+  doc.setFontSize(7.7);
   doc.setTextColor(...muted);
-  doc.text('Conductores contemplados: '+fmt(M.count),left+4,cursor+14);
-  doc.text('Incidencias totales: '+fmt(M.deds)+' jornadas',left+4,cursor+20);
-  doc.text('Cobertura: '+fmt(M.cov,1)+'%',left+4,cursor+26);
+  doc.text('Conductores: '+fmt(M.count),left+4,cursor+13);
+  doc.text('Incidencias: '+fmt(M.deds)+' jornadas',left+4,cursor+18.5);
+  doc.text('Cobertura: '+fmt(M.cov,1)+'%',left+4,cursor+24);
 
   doc.setFont('helvetica','bold');
-  doc.setFontSize(9);
+  doc.setFontSize(7.8);
   doc.setTextColor(...muted);
-  doc.text('SALDO',right-4,cursor+9,{align:'right'});
-
-  doc.setFontSize(19);
+  doc.text('SALDO',right-4,cursor+7,{align:'right'});
+  doc.setFontSize(17);
   doc.setTextColor(...boxAccent);
-  doc.text((M.balance>=0?'+':'')+fmt(M.balance)+' jornadas',right-4,cursor+20,{align:'right'});
-
+  doc.text((M.balance>=0?'+':'')+fmt(M.balance)+' jornadas',right-4,cursor+17,{align:'right'});
   doc.setFont('helvetica','normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setTextColor(...muted);
-  doc.text(M.balance>=0?'Margen disponible sobre el plan previsto':'Déficit respecto del plan previsto',right-4,cursor+27,{align:'right'});
+  doc.text(M.balance>=0?'Margen disponible':'Déficit respecto del plan',right-4,cursor+23,{align:'right'});
 
-  // Footer en todas las páginas
-  const totalPages=doc.getNumberOfPages();
-  for(let p=1;p<=totalPages;p++){
-    doc.setPage(p);
-    doc.setDrawColor(...line);
-    doc.setLineWidth(.25);
-    doc.line(left,282,right,282);
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(7);
-    doc.setTextColor(...muted);
-    doc.text('Presupuesto mensual de conducción - '+periodLabel(s.period),left,287);
-    doc.text('Página '+p+' de '+totalPages,right,287,{align:'right'});
-  }
+  // Pie único A4
+  doc.setDrawColor(...line);
+  doc.setLineWidth(.25);
+  doc.line(left,282,right,282);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(6.8);
+  doc.setTextColor(...muted);
+  doc.text('Presupuesto mensual de conducción - '+periodLabel(s.period),left,287);
+  doc.text('Página 1 de 1',right,287,{align:'right'});
 
   doc.save(`${safeFileName(s.name)}_${s.period||'sin_periodo'}.pdf`);
 }
