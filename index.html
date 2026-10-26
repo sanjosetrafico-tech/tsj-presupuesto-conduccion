@@ -932,6 +932,63 @@ h1{
   .monthly-actions{width:100%}
 }
 
+
+/* Presupuesto KM */
+.km-budget{display:flex;flex-direction:column;gap:14px}
+.km-budget-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.km-budget-head h2{margin:0;font-size:22px;font-weight:900;letter-spacing:-.02em}
+.km-budget-head p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.km-budget-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.km-nav-btn{width:36px!important;min-width:36px!important;padding:8px 0!important;font-size:18px!important;line-height:1!important}
+.km-days-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.km-days-bar>span{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:#625b61}
+.km-days-bar label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800}
+.km-days-bar input{width:58px;height:30px;border:1px solid var(--line);border-radius:8px;padding:4px 6px;text-align:center}
+.km-days-bar small{color:var(--muted);font-size:11px;margin-left:auto}
+.km-month-summary{display:grid;grid-template-columns:1.15fr repeat(3,1fr);gap:12px}
+.km-summary-main,.km-model-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;min-height:126px}
+.km-summary-main{background:#181416;color:#fff}
+.km-summary-title{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.km-summary-row{display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px;color:#ddd5da}
+.km-summary-row strong{font-size:16px;color:#fff}
+.km-summary-row.total{border-top:1px solid #4b4549;margin-top:4px;padding-top:7px;font-weight:900}
+.km-summary-row.total strong{font-size:20px}
+.km-model-card{border-top:4px solid var(--green)}
+.km-model-card.sab{border-top-color:#d77817;background:#fffaf4}
+.km-model-card.dom{border-top-color:#7b6aa6;background:#faf8fd}
+.km-model-card>span{display:block;color:#625b61;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.05em}
+.km-model-card>strong{display:block;margin-top:10px;font-size:28px;line-height:1;font-weight:950}
+.km-model-card>small{display:block;margin-top:8px;color:var(--muted);font-size:11px}
+.km-saved-state{margin-left:auto;color:var(--muted);font-size:11px}
+.km-section-panel{padding:0!important;overflow:hidden!important}
+.km-section-panel .panel-head{padding:16px 18px 0;margin-bottom:10px!important}
+.km-table-wrap{overflow:auto;background:#fff}
+.km-base-table,.km-model-table{border:0!important;border-radius:0!important;table-layout:fixed!important}
+.km-base-table{min-width:920px!important}
+.km-model-table{min-width:1500px!important}
+.km-base-table th,.km-base-table td,.km-model-table th,.km-model-table td{padding:7px 7px!important;text-align:center!important;height:40px!important}
+.km-base-table th:first-child,.km-base-table td:first-child,.km-model-table th:first-child,.km-model-table td:first-child{position:sticky;left:0;z-index:2;background:#fff!important;text-align:left!important;width:88px!important;min-width:88px!important;font-weight:850}
+.km-base-table thead th:first-child,.km-model-table thead th:first-child{z-index:4;background:#efebed!important}
+.km-group-head th{font-size:11px!important;font-weight:900!important}
+.km-prod-head{background:#e9f6f1!important;color:#18725a!important}
+.km-impro-head{background:#fff0df!important;color:#9d5c1b!important}
+.km-gnc-head{background:#eee9f7!important;color:#66548c!important}
+.km-base-table input,.km-model-table input{width:72px!important;min-width:0!important;height:29px!important;min-height:29px!important;padding:4px 6px!important;text-align:center!important;font-size:10px!important}
+.km-base-table .km-line,.km-model-table .km-line{width:72px!important;text-align:left!important;font-weight:850!important}
+.km-model-table .group-hab{background:#e9f6f1!important;color:#18725a!important;border-left:3px solid #0b9b73!important}
+.km-model-table .group-sab{background:#fff0df!important;color:#9d5c1b!important;border-left:3px solid #d77817!important}
+.km-model-table .group-dom{background:#eee9f7!important;color:#66548c!important;border-left:3px solid #7b6aa6!important}
+.km-model-table .sub-hab{background:#f3faf7!important}
+.km-model-table .sub-sab{background:#fff8ef!important}
+.km-model-table .sub-dom{background:#f7f4fb!important}
+.km-model-table tbody td:nth-child(n+2):nth-child(-n+7),.km-model-table tfoot td:nth-child(n+2):nth-child(-n+7){background:#f8fcfa!important}
+.km-model-table tbody td:nth-child(n+8):nth-child(-n+12),.km-model-table tfoot td:nth-child(n+8):nth-child(-n+12){background:#fffbf6!important}
+.km-model-table tbody td:nth-child(n+13):nth-child(-n+17),.km-model-table tfoot td:nth-child(n+13):nth-child(-n+17){background:#fbf9fd!important}
+.km-model-table tfoot td{font-weight:900!important;font-size:10px!important}
+.km-total-cell{font-weight:900!important;font-size:11px!important}
+@media(max-width:1050px){.km-month-summary{grid-template-columns:repeat(2,1fr)}.km-budget-head{align-items:flex-start;flex-direction:column}.km-budget-actions{width:100%}}
+@media(max-width:600px){.km-month-summary{grid-template-columns:1fr}.km-days-bar small{width:100%;margin-left:0}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
@@ -1072,16 +1129,219 @@ h1{
   </section>
 
   <section class="service-tab-panel" id="tab-presupuesto-km">
-    <div class="module-placeholder">
-      <div class="module-kicker">PRESUPUESTO</div>
-      <h2>Presupuesto KM</h2>
-      <p>Espacio preparado para presupuestar kilómetros por modelo de servicio y período.</p>
+    <div class="km-budget">
+      <div class="km-budget-head">
+        <div>
+          <h2>Presupuesto KM</h2>
+          <p>Presupuesto mensual por línea / ramal, kilómetros productivos, improductivos y modelo de servicio.</p>
+        </div>
+        <div class="km-budget-actions">
+          <button class="btn ghost km-nav-btn" type="button" onclick="moveKmPeriod(-1)">‹</button>
+          <input id="kmPeriod" class="monthly-month" type="month" value="2026-11" aria-label="Mes presupuesto KM">
+          <button class="btn ghost km-nav-btn" type="button" onclick="moveKmPeriod(1)">›</button>
+          <button class="btn ghost" type="button" onclick="copyPreviousKmBudget()">Copiar mes anterior</button>
+          <button class="btn soft" type="button" onclick="createNextKmBudget()">+ Crear mes siguiente</button>
+          <button class="btn primary" type="button" onclick="saveKmBudget()">Guardar presupuesto</button>
+        </div>
+      </div>
+
+      <div class="km-days-bar">
+        <span>Días por modelo</span>
+        <label>Hábil <input id="kmDaysHab" type="number" min="0" step="1" value="19" oninput="updateKmBudget();markKmDirty()"></label>
+        <label>Sábado <input id="kmDaysSab" type="number" min="0" step="1" value="4" oninput="updateKmBudget();markKmDirty()"></label>
+        <label>Domingo <input id="kmDaysDom" type="number" min="0" step="1" value="7" oninput="updateKmBudget();markKmDirty()"></label>
+        <small>Los días son editables para contemplar feriados o modelos especiales.</small>
+      </div>
+
+      <section class="km-month-summary">
+        <div class="km-summary-main">
+          <div class="km-summary-title">KM <span id="kmSummaryPeriod">NOV 2026</span></div>
+          <div class="km-summary-row"><span>Productivos</span><strong id="kmMonthProd">0</strong></div>
+          <div class="km-summary-row"><span>Improductivos</span><strong id="kmMonthImpro">0</strong></div>
+          <div class="km-summary-row total"><span>Total</span><strong id="kmMonthTotal">0</strong></div>
+        </div>
+        <div class="km-model-card hab">
+          <span>KM modelo · Hábil</span>
+          <strong id="kmModelHab">0</strong>
+          <small id="kmModelHabSplit">0 prod / 0 impro</small>
+        </div>
+        <div class="km-model-card sab">
+          <span>KM modelo · Sábado</span>
+          <strong id="kmModelSab">0</strong>
+          <small id="kmModelSabSplit">0 prod / 0 impro</small>
+        </div>
+        <div class="km-model-card dom">
+          <span>KM modelo · Domingo</span>
+          <strong id="kmModelDom">0</strong>
+          <small id="kmModelDomSplit">0 prod / 0 impro</small>
+        </div>
+      </section>
+
+      <div class="monthly-saved-nav">
+        <span>Presupuestos guardados</span>
+        <div id="kmSavedMonths" class="monthly-saved-months"></div>
+        <span id="kmSavedState" class="km-saved-state">Base inicial · sin guardar</span>
+      </div>
+
+      <section class="panel km-section-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Distancias por línea / ramal</h2>
+            <p class="help">Datos base de recorrido y kilómetros improductivos. Todos los valores son editables.</p>
+          </div>
+        </div>
+        <div class="km-table-wrap">
+          <table class="km-base-table">
+            <thead>
+              <tr class="km-group-head">
+                <th rowspan="2">Línea</th>
+                <th colspan="3" class="km-prod-head">KM productivos</th>
+                <th colspan="3" class="km-impro-head">KM improductivos</th>
+                <th colspan="3" class="km-gnc-head">KM impro GNC</th>
+              </tr>
+              <tr>
+                <th>Km Ida</th><th>Km Vta</th><th>Total</th>
+                <th>Km Tome</th><th>Km Deje</th><th>Total</th>
+                <th>Km Tome</th><th>Km Deje</th><th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="kmBaseBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel km-section-panel">
+        <div class="panel-head">
+          <div>
+            <h2>KM por modelo de servicio</h2>
+            <p class="help">Vueltas, flota y kilómetros diarios por Hábil, Sábado y Domingo.</p>
+          </div>
+        </div>
+        <div class="km-table-wrap">
+          <table class="km-model-table">
+            <thead>
+              <tr class="km-group-head">
+                <th rowspan="2">Línea</th>
+                <th colspan="6" class="group-hab">Hábil</th>
+                <th colspan="5" class="group-sab">Sábado</th>
+                <th colspan="5" class="group-dom">Domingo</th>
+              </tr>
+              <tr>
+                <th class="sub-hab">Q Vtas</th><th class="sub-hab">Flota Gas</th><th class="sub-hab">Flota GNC</th><th class="sub-hab">KM Prod</th><th class="sub-hab">KM Impro</th><th class="sub-hab">KM Total</th>
+                <th class="sub-sab">Q Vtas</th><th class="sub-sab">Flota</th><th class="sub-sab">KM Prod</th><th class="sub-sab">KM Impro</th><th class="sub-sab">KM Total</th>
+                <th class="sub-dom">Q Vtas</th><th class="sub-dom">Flota</th><th class="sub-dom">KM Prod</th><th class="sub-dom">KM Impro</th><th class="sub-dom">KM Total</th>
+              </tr>
+            </thead>
+            <tbody id="kmModelBody"></tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td>Total</td>
+                <td id="kmQHab">0</td><td id="kmFlotaGasHab">0</td><td id="kmFlotaGncHab">0</td><td id="kmProdHab">0</td><td id="kmImproHab">0</td><td id="kmTotalHab">0</td>
+                <td id="kmQSab">0</td><td id="kmFlotaSab">0</td><td id="kmProdSab">0</td><td id="kmImproSab">0</td><td id="kmTotalSab">0</td>
+                <td id="kmQDom">0</td><td id="kmFlotaDom">0</td><td id="kmProdDom">0</td><td id="kmImproDom">0</td><td id="kmTotalDom">0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
     </div>
   </section>
 </main>
 <script>
 
 
+
+
+const KM_BUDGET_KEY='tsj_presupuesto_km_v1';
+const KM_NOV_2026=[
+{line:'A',ida:13.8,vta:13.4,prod:27.2,tome:7.1,deje:7.4,impro:14.5,gncTome:8.4,gncDeje:8.6,gncImpro:17,qHab:25,flotaGas:2,flotaGnc:1,prodHab:678.5,improHab:46,qSab:16,flotaSab:2,prodSab:434.56,improSab:29,qDom:8,flotaDom:1,prodDom:217.28,improDom:14.5},
+{line:'B',ida:16.1,vta:16.4,prod:32.5,tome:6.5,deje:6.5,impro:13,gncTome:0,gncDeje:0,gncImpro:0,qHab:15,flotaGas:2,flotaGnc:0,prodHab:488,improHab:26.04,qSab:16,flotaSab:2,prodSab:520,improSab:26.04,qDom:8,flotaDom:1,prodDom:260,improDom:13.02},
+{line:'C 1',ida:13.1,vta:13.5,prod:26.6,tome:5.2,deje:5.2,impro:10.4,gncTome:0,gncDeje:0,gncImpro:0,qHab:15,flotaGas:2,flotaGnc:0,prodHab:399,improHab:20.86,qSab:8,flotaSab:1,prodSab:212.8,improSab:10.43,qDom:8,flotaDom:1,prodDom:212.8,improDom:10.43},
+{line:'C 2',ida:20.5,vta:20.9,prod:41.4,tome:5.2,deje:5.2,impro:10.4,gncTome:10.4,gncDeje:12,gncImpro:22.45,qHab:8,flotaGas:0,flotaGnc:1,prodHab:331,improHab:22.45,qSab:8,flotaSab:1,prodSab:331.2,improSab:10.4,qDom:0,flotaDom:0,prodDom:0,improDom:0},
+{line:'D 1',ida:16,vta:16.4,prod:32.4,tome:6.1,deje:6.1,impro:12.2,gncTome:7.1,gncDeje:6.2,gncImpro:13.3,qHab:67,flotaGas:6,flotaGnc:3,prodHab:2170,improHab:113.1,qSab:24,flotaSab:3,prodSab:777.36,improSab:36.6,qDom:15,flotaDom:2,prodDom:485.85,improDom:24.4},
+{line:'D 2',ida:17.1,vta:17.1,prod:34.3,tome:6.1,deje:6.1,impro:12.2,gncTome:0,gncDeje:0,gncImpro:0,qHab:0,flotaGas:0,flotaGnc:0,prodHab:0,improHab:0,qSab:0,flotaSab:0,prodSab:0,improSab:0,qDom:0,flotaDom:0,prodDom:0,improDom:0},
+{line:'E',ida:11.3,vta:10.9,prod:22.2,tome:5,deje:5.1,impro:10.1,gncTome:9.9,gncDeje:10,gncImpro:19.9,qHab:29,flotaGas:3,flotaGnc:1,prodHab:645,improHab:50.2,qSab:18,flotaSab:2,prodSab:400.14,improSab:20.2,qDom:8,flotaDom:1,prodDom:177.84,improDom:10.1},
+{line:'F 1',ida:14.2,vta:12.9,prod:27.1,tome:6.4,deje:6.5,impro:12.9,gncTome:7.8,gncDeje:8.9,gncImpro:16.7,qHab:74,flotaGas:6,flotaGnc:2,prodHab:2004,improHab:110.74,qSab:17,flotaSab:2,prodSab:460.36,improSab:25.78,qDom:16,flotaDom:2,prodDom:433.28,improDom:25.78},
+{line:'F 2',ida:14.3,vta:12.8,prod:27.1,tome:7.7,deje:8.1,impro:15.8,gncTome:9.2,gncDeje:10.6,gncImpro:19.8,qHab:8,flotaGas:1,flotaGnc:1,prodHab:217,improHab:35.56,qSab:8,flotaSab:1,prodSab:216.8,improSab:15.76,qDom:8,flotaDom:1,prodDom:216.8,improDom:15.76},
+{line:'F 3',ida:14.9,vta:12.9,prod:27.8,tome:6.4,deje:6.5,impro:12.9,gncTome:0,gncDeje:0,gncImpro:0,qHab:8,flotaGas:1,flotaGnc:0,prodHab:222,improHab:12.9,qSab:0,flotaSab:0,prodSab:0,improSab:0,qDom:0,flotaDom:0,prodDom:0,improDom:0},
+{line:'G',ida:12.4,vta:13.9,prod:26.3,tome:12.7,deje:12.2,impro:24.9,gncTome:12.4,gncDeje:12.2,gncImpro:24.6,qHab:57,flotaGas:6,flotaGnc:2,prodHab:1496,improHab:198.6,qSab:17,flotaSab:2,prodSab:446.318,improSab:49.8,qDom:17,flotaDom:2,prodDom:446.318,improDom:49.8},
+{line:'H 1',ida:8,vta:7.6,prod:15.6,tome:5,deje:5.1,impro:10.1,gncTome:9.9,gncDeje:10,gncImpro:19.9,qHab:32,flotaGas:2,flotaGnc:1,prodHab:499,improHab:40.16,qSab:21,flotaSab:2,prodSab:327.6,improSab:20.26,qDom:10,flotaDom:1,prodDom:156,improDom:10.13},
+{line:'H 2',ida:7.6,vta:7.6,prod:15.2,tome:5,deje:5.1,impro:10.1,gncTome:9.9,gncDeje:10,gncImpro:19.9,qHab:32,flotaGas:3,flotaGnc:0,prodHab:486,improHab:30.39,qSab:10,flotaSab:1,prodSab:152,improSab:10.13,qDom:9,flotaDom:1,prodDom:136.8,improDom:10.13},
+{line:'L 1',ida:15.1,vta:14.4,prod:29.5,tome:10.6,deje:10.8,impro:21.4,gncTome:10.7,gncDeje:10.8,gncImpro:21.5,qHab:35,flotaGas:3,flotaGnc:2,prodHab:1033,improHab:107.2,qSab:17,flotaSab:2,prodSab:501.5,improSab:42.8,qDom:16,flotaDom:2,prodDom:472,improDom:42.8},
+{line:'L 2',ida:13.7,vta:12.9,prod:26.6,tome:8.1,deje:8.3,impro:16.4,gncTome:0,gncDeje:0,gncImpro:0,qHab:4,flotaGas:1,flotaGnc:0,prodHab:106,improHab:16.43,qSab:8,flotaSab:1,prodSab:212.8,improSab:16.43,qDom:0,flotaDom:0,prodDom:0,improDom:0},
+{line:'M',ida:14.4,vta:13.2,prod:27.6,tome:5,deje:5.1,impro:10.1,gncTome:9.9,gncDeje:10,gncImpro:19.9,qHab:31,flotaGas:2,flotaGnc:2,prodHab:856,improHab:60,qSab:17,flotaSab:2,prodSab:469.2,improSab:20.2,qDom:8,flotaDom:1,prodDom:220.8,improDom:10.1},
+{line:'P',ida:11.9,vta:12.5,prod:24.4,tome:4.1,deje:4.1,impro:8.2,gncTome:11.7,gncDeje:11.9,gncImpro:23.6,qHab:17,flotaGas:1,flotaGnc:1,prodHab:415,improHab:31.8,qSab:8,flotaSab:1,prodSab:195.2,improSab:8.2,qDom:7,flotaDom:1,prodDom:170.8,improDom:8.2},
+{line:'R',ida:13.7,vta:13.4,prod:27.1,tome:.5,deje:.5,impro:1,gncTome:0,gncDeje:0,gncImpro:0,qHab:25,flotaGas:3,flotaGnc:0,prodHab:678,improHab:3,qSab:16,flotaSab:2,prodSab:433.6,improSab:2,qDom:8,flotaDom:1,prodDom:216.8,improDom:1},
+{line:'S',ida:12.2,vta:12.4,prod:24.6,tome:.5,deje:.5,impro:1,gncTome:0,gncDeje:0,gncImpro:0,qHab:25,flotaGas:3,flotaGnc:0,prodHab:615,improHab:3,qSab:16,flotaSab:2,prodSab:393.6,improSab:2,qDom:8,flotaDom:1,prodDom:196.8,improDom:1}
+];
+let kmBudgetRows=[];
+function kmClone(v){return JSON.parse(JSON.stringify(v||[]))}
+function getKmBudgets(){try{return JSON.parse(localStorage.getItem(KM_BUDGET_KEY)||'{}')}catch(e){return{}}}
+function setKmBudgets(v){localStorage.setItem(KM_BUDGET_KEY,JSON.stringify(v))}
+function kmN(v){return Number(v)||0}
+function kmI(v){return Math.max(0,Math.floor(Number(v)||0))}
+function kmFmt(v,d=2){return new Intl.NumberFormat('es-AR',{minimumFractionDigits:0,maximumFractionDigits:d}).format(Number(v)||0)}
+function loadKmBudget(period){
+  const input=document.getElementById('kmPeriod'); if(!input)return;
+  const key=period||input.value||'2026-11'; input.value=key;
+  const saved=getKmBudgets();
+  let days={hab:19,sab:4,dom:7};
+  if(saved[key]?.rows){kmBudgetRows=kmClone(saved[key].rows);days=saved[key].days||days;setKmState('Guardado '+new Date(saved[key].updatedAt).toLocaleString('es-AR'))}
+  else if(key==='2026-11'){kmBudgetRows=kmClone(KM_NOV_2026);setKmState('Base inicial · sin guardar')}
+  else{kmBudgetRows=kmClone(kmBudgetRows.length?kmBudgetRows:KM_NOV_2026);setKmState('Nuevo mes · sin guardar')}
+  document.getElementById('kmDaysHab').value=days.hab??19;
+  document.getElementById('kmDaysSab').value=days.sab??4;
+  document.getElementById('kmDaysDom').value=days.dom??7;
+  renderKmBudget(); renderKmSavedMonths();
+}
+function kmInput(i,k,v,cls=''){return `<input class="${cls}" type="number" step="0.001" min="0" value="${kmN(v)}" oninput="kmBudgetRows[${i}].${k}=kmN(this.value);updateKmBudget();markKmDirty()">`}
+function renderKmBudget(){
+  const b=document.getElementById('kmBaseBody'),m=document.getElementById('kmModelBody'); if(!b||!m)return;
+  b.innerHTML=kmBudgetRows.map((r,i)=>`<tr>
+    <td><input class="km-line" value="${esc(r.line)}" oninput="kmBudgetRows[${i}].line=this.value;renderKmBudget();markKmDirty()"></td>
+    <td>${kmInput(i,'ida',r.ida)}</td><td>${kmInput(i,'vta',r.vta)}</td><td>${kmInput(i,'prod',r.prod)}</td>
+    <td>${kmInput(i,'tome',r.tome)}</td><td>${kmInput(i,'deje',r.deje)}</td><td>${kmInput(i,'impro',r.impro)}</td>
+    <td>${kmInput(i,'gncTome',r.gncTome)}</td><td>${kmInput(i,'gncDeje',r.gncDeje)}</td><td>${kmInput(i,'gncImpro',r.gncImpro)}</td>
+  </tr>`).join('');
+  m.innerHTML=kmBudgetRows.map((r,i)=>`<tr>
+    <td><b>${esc(r.line)}</b></td>
+    <td>${kmInput(i,'qHab',r.qHab)}</td><td>${kmInput(i,'flotaGas',r.flotaGas)}</td><td>${kmInput(i,'flotaGnc',r.flotaGnc)}</td><td>${kmInput(i,'prodHab',r.prodHab)}</td><td>${kmInput(i,'improHab',r.improHab)}</td><td class="km-total-cell">${kmFmt(kmN(r.prodHab)+kmN(r.improHab),3)}</td>
+    <td>${kmInput(i,'qSab',r.qSab)}</td><td>${kmInput(i,'flotaSab',r.flotaSab)}</td><td>${kmInput(i,'prodSab',r.prodSab)}</td><td>${kmInput(i,'improSab',r.improSab)}</td><td class="km-total-cell">${kmFmt(kmN(r.prodSab)+kmN(r.improSab),3)}</td>
+    <td>${kmInput(i,'qDom',r.qDom)}</td><td>${kmInput(i,'flotaDom',r.flotaDom)}</td><td>${kmInput(i,'prodDom',r.prodDom)}</td><td>${kmInput(i,'improDom',r.improDom)}</td><td class="km-total-cell">${kmFmt(kmN(r.prodDom)+kmN(r.improDom),3)}</td>
+  </tr>`).join('');
+  updateKmBudget();
+}
+function updateKmBudget(){
+  if(!kmBudgetRows.length)return;
+  const t={qHab:0,gas:0,gnc:0,pHab:0,iHab:0,qSab:0,fSab:0,pSab:0,iSab:0,qDom:0,fDom:0,pDom:0,iDom:0};
+  kmBudgetRows.forEach(r=>{t.qHab+=kmN(r.qHab);t.gas+=kmN(r.flotaGas);t.gnc+=kmN(r.flotaGnc);t.pHab+=kmN(r.prodHab);t.iHab+=kmN(r.improHab);t.qSab+=kmN(r.qSab);t.fSab+=kmN(r.flotaSab);t.pSab+=kmN(r.prodSab);t.iSab+=kmN(r.improSab);t.qDom+=kmN(r.qDom);t.fDom+=kmN(r.flotaDom);t.pDom+=kmN(r.prodDom);t.iDom+=kmN(r.improDom)});
+  const dH=kmI(document.getElementById('kmDaysHab')?.value),dS=kmI(document.getElementById('kmDaysSab')?.value),dD=kmI(document.getElementById('kmDaysDom')?.value);
+  const modelH=t.pHab+t.iHab,modelS=t.pSab+t.iSab,modelD=t.pDom+t.iDom;
+  const monthProd=t.pHab*dH+t.pSab*dS+t.pDom*dD,monthImpro=t.iHab*dH+t.iSab*dS+t.iDom*dD,monthTotal=monthProd+monthImpro;
+  const set=(id,v,d=2)=>{const e=document.getElementById(id);if(e)e.textContent=kmFmt(v,d)};
+  set('kmQHab',t.qHab,0);set('kmFlotaGasHab',t.gas,0);set('kmFlotaGncHab',t.gnc,0);set('kmProdHab',t.pHab,3);set('kmImproHab',t.iHab,3);set('kmTotalHab',modelH,3);
+  set('kmQSab',t.qSab,0);set('kmFlotaSab',t.fSab,0);set('kmProdSab',t.pSab,3);set('kmImproSab',t.iSab,3);set('kmTotalSab',modelS,3);
+  set('kmQDom',t.qDom,0);set('kmFlotaDom',t.fDom,0);set('kmProdDom',t.pDom,3);set('kmImproDom',t.iDom,3);set('kmTotalDom',modelD,3);
+  set('kmModelHab',modelH,3);set('kmModelSab',modelS,3);set('kmModelDom',modelD,3);
+  set('kmMonthProd',Math.round(monthProd),0);set('kmMonthImpro',Math.round(monthImpro),0);set('kmMonthTotal',Math.round(monthTotal),0);
+  const hs=document.getElementById('kmModelHabSplit'),ss=document.getElementById('kmModelSabSplit'),ds=document.getElementById('kmModelDomSplit');
+  if(hs)hs.textContent=kmFmt(t.pHab,3)+' prod / '+kmFmt(t.iHab,3)+' impro';
+  if(ss)ss.textContent=kmFmt(t.pSab,3)+' prod / '+kmFmt(t.iSab,3)+' impro';
+  if(ds)ds.textContent=kmFmt(t.pDom,3)+' prod / '+kmFmt(t.iDom,3)+' impro';
+  const p=document.getElementById('kmPeriod')?.value||'2026-11',lab=document.getElementById('kmSummaryPeriod');
+  if(lab)lab.textContent=monthlyPeriodLabel(p).toUpperCase().replace(' DE ',' ');
+}
+function setKmState(s){const e=document.getElementById('kmSavedState');if(e)e.textContent=s}
+function markKmDirty(){setKmState('Cambios sin guardar')}
+function saveKmBudget(){
+  const p=document.getElementById('kmPeriod')?.value;if(!p)return;
+  const all=getKmBudgets();all[p]={period:p,rows:kmClone(kmBudgetRows),days:{hab:kmI(kmDaysHab.value),sab:kmI(kmDaysSab.value),dom:kmI(kmDaysDom.value)},updatedAt:new Date().toISOString()};setKmBudgets(all);setKmState('Guardado '+new Date(all[p].updatedAt).toLocaleString('es-AR'));renderKmSavedMonths()
+}
+function renderKmSavedMonths(){const w=document.getElementById('kmSavedMonths'),p=document.getElementById('kmPeriod')?.value;if(!w)return;const a=getKmBudgets(),ks=Object.keys(a).sort();w.innerHTML=ks.length?ks.map(k=>`<button class="monthly-month-chip ${k===p?'active':''}" onclick="loadKmBudget('${k}')">${monthlyPeriodLabel(k)}</button>`).join(''):'<span style="color:var(--muted);font-size:11px">Todavía no hay presupuestos guardados.</span>'}
+function moveKmPeriod(d){const e=document.getElementById('kmPeriod');if(!e)return;loadKmBudget(shiftMonthKey(e.value||'2026-11',d))}
+function createNextKmBudget(){const e=document.getElementById('kmPeriod');if(!e)return;const cur=e.value||'2026-11',next=shiftMonthKey(cur,1),all=getKmBudgets();if(all[next]){loadKmBudget(next);return}e.value=next;kmBudgetRows=kmClone(kmBudgetRows);setKmState('Nuevo mes basado en '+monthlyPeriodLabel(cur)+' · sin guardar');renderKmBudget();renderKmSavedMonths()}
+function copyPreviousKmBudget(){const e=document.getElementById('kmPeriod');if(!e)return;const prev=shiftMonthKey(e.value||'2026-11',-1),all=getKmBudgets();if(!all[prev]){alert('No hay presupuesto KM guardado para '+monthlyPeriodLabel(prev)+'.');return}kmBudgetRows=kmClone(all[prev].rows);const d=all[prev].days||{};kmDaysHab.value=d.hab??19;kmDaysSab.value=d.sab??4;kmDaysDom.value=d.dom??7;renderKmBudget();setKmState('Copiado de '+monthlyPeriodLabel(prev)+' · sin guardar')}
+function initKmBudget(){const e=document.getElementById('kmPeriod');if(!e||e.dataset.ready)return;e.dataset.ready='1';e.addEventListener('change',()=>loadKmBudget(e.value));loadKmBudget(e.value||'2026-11')}
 
 const MONTHLY_PLAN_KEY='tsj_plan_mensual_v1';
 const MONTHLY_NOV_2026=[
@@ -1319,6 +1579,7 @@ function showServiceTab(name){
   try{sessionStorage.setItem('tsj_plan_servicio_tab',name)}catch(e){}
   if(name==='plan-diario')setTimeout(preparePlanDailyFrame,50);
   if(name==='plan-mensual')setTimeout(initMonthlyPlan,20);
+  if(name==='presupuesto-km')setTimeout(initKmBudget,20);
 }
 function restoreServiceTab(){
   let saved='';
