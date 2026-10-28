@@ -1196,6 +1196,70 @@ h1{
   }
 }
 
+
+/* Alerta automática por dotación insuficiente para plan Hábil */
+.staff-shortage-alert{
+  display:grid;
+  grid-template-columns:32px minmax(0,1fr) 72px;
+  align-items:center;
+  gap:10px;
+  background:#fff1f1;
+  border:1px solid #ef6b6b;
+  border-radius:12px;
+  padding:10px 12px;
+  color:#9f1d1d;
+}
+.staff-shortage-alert[hidden]{display:none!important}
+.staff-shortage-icon{
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  background:#d83a3a;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:17px;
+  font-weight:950;
+}
+.staff-shortage-copy strong{
+  display:block;
+  font-size:12px;
+  font-weight:950;
+  color:#c22b2b;
+}
+.staff-shortage-copy span{
+  display:block;
+  margin-top:3px;
+  font-size:10.5px;
+  line-height:1.35;
+  color:#6f4a4a;
+}
+.staff-shortage-count{
+  border-left:1px solid #efb8b8;
+  padding-left:10px;
+  text-align:center;
+}
+.staff-shortage-count small,
+.staff-shortage-count span{
+  display:block;
+  font-size:8.5px;
+  color:#c22b2b;
+}
+.staff-shortage-count strong{
+  display:block;
+  margin:1px 0;
+  font-size:24px;
+  line-height:1;
+  font-weight:950;
+  color:#d52f2f;
+}
+@media(max-width:560px){
+  .staff-shortage-alert{grid-template-columns:28px 1fr}
+  .staff-shortage-count{grid-column:1/-1;border-left:0;border-top:1px solid #efb8b8;padding:8px 0 0;display:flex;gap:6px;justify-content:center;align-items:baseline}
+  .staff-shortage-count small,.staff-shortage-count span{display:inline}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
@@ -1342,6 +1406,18 @@ h1{
           <tbody id="staffBody"></tbody>
           <tfoot><tr class="total-row"><td class="num" id="staffCount">0</td><td>Total</td><td></td><td class="num" id="staffTotal">0</td><td></td></tr></tfoot>
         </table>
+      </div>
+      <div id="staffShortageAlert" class="staff-shortage-alert" hidden>
+        <div class="staff-shortage-icon">!</div>
+        <div class="staff-shortage-copy">
+          <strong>Dotación insuficiente para plan Hábil</strong>
+          <span id="staffShortageText">Faltan 0 conductores. La cobertura requerirá HHEE adicionales para completar los turnos (8 a 10 hs por turno a cubrir).</span>
+        </div>
+        <div class="staff-shortage-count">
+          <small>Faltan</small>
+          <strong id="staffShortageCount">0</strong>
+          <span>conductores</span>
+        </div>
       </div>
       <aside class="staff-summary">
         <div class="staff-summary-title">
@@ -1927,6 +2003,9 @@ const DED_CONCEPTS=['Licencia medica','Licencia especial','Monitor escuela','Mon
 let deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5},{name:'Licencia medica',kind:'days',value:65},{name:'Licencia especial',kind:'days',value:10},{name:'Monitor escuela',kind:'days',value:32}];
 const fmt=(n,d=0)=>new Intl.NumberFormat('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}).format(Number(n)||0);const val=x=>Number(x)||0;const whole=x=>Math.floor(val(x));const deductionDays=(raw,kind)=>kind==='percent'?Math.ceil(val(raw)):Math.floor(val(raw));
 function computeMetricsData(planData=plan,staffData=staff,dedData=deductions){let need=0,days=0;(planData||[]).forEach(r=>{const fleet=whole(r.fleet),d=whole(r.days);need+=fleet*d;days+=d});let gross=0,count=0;(staffData||[]).forEach(r=>{const c=whole(r.count),w=whole(r.workdays);gross+=c*w;count+=c});let deds=0;const dedItems=(dedData||[]).map(r=>{const raw=r.kind==='percent'?need*val(r.value)/100:val(r.value);const j=deductionDays(raw,r.kind);deds+=j;return j});const net=Math.floor(gross-deds),balance=Math.floor(net-need),cov=need?net/need*100:0;return{need,days,gross,count,deds,net,balance,cov,dedItems}}
+function habilFleetRequirement(planData=plan){
+  return Math.max(0,...(planData||[]).filter(r=>r.type==='Hábil').map(r=>whole(r.fleet)));
+}
 function staffFrancos(r){const f=whole(r?.francos);if(f===6||f===7)return f;return whole(r?.workdays)===23?7:6}
 function normalizeStaff(){staff=(staff||[]).map(r=>({...r,francos:staffFrancos(r)}))}
 function renderAll(){normalizeStaff();renderPlan();renderStaff();renderDeds();calculate();renderSaved()}
@@ -1944,6 +2023,14 @@ const sf6=staff.filter(r=>staffFrancos(r)===6).reduce((a,r)=>a+whole(r.count),0)
 const sf7=staff.filter(r=>staffFrancos(r)===7).reduce((a,r)=>a+whole(r.count),0);
 const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross'),ss6=document.getElementById('staffSummary6Count'),ss7=document.getElementById('staffSummary7Count');
 if(ssc)ssc.textContent=fmt(m.count);if(ssg)ssg.textContent=fmt(m.gross);if(ss6)ss6.textContent=fmt(sf6);if(ss7)ss7.textContent=fmt(sf7);
+const habilFleet=habilFleetRequirement();
+const shortage=Math.max(0,habilFleet-m.count);
+const shortageAlert=document.getElementById('staffShortageAlert');
+const shortageCount=document.getElementById('staffShortageCount');
+const shortageText=document.getElementById('staffShortageText');
+if(shortageAlert)shortageAlert.hidden=shortage<=0;
+if(shortageCount)shortageCount.textContent=fmt(shortage);
+if(shortageText)shortageText.textContent='Faltan '+fmt(shortage)+' conductores. La cobertura requerirá HHEE adicionales para completar los turnos (8 a 10 hs por turno a cubrir).';
 dedTotal.textContent=fmt(m.deds);needKpi.textContent=fmt(m.need);grossKpi.textContent=fmt(m.gross);netKpi.textContent=fmt(m.net);balanceKpi.textContent=(m.balance>=0?'+':'')+fmt(m.balance);rNeed.textContent=fmt(m.need);rGross.textContent=fmt(m.gross);rDeds.textContent=fmt(m.deds);rNet.textContent=fmt(m.net);coverage.textContent=fmt(m.cov,1)+'%';rBalance.textContent=(m.balance>=0?'+':'')+fmt(m.balance);balanceCard.className='card '+(m.balance>=0?'positive':'negative');resultAlert.className='alert '+(m.balance>=0?'ok':'bad');resultAlert.textContent=m.balance>=0?`La dotación cubre el plan con un margen de ${fmt(m.balance)} jornadas (${fmt(m.cov,1)}% de cobertura).`:`Faltan ${fmt(Math.abs(m.balance))} jornadas para cubrir el plan (${fmt(m.cov,1)}% de cobertura).`;return m}
 function addPlanRow(){plan.push({type:'Hábil',desc:'Nuevo período',fleet:0,days:0});renderPlan();calculate()}function addStaffRow(){staff.push({count:0,workdays:0,francos:6});renderStaff();calculate()}function addDeductionRow(){deductions.push({name:DED_CONCEPTS[0],kind:'days',value:0});renderDeds();calculate()}function removePlan(i){plan.splice(i,1);renderPlan();calculate()}function removeStaff(i){staff.splice(i,1);renderStaff();calculate()}function removeDed(i){deductions.splice(i,1);renderDeds();calculate()}
 function snapshot(){return{id:currentId||crypto.randomUUID(),name:budgetName.value.trim()||'Presupuesto sin nombre',period:period.value,status:document.getElementById('status').value,plan:structuredClone(plan),staff:structuredClone(staff),deductions:structuredClone(deductions),metrics:calculate(),updatedAt:new Date().toISOString()}}function getSaved(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}
@@ -1992,6 +2079,8 @@ function downloadPDFFromSnapshot(s){
 
   const staff6=(s.staff||[]).filter(r=>staffFrancos(r)===6).reduce((a,r)=>a+whole(r.count),0);
   const staff7=(s.staff||[]).filter(r=>staffFrancos(r)===7).reduce((a,r)=>a+whole(r.count),0);
+  const habilFleet=habilFleetRequirement(s.plan||[]);
+  const staffShortage=Math.max(0,habilFleet-M.count);
 
   const incidenceRows=(s.deductions||[]).map(r=>{
     const raw=r.kind==='percent'?M.need*val(r.value)/100:val(r.value);
@@ -2186,7 +2275,51 @@ function downloadPDFFromSnapshot(s){
     doc.text(c.value,x+sumW-2.4,cursor+8.3,{align:'right'});
   });
 
-  cursor+=sumH+sectionGap;
+  cursor+=sumH+2.5;
+
+  // Alerta por dotación insuficiente para el plan Hábil
+  if(staffShortage>0){
+    const alertH=12.5;
+    doc.setFillColor(255,241,241);
+    doc.setDrawColor(230,76,76);
+    doc.setLineWidth(.35);
+    doc.roundedRect(left,cursor,contentW,alertH,1.5,1.5,'FD');
+
+    doc.setFillColor(216,58,58);
+    doc.roundedRect(left+3,cursor+2.2,8,8,1.4,1.4,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.setTextColor(255,255,255);
+    doc.text('!',left+7,cursor+7.7,{align:'center'});
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7.4);
+    doc.setTextColor(194,43,43);
+    doc.text('Dotación insuficiente para plan Hábil',left+14,cursor+4.8);
+
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(6.1);
+    doc.setTextColor(103,74,74);
+    doc.text('Faltan '+fmt(staffShortage)+' conductores. La cobertura requerirá HHEE adicionales para completar los turnos',left+14,cursor+8.2);
+    doc.text('(8 a 10 hs por turno a cubrir).',left+14,cursor+11);
+
+    doc.setDrawColor(239,184,184);
+    doc.line(right-24,cursor+1.8,right-24,cursor+10.7);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(5.6);
+    doc.setTextColor(194,43,43);
+    doc.text('FALTAN',right-12,cursor+3.6,{align:'center'});
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(12);
+    doc.text(fmt(staffShortage),right-12,cursor+8.1,{align:'center'});
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(5.6);
+    doc.text('conductores',right-12,cursor+10.8,{align:'center'});
+
+    cursor+=alertH+2.5;
+  }else{
+    cursor+=sectionGap;
+  }
 
   // Incidencias
   cursor=addSectionTitle('Incidencias',cursor);
