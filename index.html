@@ -1260,6 +1260,14 @@ h1{
   .staff-shortage-count small,.staff-shortage-count span{display:inline}
 }
 
+
+.km-model-table .km-line{
+  width:78px!important;
+  min-width:68px!important;
+  font-weight:900!important;
+  text-align:left!important;
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
@@ -1545,6 +1553,7 @@ h1{
             <h2>KM por modelo de servicio</h2>
             <p class="help">La cantidad de vueltas define los KM productivos. La flota define los KM improductivos. El KM total se calcula automáticamente desde la base de distancias.</p>
           </div>
+          <button class="btn soft" type="button" onclick="addKmLine()">+ Agregar línea</button>
         </div>
         <div class="km-table-wrap">
           <table class="km-model-table">
@@ -1610,26 +1619,27 @@ h1{
 
 const KM_BUDGET_KEY='tsj_presupuesto_km_v1';
 const KM_NOV_2026=[
-{line:'A',ida:13.8,vta:13.4,prod:27.2,tome:7.1,deje:7.4,impro:14.5,gncTome:8.4,gncDeje:8.6,gncImpro:17,qHab:25,flotaGas:2,flotaGnc:1,prodHab:678.5,improHab:46,qSab:16,flotaSab:2,prodSab:434.56,improSab:29,qDom:8,flotaDom:1,prodDom:217.28,improDom:14.5},
-{line:'B',ida:16.1,vta:16.4,prod:32.5,tome:6.5,deje:6.5,impro:13,gncTome:0,gncDeje:0,gncImpro:0,qHab:15,flotaGas:2,flotaGnc:0,prodHab:488,improHab:26.04,qSab:16,flotaSab:2,prodSab:520,improSab:26.04,qDom:8,flotaDom:1,prodDom:260,improDom:13.02},
-{line:'C 1',ida:13.1,vta:13.5,prod:26.6,tome:5.2,deje:5.2,impro:10.4,gncTome:0,gncDeje:0,gncImpro:0,qHab:15,flotaGas:2,flotaGnc:0,prodHab:399,improHab:20.86,qSab:8,flotaSab:1,prodSab:212.8,improSab:10.43,qDom:8,flotaDom:1,prodDom:212.8,improDom:10.43},
-{line:'C 2',ida:20.5,vta:20.9,prod:41.4,tome:5.2,deje:5.2,impro:10.4,gncTome:10.4,gncDeje:12,gncImpro:22.45,qHab:8,flotaGas:0,flotaGnc:1,prodHab:331,improHab:22.45,qSab:8,flotaSab:1,prodSab:331.2,improSab:10.4,qDom:0,flotaDom:0,prodDom:0,improDom:0},
-{line:'D 1',ida:16,vta:16.4,prod:32.4,tome:6.1,deje:6.1,impro:12.2,gncTome:7.1,gncDeje:6.2,gncImpro:13.3,qHab:67,flotaGas:6,flotaGnc:3,prodHab:2170,improHab:113.1,qSab:24,flotaSab:3,prodSab:777.36,improSab:36.6,qDom:15,flotaDom:2,prodDom:485.85,improDom:24.4},
-{line:'D 2',ida:17.1,vta:17.1,prod:34.3,tome:6.1,deje:6.1,impro:12.2,gncTome:0,gncDeje:0,gncImpro:0,qHab:0,flotaGas:0,flotaGnc:0,prodHab:0,improHab:0,qSab:0,flotaSab:0,prodSab:0,improSab:0,qDom:0,flotaDom:0,prodDom:0,improDom:0},
-{line:'E',ida:11.3,vta:10.9,prod:22.2,tome:5,deje:5.1,impro:10.1,gncTome:9.9,gncDeje:10,gncImpro:19.9,qHab:29,flotaGas:3,flotaGnc:1,prodHab:645,improHab:50.2,qSab:18,flotaSab:2,prodSab:400.14,improSab:20.2,qDom:8,flotaDom:1,prodDom:177.84,improDom:10.1},
-{line:'F 1',ida:14.2,vta:12.9,prod:27.1,tome:6.4,deje:6.5,impro:12.9,gncTome:7.8,gncDeje:8.9,gncImpro:16.7,qHab:74,flotaGas:6,flotaGnc:2,prodHab:2004,improHab:110.74,qSab:17,flotaSab:2,prodSab:460.36,improSab:25.78,qDom:16,flotaDom:2,prodDom:433.28,improDom:25.78},
-{line:'F 2',ida:14.3,vta:12.8,prod:27.1,tome:7.7,deje:8.1,impro:15.8,gncTome:9.2,gncDeje:10.6,gncImpro:19.8,qHab:8,flotaGas:1,flotaGnc:1,prodHab:217,improHab:35.56,qSab:8,flotaSab:1,prodSab:216.8,improSab:15.76,qDom:8,flotaDom:1,prodDom:216.8,improDom:15.76},
-{line:'F 3',ida:14.9,vta:12.9,prod:27.8,tome:6.4,deje:6.5,impro:12.9,gncTome:0,gncDeje:0,gncImpro:0,qHab:8,flotaGas:1,flotaGnc:0,prodHab:222,improHab:12.9,qSab:0,flotaSab:0,prodSab:0,improSab:0,qDom:0,flotaDom:0,prodDom:0,improDom:0},
-{line:'G',ida:12.4,vta:13.9,prod:26.3,tome:12.7,deje:12.2,impro:24.9,gncTome:12.4,gncDeje:12.2,gncImpro:24.6,qHab:57,flotaGas:6,flotaGnc:2,prodHab:1496,improHab:198.6,qSab:17,flotaSab:2,prodSab:446.318,improSab:49.8,qDom:17,flotaDom:2,prodDom:446.318,improDom:49.8},
-{line:'H 1',ida:8,vta:7.6,prod:15.6,tome:5,deje:5.1,impro:10.1,gncTome:9.9,gncDeje:10,gncImpro:19.9,qHab:32,flotaGas:2,flotaGnc:1,prodHab:499,improHab:40.16,qSab:21,flotaSab:2,prodSab:327.6,improSab:20.26,qDom:10,flotaDom:1,prodDom:156,improDom:10.13},
-{line:'H 2',ida:7.6,vta:7.6,prod:15.2,tome:5,deje:5.1,impro:10.1,gncTome:9.9,gncDeje:10,gncImpro:19.9,qHab:32,flotaGas:3,flotaGnc:0,prodHab:486,improHab:30.39,qSab:10,flotaSab:1,prodSab:152,improSab:10.13,qDom:9,flotaDom:1,prodDom:136.8,improDom:10.13},
-{line:'L 1',ida:15.1,vta:14.4,prod:29.5,tome:10.6,deje:10.8,impro:21.4,gncTome:10.7,gncDeje:10.8,gncImpro:21.5,qHab:35,flotaGas:3,flotaGnc:2,prodHab:1033,improHab:107.2,qSab:17,flotaSab:2,prodSab:501.5,improSab:42.8,qDom:16,flotaDom:2,prodDom:472,improDom:42.8},
-{line:'L 2',ida:13.7,vta:12.9,prod:26.6,tome:8.1,deje:8.3,impro:16.4,gncTome:0,gncDeje:0,gncImpro:0,qHab:4,flotaGas:1,flotaGnc:0,prodHab:106,improHab:16.43,qSab:8,flotaSab:1,prodSab:212.8,improSab:16.43,qDom:0,flotaDom:0,prodDom:0,improDom:0},
-{line:'M',ida:14.4,vta:13.2,prod:27.6,tome:5,deje:5.1,impro:10.1,gncTome:9.9,gncDeje:10,gncImpro:19.9,qHab:31,flotaGas:2,flotaGnc:2,prodHab:856,improHab:60,qSab:17,flotaSab:2,prodSab:469.2,improSab:20.2,qDom:8,flotaDom:1,prodDom:220.8,improDom:10.1},
-{line:'P',ida:11.9,vta:12.5,prod:24.4,tome:4.1,deje:4.1,impro:8.2,gncTome:11.7,gncDeje:11.9,gncImpro:23.6,qHab:17,flotaGas:1,flotaGnc:1,prodHab:415,improHab:31.8,qSab:8,flotaSab:1,prodSab:195.2,improSab:8.2,qDom:7,flotaDom:1,prodDom:170.8,improDom:8.2},
-{line:'R',ida:13.7,vta:13.4,prod:27.1,tome:.5,deje:.5,impro:1,gncTome:0,gncDeje:0,gncImpro:0,qHab:25,flotaGas:3,flotaGnc:0,prodHab:678,improHab:3,qSab:16,flotaSab:2,prodSab:433.6,improSab:2,qDom:8,flotaDom:1,prodDom:216.8,improDom:1},
-{line:'S',ida:12.2,vta:12.4,prod:24.6,tome:.5,deje:.5,impro:1,gncTome:0,gncDeje:0,gncImpro:0,qHab:25,flotaGas:3,flotaGnc:0,prodHab:615,improHab:3,qSab:16,flotaSab:2,prodSab:393.6,improSab:2,qDom:8,flotaDom:1,prodDom:196.8,improDom:1}
-];
+{line:'A',ida:13.80,vta:13.40,tome:7.10,deje:7.40,gncTome:8.40,gncDeje:8.60,qHab:25,flotaGas:2,flotaGnc:1,qSab:16,flotaSab:2,qDom:8,flotaDom:1},
+{line:'B',ida:16.10,vta:16.40,tome:6.50,deje:6.50,gncTome:0,gncDeje:0,qHab:15,flotaGas:2,flotaGnc:0,qSab:16,flotaSab:2,qDom:8,flotaDom:1},
+{line:'C 1',ida:12.90,vta:13.30,tome:5.21,deje:5.20,gncTome:0,gncDeje:0,qHab:15,flotaGas:2,flotaGnc:0,qSab:8,flotaSab:1,qDom:8,flotaDom:1},
+{line:'C 2',ida:20.30,vta:20.70,tome:5.20,deje:5.20,gncTome:10.40,gncDeje:12.00,qHab:8,flotaGas:0,flotaGnc:1,qSab:8,flotaSab:1,qDom:0,flotaDom:0},
+{line:'D 1',ida:15.98,vta:16.40,tome:6.10,deje:6.10,gncTome:7.10,gncDeje:6.20,qHab:67,flotaGas:6,flotaGnc:3,qSab:24,flotaSab:3,qDom:15,flotaDom:2},
+{line:'D 2',ida:17.10,vta:17.10,tome:6.10,deje:6.10,gncTome:0,gncDeje:0,qHab:0,flotaGas:0,flotaGnc:0,qSab:0,flotaSab:0,qDom:0,flotaDom:0},
+{line:'E',ida:11.28,vta:10.90,tome:5.00,deje:5.10,gncTome:9.90,gncDeje:10.00,qHab:29,flotaGas:3,flotaGnc:1,qSab:18,flotaSab:2,qDom:8,flotaDom:1},
+{line:'F 1',ida:14.18,vta:12.90,tome:6.41,deje:6.50,gncTome:7.80,gncDeje:8.90,qHab:74,flotaGas:6,flotaGnc:2,qSab:17,flotaSab:2,qDom:16,flotaDom:2},
+{line:'F 2',ida:14.28,vta:12.80,tome:7.72,deje:8.10,gncTome:9.20,gncDeje:10.60,qHab:8,flotaGas:1,flotaGnc:1,qSab:8,flotaSab:1,qDom:8,flotaDom:1},
+{line:'F 3',ida:14.90,vta:12.90,tome:6.40,deje:6.50,gncTome:0,gncDeje:0,qHab:8,flotaGas:1,flotaGnc:0,qSab:0,flotaSab:0,qDom:0,flotaDom:0},
+{line:'G',ida:12.38,vta:13.90,tome:12.70,deje:12.20,gncTome:12.40,gncDeje:12.20,qHab:57,flotaGas:6,flotaGnc:2,qSab:17,flotaSab:2,qDom:17,flotaDom:2},
+{line:'H 1',ida:8.00,vta:7.70,tome:5.00,deje:5.10,gncTome:9.90,gncDeje:10.00,qHab:32,flotaGas:2,flotaGnc:1,qSab:21,flotaSab:2,qDom:10,flotaDom:1},
+{line:'H 2',ida:7.60,vta:7.70,tome:5.01,deje:5.10,gncTome:9.90,gncDeje:10.00,qHab:32,flotaGas:3,flotaGnc:0,qSab:10,flotaSab:1,qDom:9,flotaDom:1},
+{line:'L 1',ida:15.10,vta:14.40,tome:10.62,deje:10.80,gncTome:10.70,gncDeje:10.80,qHab:35,flotaGas:3,flotaGnc:2,qSab:17,flotaSab:2,qDom:16,flotaDom:2},
+{line:'L 2',ida:13.69,vta:12.90,tome:8.10,deje:8.30,gncTome:0,gncDeje:0,qHab:4,flotaGas:1,flotaGnc:0,qSab:8,flotaSab:1,qDom:0,flotaDom:0},
+{line:'M',ida:14.39,vta:13.20,tome:5.00,deje:5.10,gncTome:9.90,gncDeje:10.00,qHab:31,flotaGas:2,flotaGnc:2,qSab:17,flotaSab:2,qDom:8,flotaDom:1},
+{line:'P',ida:12.70,vta:13.00,tome:0.51,deje:0.50,gncTome:11.70,gncDeje:11.90,qHab:17,flotaGas:1,flotaGnc:1,qSab:8,flotaSab:1,qDom:7,flotaDom:1},
+{line:'P 10',ida:12.60,vta:12.70,tome:0.50,deje:0.50,gncTome:0,gncDeje:0,qHab:8,flotaGas:1,flotaGnc:0,qSab:0,flotaSab:0,qDom:0,flotaDom:0},
+{line:'R',ida:12.90,vta:12.90,tome:4.10,deje:4.10,gncTome:0,gncDeje:0,qHab:25,flotaGas:3,flotaGnc:0,qSab:16,flotaSab:2,qDom:8,flotaDom:1},
+{line:'S',ida:12.20,vta:12.40,tome:0.50,deje:0.50,gncTome:0,gncDeje:0,qHab:25,flotaGas:3,flotaGnc:0,qSab:16,flotaSab:2,qDom:8,flotaDom:1}
+]
 let kmBudgetRows=[];
 function kmClone(v){return JSON.parse(JSON.stringify(v||[]))}
 function getKmBudgets(){try{return JSON.parse(localStorage.getItem(KM_BUDGET_KEY)||'{}')}catch(e){return{}}}
@@ -1642,8 +1652,8 @@ function loadKmBudget(period){
   const key=period||input.value||'2026-11'; input.value=key;
   const saved=getKmBudgets();
   let days={hab:0,sab:0,dom:0};
-  if(saved[key]?.rows){kmBudgetRows=kmClone(saved[key].rows);days=saved[key].days||days;setKmState('Guardado '+new Date(saved[key].updatedAt).toLocaleString('es-AR'))}
-  else if(key==='2026-11'){kmBudgetRows=kmClone(KM_NOV_2026);days={hab:19,sab:4,dom:7};setKmState('Base inicial · sin guardar')}
+  if(saved[key]?.rows && !(key==='2026-11' && Number(saved[key].version||0)<2)){kmBudgetRows=kmClone(saved[key].rows);days=saved[key].days||days;setKmState('Guardado '+new Date(saved[key].updatedAt).toLocaleString('es-AR'))}
+  else if(key==='2026-11'){kmBudgetRows=kmClone(KM_NOV_2026);days={hab:19,sab:4,dom:7};setKmState('Base actualizada · sin guardar')}
   else{kmBudgetRows=kmClone(kmBudgetRows.length?kmBudgetRows:KM_NOV_2026);setKmState('Completá primero las jornadas del mes')}
   document.getElementById('kmDaysHab').value=days.hab??0;
   document.getElementById('kmDaysSab').value=days.sab??0;
@@ -1652,6 +1662,24 @@ function loadKmBudget(period){
 }
 function kmInputInt(i,k,v,cls=''){return `<input class="${cls}" type="number" step="1" min="0" value="${kmI(v)}" oninput="kmBudgetRows[${i}].${k}=kmI(this.value);updateKmBudget();markKmDirty()">`}
 function kmInputDec(i,k,v,cls=''){return `<input class="${cls}" type="number" step="0.01" min="0" value="${kmN(v).toFixed(2)}" oninput="kmBudgetRows[${i}].${k}=kmN(this.value);updateKmBudget();markKmDirty()" onblur="this.value=kmN(this.value).toFixed(2)">`}
+function setKmLineName(i,value,source){
+  if(!kmBudgetRows[i])return;
+  kmBudgetRows[i].line=value;
+  const other=document.getElementById((source==='base'?'kmLineModel':'kmLineBase')+i);
+  if(other&&other.value!==value)other.value=value;
+  markKmDirty();
+}
+function addKmLine(){
+  kmBudgetRows.push({
+    line:'Nueva línea',
+    ida:0,vta:0,tome:0,deje:0,gncTome:0,gncDeje:0,
+    qHab:0,flotaGas:0,flotaGnc:0,
+    qSab:0,flotaSab:0,
+    qDom:0,flotaDom:0
+  });
+  renderKmBudget();
+  markKmDirty();
+}
 function renderKmBudget(){
   const b=document.getElementById('kmBaseBody'),m=document.getElementById('kmModelBody'); if(!b||!m)return;
   kmBudgetRows.forEach(r=>{
@@ -1660,13 +1688,13 @@ function renderKmBudget(){
     r.gncImpro=kmN(r.gncTome)+kmN(r.gncDeje);
   });
   b.innerHTML=kmBudgetRows.map((r,i)=>`<tr>
-    <td><input class="km-line" value="${esc(r.line)}" oninput="kmBudgetRows[${i}].line=this.value;renderKmBudget();markKmDirty()"></td>
+    <td><input id="kmLineBase${i}" class="km-line" value="${esc(r.line)}" oninput="setKmLineName(${i},this.value,'base')"></td>
     <td>${kmInputDec(i,'ida',r.ida)}</td><td>${kmInputDec(i,'vta',r.vta)}</td><td class="km-calc-cell">${kmFmt(r.prod,2)}</td>
     <td>${kmInputDec(i,'tome',r.tome)}</td><td>${kmInputDec(i,'deje',r.deje)}</td><td class="km-calc-cell">${kmFmt(r.impro,2)}</td>
     <td>${kmInputDec(i,'gncTome',r.gncTome)}</td><td>${kmInputDec(i,'gncDeje',r.gncDeje)}</td><td class="km-calc-cell">${kmFmt(r.gncImpro,2)}</td>
   </tr>`).join('');
   m.innerHTML=kmBudgetRows.map((r,i)=>`<tr>
-    <td><b>${esc(r.line)}</b></td>
+    <td><input id="kmLineModel${i}" class="km-line" value="${esc(r.line)}" oninput="setKmLineName(${i},this.value,'model')"></td>
     <td>${kmInputInt(i,'qHab',r.qHab,'km-q-input')}</td>
     <td>${kmInputInt(i,'flotaGas',r.flotaGas)}</td>
     <td>${kmInputInt(i,'flotaGnc',r.flotaGnc)}</td>
@@ -1743,7 +1771,7 @@ function setKmState(s){const e=document.getElementById('kmSavedState');if(e)e.te
 function markKmDirty(){setKmState('Cambios sin guardar')}
 function saveKmBudget(){
   const p=document.getElementById('kmPeriod')?.value;if(!p)return;
-  const all=getKmBudgets();const h=document.getElementById('kmDaysHab'),s=document.getElementById('kmDaysSab'),d=document.getElementById('kmDaysDom');all[p]={period:p,rows:kmClone(kmBudgetRows),days:{hab:kmI(h?.value),sab:kmI(s?.value),dom:kmI(d?.value)},updatedAt:new Date().toISOString()};setKmBudgets(all);setKmState('Guardado '+new Date(all[p].updatedAt).toLocaleString('es-AR'));renderKmSavedMonths()
+  const all=getKmBudgets();const h=document.getElementById('kmDaysHab'),s=document.getElementById('kmDaysSab'),d=document.getElementById('kmDaysDom');all[p]={period:p,version:2,rows:kmClone(kmBudgetRows),days:{hab:kmI(h?.value),sab:kmI(s?.value),dom:kmI(d?.value)},updatedAt:new Date().toISOString()};setKmBudgets(all);setKmState('Guardado '+new Date(all[p].updatedAt).toLocaleString('es-AR'));renderKmSavedMonths()
 }
 function renderKmSavedMonths(){const w=document.getElementById('kmSavedMonths'),p=document.getElementById('kmPeriod')?.value;if(!w)return;const a=getKmBudgets(),ks=Object.keys(a).sort();w.innerHTML=ks.length?ks.map(k=>`<button class="monthly-month-chip ${k===p?'active':''}" onclick="loadKmBudget('${k}')">${monthlyPeriodLabel(k)}</button>`).join(''):'<span style="color:var(--muted);font-size:11px">Todavía no hay presupuestos guardados.</span>'}
 function moveKmPeriod(d){const e=document.getElementById('kmPeriod');if(!e)return;loadKmBudget(shiftMonthKey(e.value||'2026-11',d))}
