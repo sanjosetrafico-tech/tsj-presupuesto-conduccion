@@ -1356,7 +1356,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
-<body class="tsj-auth-locked">
+<body>
 <div id="tsjLoginOverlay" class="tsj-login-overlay">
   <div class="tsj-login-card">
     <div class="tsj-login-brand">
@@ -1381,6 +1381,10 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
     <div>
       <h1>Plan Servicio</h1>
       <div class="subtitle">Planificación operativa y presupuestaria del servicio.</div>
+    </div>
+    <div id="tsjAuthGuestBar" class="tsj-auth-userbar">
+      <span>Calendarios</span><strong>modo local</strong>
+      <button class="btn ghost" type="button" onclick="tsjOpenLogin()">Iniciar sesión</button>
     </div>
     <div id="tsjAuthUserBar" class="tsj-auth-userbar" hidden>
       <span>Usuario</span><strong id="tsjAuthUsername">—</strong>
@@ -1740,7 +1744,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
       </div>
 
       <div class="inspector-storage-note" id="inspectorStorageNote">
-        Calendarios compartidos en Supabase. Los usuarios autorizados ven y editan las mismas semanas desde cualquier dispositivo.
+        La base compartida en Supabase ya está preparada. Hasta completar el alta de usuarios, el calendario mantiene guardado local de respaldo.
       </div>
 
       <section class="inspector-kpis">
@@ -2215,6 +2219,7 @@ function preparePlanDailyFrame(){
 const TSJ_SUPABASE_URL='https://xmosbwnredpzsrziqeux.supabase.co';
 const TSJ_SUPABASE_KEY='sb_publishable_M_X1Lv-0SQuzXqd3-Seb7w_IXqbzsGK';
 const TSJ_AUTH_USERS=['tr01','tr02','tr03'];
+const TSJ_AUTH_ENFORCED=false;
 let tsjSupabase=null;
 let tsjCurrentUser='';
 
@@ -2239,8 +2244,8 @@ function tsjUnlock(session){
   if(!username)return false;
   tsjCurrentUser=username;
   document.body.classList.remove('tsj-auth-locked');
-  const bar=document.getElementById('tsjAuthUserBar'),name=document.getElementById('tsjAuthUsername');
-  if(bar)bar.hidden=false;if(name)name.textContent=username;
+  const bar=document.getElementById('tsjAuthUserBar'),guest=document.getElementById('tsjAuthGuestBar'),name=document.getElementById('tsjAuthUsername');
+  if(bar)bar.hidden=false;if(guest)guest.hidden=true;if(name)name.textContent=username;
   tsjSetLoginError('');
   restoreServiceTab();
   return true;
@@ -2250,12 +2255,18 @@ async function initTsjAuth(){
     const sb=await getTsjSupabase();
     const {data:{session}}=await sb.auth.getSession();
     if(session&&tsjUnlock(session))return;
-    document.body.classList.add('tsj-auth-locked');
-    const bar=document.getElementById('tsjAuthUserBar');if(bar)bar.hidden=true;
+    if(TSJ_AUTH_ENFORCED)document.body.classList.add('tsj-auth-locked');else document.body.classList.remove('tsj-auth-locked');
+    const bar=document.getElementById('tsjAuthUserBar'),guest=document.getElementById('tsjAuthGuestBar');
+    if(bar)bar.hidden=true;if(guest)guest.hidden=false;
   }catch(e){
-    document.body.classList.add('tsj-auth-locked');
+    if(TSJ_AUTH_ENFORCED)document.body.classList.add('tsj-auth-locked');else document.body.classList.remove('tsj-auth-locked');
     tsjSetLoginError('No se pudo conectar con el servicio de acceso.');
   }
+}
+function tsjOpenLogin(){
+  tsjSetLoginError('');
+  document.body.classList.add('tsj-auth-locked');
+  setTimeout(()=>document.getElementById('tsjLoginUser')?.focus(),20);
 }
 async function tsjLogin(){
   const username=String(document.getElementById('tsjLoginUser')?.value||'').trim().toLowerCase();
@@ -2282,8 +2293,9 @@ async function tsjLogin(){
 async function tsjLogout(){
   try{const sb=await getTsjSupabase();await sb.auth.signOut()}catch(e){}
   tsjCurrentUser='';
-  document.body.classList.add('tsj-auth-locked');
-  const bar=document.getElementById('tsjAuthUserBar');if(bar)bar.hidden=true;
+  if(TSJ_AUTH_ENFORCED)document.body.classList.add('tsj-auth-locked');else document.body.classList.remove('tsj-auth-locked');
+  const bar=document.getElementById('tsjAuthUserBar'),guest=document.getElementById('tsjAuthGuestBar');
+  if(bar)bar.hidden=true;if(guest)guest.hidden=false;
   const u=document.getElementById('tsjLoginUser');if(u)u.focus();
 }
 
@@ -2541,6 +2553,13 @@ function deleteInspectorTask(id){
 async function saveInspectorCalendar(){
   const week=document.getElementById('inspectorWeek').value;
   const state=document.getElementById('inspectorSaveState');
+  if(!tsjCurrentUser){
+    const all=inspGetStore();
+    all[week]={week,tasks:inspectorTasks,findings:inspectorFindings,files:inspectorImportedFiles,updatedAt:new Date().toISOString(),updatedBy:'local'};
+    inspSetStore(all);await renderInspectorSaved();
+    if(state)state.textContent='Guardado local · sin sincronizar';
+    return;
+  }
   if(state)state.textContent='Guardando…';
   try{
     const sb=await getTsjSupabase();
@@ -2562,6 +2581,20 @@ async function saveInspectorCalendar(){
 async function loadInspectorWeek(force=true){
   const week=document.getElementById('inspectorWeek')?.value;if(!week)return;
   const state=document.getElementById('inspectorSaveState');
+  if(!tsjCurrentUser){
+    const rec=inspGetStore()[week];
+    if(rec){
+      inspectorTasks=Array.isArray(rec.tasks)?rec.tasks:[];
+      inspectorFindings=Array.isArray(rec.findings)?rec.findings:[];
+      inspectorImportedFiles=Array.isArray(rec.files)?rec.files:[];
+      if(state)state.textContent='Guardado local · '+new Date(rec.updatedAt).toLocaleString('es-AR');
+    }else if(force||inspectorTasks.length===0){
+      inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
+      if(state)state.textContent='Semana nueva · sin guardar';
+    }
+    renderInspectorAnalysis();renderInspectorCalendar();await renderInspectorSaved();clearInspectorEditor();
+    return;
+  }
   try{
     const sb=await getTsjSupabase();
     const {data:rec,error}=await sb.from('inspector_calendars')
@@ -2587,6 +2620,15 @@ async function openInspectorSaved(week){
 }
 async function deleteInspectorSaved(week){
   if(!confirm('¿Eliminar el calendario guardado de esta semana?'))return;
+  if(!tsjCurrentUser){
+    const all=inspGetStore();delete all[week];inspSetStore(all);
+    if(document.getElementById('inspectorWeek')?.value===week){
+      inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
+      renderInspectorAnalysis();renderInspectorCalendar();
+      document.getElementById('inspectorSaveState').textContent='Semana nueva · sin guardar';
+    }
+    await renderInspectorSaved();return;
+  }
   try{
     const sb=await getTsjSupabase();
     const {error}=await sb.from('inspector_calendars').delete().eq('week_start',week);
@@ -2601,6 +2643,11 @@ async function deleteInspectorSaved(week){
 }
 async function renderInspectorSaved(){
   const box=document.getElementById('inspectorSavedList');if(!box)return;
+  if(!tsjCurrentUser){
+    const all=inspGetStore(),keys=Object.keys(all).sort().reverse();
+    box.innerHTML=keys.length?keys.map(k=>{const r=all[k];return `<div class="inspector-saved-item"><div><b>Semana ${inspDateLabel(k)} · ${(r.tasks||[]).length} tareas</b><span>Guardado local · ${new Date(r.updatedAt).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="openInspectorSaved('${k}')">Abrir</button><button class="btn pdf" onclick="exportInspectorSavedPDF('${k}')">PDF</button><button class="btn danger" onclick="deleteInspectorSaved('${k}')">Eliminar</button></div></div>`}).join(''):'<div class="footer-note">Todavía no hay calendarios guardados.</div>';
+    return;
+  }
   try{
     const sb=await getTsjSupabase();
     const {data,error}=await sb.from('inspector_calendars')
@@ -2614,6 +2661,9 @@ async function renderInspectorSaved(){
   }
 }
 async function exportInspectorSavedPDF(week){
+  if(!tsjCurrentUser){
+    const rec=inspGetStore()[week];if(rec)exportInspectorPDF(rec);return;
+  }
   try{
     const sb=await getTsjSupabase();
     const {data:rec,error}=await sb.from('inspector_calendars')
