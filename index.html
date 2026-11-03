@@ -2679,6 +2679,20 @@ function inspTaskMatchesFinding(t,f){
   const legajo=(f.legajo==='—'?'':(f.legajo||''));
   return (t.task||'')===(f.task||'')&&(t.line||'')===line&&(t.legajo||'')===legajo;
 }
+function inspNormalizeTaskReason(t){
+  if(!t)return '';
+  const reason=String(t.reason||'');
+  if((t.task||'')!=='Seguimiento de conductor')return reason;
+  const n=(reason.match(/(\d+)\s*d[ií]as?/i)||[])[1]||'3';
+  const focus=/adelant/i.test(reason)?'adelantos':'atrasos';
+  return n+' días consecutivos de '+focus;
+}
+function inspNormalizeStoredTasks(tasks){
+  return (tasks||[]).map(t=>({
+    ...t,
+    reason:inspNormalizeTaskReason(t)
+  }));
+}
 function inspFindingCalendarCount(f){
   return inspectorTasks.filter(t=>inspTaskMatchesFinding(t,f)).length;
 }
@@ -2873,6 +2887,7 @@ function saveInspectorTask(){
     source:'Manual'
   };
   if(!task.date){alert('Seleccioná una fecha.');return}
+  task.reason=inspNormalizeTaskReason(task);
   const i=inspectorTasks.findIndex(x=>x.id===id);if(i>=0)inspectorTasks[i]=task;else inspectorTasks.push(task);
   renderInspectorAnalysis();renderInspectorCalendar();clearInspectorEditor();
   document.getElementById('inspectorSaveState').textContent='Cambios sin guardar';
@@ -2885,6 +2900,7 @@ function deleteInspectorTask(id){
 function saveInspectorCalendar(){
   const week=document.getElementById('inspectorWeek').value;
   const all=inspGetStore();
+  inspectorTasks=inspNormalizeStoredTasks(inspectorTasks);
   all[week]={week,tasks:inspectorTasks,findings:inspectorFindings,files:inspectorImportedFiles,updatedAt:new Date().toISOString(),updatedBy:'local'};
   inspSetStore(all);
   renderInspectorSaved();
@@ -2894,7 +2910,7 @@ function loadInspectorWeek(force=true){
   const week=document.getElementById('inspectorWeek')?.value;if(!week)return;
   const rec=inspGetStore()[week];
   if(rec){
-    inspectorTasks=Array.isArray(rec.tasks)?rec.tasks:[];
+    inspectorTasks=Array.isArray(rec.tasks)?inspNormalizeStoredTasks(rec.tasks):[];
     inspectorFindings=Array.isArray(rec.findings)?rec.findings:[];
     inspectorImportedFiles=Array.isArray(rec.files)?rec.files:[];
     document.getElementById('inspectorSaveState').textContent='Guardado '+new Date(rec.updatedAt).toLocaleString('es-AR');
@@ -2930,7 +2946,7 @@ function exportInspectorSavedPDF(week){
 function exportInspectorPDF(record){
   if(!window.jspdf||!window.jspdf.jsPDF){alert('No se pudo cargar el generador de PDF.');return}
   const rec=record||{week:document.getElementById('inspectorWeek').value,tasks:inspectorTasks};
-  const tasks=[...(rec.tasks||[])].sort((a,b)=>a.date.localeCompare(b.date)||(a.shift==='Mañana'?-1:1));
+  const tasks=inspNormalizeStoredTasks(rec.tasks||[]).sort((a,b)=>a.date.localeCompare(b.date)||(a.shift==='Mañana'?-1:1));
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const left=12,right=285;
