@@ -1362,6 +1362,7 @@ h1{
 .inspector-day-head{background:#faf9fa;padding:9px;text-align:center;font-size:10.5px;font-weight:950;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
 .inspector-shift-label{padding:12px 8px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;font-weight:950;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
 .inspector-shift-label.tm{background:#edf9f4;color:#087456}.inspector-shift-label.tt{background:#f4f0ff;color:#6449a8}
+.inspector-shift-label.plan{background:#f5f4f2;color:#555}.inspector-day-cell.plan{background:#faf9f7}
 .inspector-shift-label strong{font-size:16px}.inspector-shift-label small{font-size:9px}
 .inspector-day-cell{padding:7px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-height:126px;background:#fff}
 .inspector-day-cell.tm{background:#f3fbf7}
@@ -1868,7 +1869,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           <div class="panel-head"><div><h2 id="inspectorEditorTitle">Agregar tarea</h2><p class="help">Completá o editá los datos de la tarea.</p></div></div>
           <input id="inspEditId" type="hidden">
           <label>Fecha<input id="inspEditDate" type="date"></label>
-          <label>Turno<select id="inspEditShift"><option>Mañana</option><option>Tarde</option></select></label>
+          <label>Turno<select id="inspEditShift"><option>Mañana</option><option>Tarde</option><option>Ver Plan Diario</option></select></label>
           <label>Tarea<select id="inspEditTask"></select></label>
           <div class="inspector-editor-two">
             <label>Línea<select id="inspEditLine"></select></label>
@@ -2804,6 +2805,7 @@ function inspNormalizeStoredTasks(tasks){
       ...t,
       reason:inspNormalizeTaskReason(t),
       task:t.task==='Relevamiento operativo'?'Relevamiento del servicio':t.task,
+      shift:t.task==='Seguimiento de conductor'?'Ver Plan Diario':t.shift,
       inspector:t.inspector||legacyInspector||'',
       notes:''
     };
@@ -2893,31 +2895,43 @@ function generateInspectorCalendar(){
 
   const existing=inspectorTasks.filter(t=>t.manual);
   const loads=new Map();
-  dates.forEach(date=>['Mañana','Tarde'].forEach(shift=>{
-    loads.set(date+'|'+shift,existing.filter(t=>t.date===date&&t.shift===shift).length);
-  }));
+  dates.forEach(date=>{
+    ['Mañana','Tarde','Ver Plan Diario'].forEach(shift=>{
+      loads.set(date+'|'+shift,existing.filter(t=>t.date===date&&t.shift===shift).length);
+    });
+  });
 
   const generated=[];
   const candidates=inspectorFindings.slice(0,42);
 
   candidates.forEach((f,i)=>{
-    const preferred=f.shift||'';
+    const isDriver=f.kind==='driver'||f.task==='Seguimiento de conductor';
+    const preferred=isDriver?'Ver Plan Diario':(f.shift||'');
     let slots=[];
-    dates.forEach(date=>{
-      ['Mañana','Tarde'].forEach(shift=>{
-        if(preferred&&shift!==preferred)return;
-        const key=date+'|'+shift;
-        const load=loads.get(key)||0;
-        if(load<3)slots.push({date,shift,load,key});
-      });
-    });
 
-    if(!slots.length&&!preferred){
-      dates.forEach(date=>['Mañana','Tarde'].forEach(shift=>{
-        const key=date+'|'+shift;
+    if(isDriver){
+      dates.forEach(date=>{
+        const key=date+'|Ver Plan Diario';
         const load=loads.get(key)||0;
-        if(load<3)slots.push({date,shift,load,key});
-      }));
+        if(load<3)slots.push({date,shift:'Ver Plan Diario',load,key});
+      });
+    }else{
+      dates.forEach(date=>{
+        ['Mañana','Tarde'].forEach(shift=>{
+          if(preferred&&shift!==preferred)return;
+          const key=date+'|'+shift;
+          const load=loads.get(key)||0;
+          if(load<3)slots.push({date,shift,load,key});
+        });
+      });
+
+      if(!slots.length&&!preferred){
+        dates.forEach(date=>['Mañana','Tarde'].forEach(shift=>{
+          const key=date+'|'+shift;
+          const load=loads.get(key)||0;
+          if(load<3)slots.push({date,shift,load,key});
+        }));
+      }
     }
     if(!slots.length)return;
 
@@ -2949,11 +2963,14 @@ function renderInspectorCalendar(){
   const dates=inspWeekDates();
   document.getElementById('inspectorWeekLabel').textContent='Semana '+inspWeekTitle();
   let out='<div class="inspector-day-head"></div>'+dates.map(d=>`<div class="inspector-day-head">${inspDateLabel(d,true)}</div>`).join('');
-  ['Mañana','Tarde'].forEach(shift=>{
-    out+=`<div class="inspector-shift-label ${shift==='Mañana'?'tm':'tt'}"><strong>${shift==='Mañana'?'TM':'TT'}</strong><small>${shift}</small></div>`;
+  ['Mañana','Tarde','Ver Plan Diario'].forEach(shift=>{
+    const isPlan=shift==='Ver Plan Diario';
+    const cls=shift==='Mañana'?'tm':shift==='Tarde'?'tt':'plan';
+    const code=shift==='Mañana'?'TM':shift==='Tarde'?'TT':'PLAN';
+    out+=`<div class="inspector-shift-label ${cls}"><strong>${code}</strong><small>${shift}</small></div>`;
     dates.forEach(date=>{
       const arr=inspectorTasks.filter(t=>t.date===date&&t.shift===shift);
-      out+='<div class="inspector-day-cell '+(shift==='Mañana'?'tm':'tt')+'">'+arr.map(t=>`<div class="inspector-task-card ${t.priority}">
+      out+='<div class="inspector-day-cell '+cls+'">'+arr.map(t=>`<div class="inspector-task-card ${t.priority}">
         <strong>${inspEsc(t.task)}</strong>
         <span>Línea ${inspEsc(t.line||'—')} · Leg. ${inspEsc(t.legajo||'—')}${t.inspector?' · Insp. '+inspEsc(t.inspector):''}</span>
         <div class="inspector-task-actions"><button class="inspector-mini-btn" onclick="editInspectorTask('${t.id}')">Editar</button><button class="inspector-mini-btn delete" onclick="deleteInspectorTask('${t.id}')">Eliminar</button></div>
@@ -2973,7 +2990,7 @@ function proposeInspectorFinding(index){
   clearInspectorEditor();
   document.getElementById('inspectorEditorTitle').textContent='Agregar prioridad al calendario';
   document.getElementById('inspEditDate').value=inspWeekDates()[0];
-  document.getElementById('inspEditShift').value=f.shift||'Mañana';
+  document.getElementById('inspEditShift').value=(f.kind==='driver'||f.task==='Seguimiento de conductor')?'Ver Plan Diario':(f.shift||'Mañana');
   document.getElementById('inspEditTask').value=f.task||'Cumplimiento de horario';
   document.getElementById('inspEditLine').value=f.line==='—'?'':(f.line||'');
   document.getElementById('inspEditLegajo').value=f.legajo==='—'?'':(f.legajo||'');
@@ -3024,6 +3041,7 @@ function saveInspectorTask(){
     source:'Manual'
   };
   if(!task.date){alert('Seleccioná una fecha.');return}
+  if(task.task==='Seguimiento de conductor')task.shift='Ver Plan Diario';
   task.reason=inspNormalizeTaskReason(task);
   const i=inspectorTasks.findIndex(x=>x.id===id);if(i>=0)inspectorTasks[i]=task;else inspectorTasks.push(task);
   renderInspectorAnalysis();renderInspectorCalendar();clearInspectorEditor();
