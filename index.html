@@ -1523,8 +1523,8 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
         <p>Simulación mensual de dotación, francos, licencias e incidencias.</p>
       </div>
       <div class="controls">
-        <input class="input" id="budgetName" value="Presupuesto Octubre 2026" aria-label="Nombre del presupuesto">
-        <input class="input" type="month" id="period" value="2026-10" aria-label="Período">
+        <input class="input" id="budgetName" value="" aria-label="Nombre del presupuesto">
+        <input class="input" type="month" id="period" value="" aria-label="Período">
         <select id="status" aria-label="Estado"><option>Borrador</option><option>Definitivo</option><option>Cerrado</option></select>
       </div>
     </div>
@@ -2790,11 +2790,70 @@ if(shortageText)shortageText.textContent='Faltan '+fmt(shortage)+' conductores. 
 dedTotal.textContent=fmt(m.deds);needKpi.textContent=fmt(m.need);grossKpi.textContent=fmt(m.gross);netKpi.textContent=fmt(m.net);balanceKpi.textContent=(m.balance>=0?'+':'')+fmt(m.balance);rNeed.textContent=fmt(m.need);rGross.textContent=fmt(m.gross);rDeds.textContent=fmt(m.deds);rNet.textContent=fmt(m.net);coverage.textContent=fmt(m.cov,1)+'%';rBalance.textContent=(m.balance>=0?'+':'')+fmt(m.balance);balanceCard.className='card '+(m.balance>=0?'positive':'negative');resultAlert.className='alert '+(m.balance>=0?'ok':'bad');resultAlert.textContent=m.balance>=0?`La dotación cubre el plan con un margen de ${fmt(m.balance)} jornadas (${fmt(m.cov,1)}% de cobertura).`:`Faltan ${fmt(Math.abs(m.balance))} jornadas para cubrir el plan (${fmt(m.cov,1)}% de cobertura).`;return m}
 function addPlanRow(){plan.push({type:'Hábil',desc:'Nuevo período',fleet:0,days:0});renderPlan();calculate()}function addStaffRow(){staff.push({count:0,workdays:0,francos:6});renderStaff();calculate()}function addDeductionRow(){deductions.push({name:DED_CONCEPTS[0],kind:'days',value:0});renderDeds();calculate()}function removePlan(i){plan.splice(i,1);renderPlan();calculate()}function removeStaff(i){staff.splice(i,1);renderStaff();calculate()}function removeDed(i){deductions.splice(i,1);renderDeds();calculate()}
 function snapshot(){return{id:currentId||crypto.randomUUID(),name:budgetName.value.trim()||'Presupuesto sin nombre',period:period.value,status:document.getElementById('status').value,plan:structuredClone(plan),staff:structuredClone(staff),deductions:structuredClone(deductions),metrics:calculate(),updatedAt:new Date().toISOString()}}function getSaved(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}
+function currentBudgetPeriod(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function budgetNameForPeriod(p){
+  return 'Presupuesto '+periodLabel(p);
+}
+function seedOctober2026Budget(){
+  const list=getSaved();
+  const exists=list.some(x=>x.period==='2026-10'&&(x.name==='Presupuesto Octubre 2026'||x.id==='tsj-budget-2026-10-base'));
+  if(exists)return;
+  const october={
+    id:'tsj-budget-2026-10-base',
+    name:'Presupuesto Octubre 2026',
+    period:'2026-10',
+    status:'Borrador',
+    plan:[
+      {type:'Hábil',desc:'Plan normal',fleet:116,days:20},
+      {type:'Sábado',desc:'Plan sábado',fleet:54,days:6},
+      {type:'Domingo',desc:'Plan domingo',fleet:36,days:5}
+    ],
+    staff:[
+      {count:36,workdays:24,francos:6},
+      {count:95,workdays:23,francos:7}
+    ],
+    deductions:[
+      {name:'Ausentismo estimado',kind:'percent',value:2.5},
+      {name:'Licencia medica',kind:'days',value:65},
+      {name:'Licencia especial',kind:'days',value:10},
+      {name:'Monitor escuela',kind:'days',value:32}
+    ],
+    updatedAt:'2026-10-31T12:00:00.000Z'
+  };
+  list.push(october);
+  localStorage.setItem(KEY,JSON.stringify(list));
+}
+function applyBudgetSnapshot(s){
+  currentId=s?.id||null;
+  budgetName.value=s?.name||'';
+  period.value=s?.period||'';
+  document.getElementById('status').value=s?.status||'Borrador';
+  plan=structuredClone(s?.plan||plan);
+  staff=structuredClone(s?.staff||staff);
+  deductions=structuredClone(s?.deductions||deductions);
+}
+function initConductionBudget(){
+  seedOctober2026Budget();
+  const current=currentBudgetPeriod();
+  const saved=getSaved().filter(x=>x.period===current).sort((a,b)=>new Date(b.updatedAt||0)-new Date(a.updatedAt||0));
+  if(saved.length){
+    applyBudgetSnapshot(saved[0]);
+    return;
+  }
+  currentId=null;
+  period.value=current;
+  budgetName.value=budgetNameForPeriod(current);
+  document.getElementById('status').value='Borrador';
+}
+
 function saveBudget(duplicate){let list=getSaved();if(duplicate)currentId=null;let s=snapshot();let idx=list.findIndex(x=>x.id===s.id);if(idx>=0)list[idx]=s;else list.unshift(s);localStorage.setItem(KEY,JSON.stringify(list));currentId=s.id;if(duplicate)budgetName.value=s.name+' - copia';renderSaved();if(confirm('Presupuesto guardado correctamente. ¿Querés descargar ahora el PDF para presentar?'))downloadPDFFromSnapshot(s)}
-function loadBudget(id){let s=getSaved().find(x=>x.id===id);if(!s)return;currentId=s.id;budgetName.value=s.name;period.value=s.period;document.getElementById('status').value=s.status||'Borrador';plan=structuredClone(s.plan);staff=structuredClone(s.staff);deductions=structuredClone(s.deductions);renderAll();window.scrollTo({top:0,behavior:'smooth'})}
+function loadBudget(id){let s=getSaved().find(x=>x.id===id);if(!s)return;applyBudgetSnapshot(s);renderAll();window.scrollTo({top:0,behavior:'smooth'})}
 function deleteBudget(id){if(!confirm('¿Eliminar este presupuesto guardado?'))return;localStorage.setItem(KEY,JSON.stringify(getSaved().filter(x=>x.id!==id)));if(currentId===id)currentId=null;renderSaved()}
 function renderSaved(){let list=getSaved();savedList.innerHTML=list.length?list.map(s=>{const m=computeMetricsData(s.plan||[],s.staff||[],s.deductions||[]);return `<div class="saved-item"><div><b>${esc(s.name)} <span class="badge">${esc(s.status||'Borrador')}</span></b><span>${s.period||''} · Saldo ${m.balance>=0?'+':''}${fmt(m.balance)} jornadas · actualizado ${new Date(s.updatedAt).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="loadBudget('${s.id}')">Abrir</button><button class="btn pdf" onclick="downloadSavedPDF('${s.id}')">PDF</button><button class="btn danger" onclick="deleteBudget('${s.id}')">Eliminar</button></div></div>`}).join(''):'<div class="footer-note">Todavía no hay presupuestos guardados.</div>'}
-function newBudget(){currentId=null;budgetName.value='Nuevo presupuesto';document.getElementById('status').value='Borrador';plan=[{type:'Hábil',desc:'Plan normal',fleet:0,days:0},{type:'Sábado',desc:'Plan sábado',fleet:0,days:0},{type:'Domingo',desc:'Plan domingo',fleet:0,days:0}];staff=[{count:0,workdays:0,francos:6}];deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5}];renderAll();window.scrollTo({top:0,behavior:'smooth'})}
+function newBudget(){currentId=null;const p=currentBudgetPeriod();period.value=p;budgetName.value=budgetNameForPeriod(p);document.getElementById('status').value='Borrador';plan=[{type:'Hábil',desc:'Plan normal',fleet:0,days:0},{type:'Sábado',desc:'Plan sábado',fleet:0,days:0},{type:'Domingo',desc:'Plan domingo',fleet:0,days:0}];staff=[{count:0,workdays:0,francos:6}];deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5}];renderAll();window.scrollTo({top:0,behavior:'smooth'})}
 function downloadPDF(){downloadPDFFromSnapshot(snapshot())}function downloadSavedPDF(id){let s=getSaved().find(x=>x.id===id);if(s)downloadPDFFromSnapshot(s)}function periodLabel(p){if(!p)return'Sin período';let[y,m]=p.split('-').map(Number);let d=new Date(Date.UTC(y,m-1,1));let t=new Intl.DateTimeFormat('es-AR',{month:'long',year:'numeric',timeZone:'UTC'}).format(d);return t.charAt(0).toUpperCase()+t.slice(1)}function safeFileName(s){return String(s||'presupuesto').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'')||'presupuesto'}
 function downloadPDFFromSnapshot(s){
   if(!window.jspdf||!window.jspdf.jsPDF){
@@ -3145,7 +3204,8 @@ function downloadPDFFromSnapshot(s){
 
   doc.save(`${safeFileName(s.name)}_${s.period||'sin_periodo'}.pdf`);
 }
-function exportJSON(){let blob=new Blob([JSON.stringify(getSaved(),null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tsj-presupuestos-respaldo.json';a.click();URL.revokeObjectURL(a.href)}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}renderAll();
+function exportJSON(){let blob=new Blob([JSON.stringify(getSaved(),null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tsj-presupuestos-respaldo.json';a.click();URL.revokeObjectURL(a.href)}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}initConductionBudget();
+renderAll();
 restoreServiceTab();
 
 </script>
