@@ -1366,6 +1366,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
 .tsj-login-card .btn{width:100%;margin-top:15px}
 .tsj-login-error{min-height:18px;margin-top:9px;font-size:10px;color:#c32c2c}
 .tsj-auth-userbar{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted)}
+.tsj-auth-userbar[hidden]{display:none!important}
 .tsj-auth-userbar strong{color:#2d282d;font-size:11px}
 .tsj-auth-userbar .btn{padding:6px 10px;font-size:9px}
 
@@ -2351,9 +2352,11 @@ async function initTsjAuth(){
     if(TSJ_AUTH_ENFORCED)document.body.classList.add('tsj-auth-locked');else document.body.classList.remove('tsj-auth-locked');
     const bar=document.getElementById('tsjAuthUserBar'),guest=document.getElementById('tsjAuthGuestBar');
     if(bar)bar.hidden=true;if(guest)guest.hidden=false;
+    restoreServiceTab();
   }catch(e){
     if(TSJ_AUTH_ENFORCED)document.body.classList.add('tsj-auth-locked');else document.body.classList.remove('tsj-auth-locked');
     tsjSetLoginError('No se pudo conectar con el servicio de acceso.');
+    restoreServiceTab();
   }
 }
 function tsjOpenLogin(){
@@ -3208,6 +3211,7 @@ function downloadPDFFromSnapshot(s){
   doc.save(`${safeFileName(s.name)}_${s.period||'sin_periodo'}.pdf`);
 }
 function exportJSON(){let blob=new Blob([JSON.stringify(getSaved(),null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tsj-presupuestos-respaldo.json';a.click();URL.revokeObjectURL(a.href)}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}renderAll();
+restoreServiceTab();
 initTsjAuth();
 document.getElementById('tsjLoginPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')tsjLogin()});
 document.getElementById('tsjLoginUser')?.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('tsjLoginPassword')?.focus()});
