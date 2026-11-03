@@ -2572,16 +2572,17 @@ function analyzeInspectorRows(rows){
       lineStats.set(line,ls);
     }
 
-    if(legajo&&estado&&estado!=='horario'){
-      const ds=driverStats.get(legajo)||{
-        legajo,dates:new Set(),lines:new Map(),shifts:new Map(),
-        adelanto:0,atraso:0
+    if(line&&legajo&&estado&&estado!=='horario'){
+      const key=line+'|'+legajo;
+      const ds=driverStats.get(key)||{
+        line,legajo,dates:new Set(),shifts:new Map(),
+        adelanto:0,atraso:0,totalIncumplimientos:0
       };
       if(date)ds.dates.add(date);
-      if(line)ds.lines.set(line,(ds.lines.get(line)||0)+1);
       if(shift)ds.shifts.set(shift,(ds.shifts.get(shift)||0)+1);
       ds[estado]=(ds[estado]||0)+1;
-      driverStats.set(legajo,ds);
+      ds.totalIncumplimientos++;
+      driverStats.set(key,ds);
     }
   });
 
@@ -2619,31 +2620,50 @@ function analyzeInspectorRows(rows){
   driverStats.forEach(ds=>{
     const streak=inspConsecutiveDays(ds.dates);
     if(streak<3)return;
-    const line=[...ds.lines.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
-    const shift=[...ds.shifts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+
+    const ls=lineStats.get(ds.line);
+    if(!ls||!ls.total)return;
+
+    const currentPct=inspPct(ls.horario,ls.total);
+    if(currentPct>=90)return;
+
+    const targetHorario=Math.ceil(ls.total*0.90);
+    const breach=Math.max(1,targetHorario-ls.horario);
+    const driverImpact=Math.min(ds.totalIncumplimientos,breach);
+    const impactPct=breach>0?(driverImpact/breach*100):0;
+    const simulatedPct=inspPct(Math.min(ls.total,ls.horario+ds.totalIncumplimientos),ls.total);
+
+    if(impactPct<25)return;
+
+    const decisive=simulatedPct>=90;
+    const impactLevel=decisive?'Decisivo':impactPct>=50?'Impacto alto':'Impacto medio';
     const focus=(ds.atraso||0)>=(ds.adelanto||0)?'Atrasos':'Adelantos';
+    const shift=[...ds.shifts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
 
     findings.push({
       kind:'driver',
-      line,
+      line:ds.line,
       legajo:ds.legajo,
       shift,
       task:'Seguimiento de conductor',
-      hallazgo:'Incumplimiento reiterado · '+focus.toLowerCase(),
-      action:'Seguimiento de conductor · '+focus,
+      hallazgo:streak+' días seguidos · '+impactLevel.toLowerCase()+' · explica '+impactPct.toLocaleString('es-AR',{maximumFractionDigits:0})+'% de la brecha al 90% · cumplimiento simulado '+simulatedPct.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%',
+      action:'Seguimiento de conductor · '+focus+' · '+impactLevel,
       pctAdelanto:null,
       pctAtraso:null,
       pctHorario:null,
-      metric:streak+' días seguidos',
+      metric:streak+' días · '+impactPct.toLocaleString('es-AR',{maximumFractionDigits:0})+'% brecha',
       streak,
-      count:streak,
-      priority:'high'
+      impactPct,
+      simulatedPct,
+      count:ds.totalIncumplimientos,
+      priority:decisive||impactPct>=50?'high':'medium'
     });
   });
 
   return findings.sort((a,b)=>{
     if(a.kind!==b.kind)return a.kind==='line'?-1:1;
     if(a.kind==='line')return (a.pctHorario??100)-(b.pctHorario??100);
+    if((b.impactPct||0)!==(a.impactPct||0))return (b.impactPct||0)-(a.impactPct||0);
     return (b.streak||0)-(a.streak||0);
   }).slice(0,60);
 }
@@ -2667,7 +2687,7 @@ function renderInspectorAnalysis(){
     <td class="num">${inspEsc(pct(x.pctAtraso))}</td>
     <td class="num">${inspEsc(x.kind==='driver'?x.metric:pct(x.pctHorario))}</td>
     <td><div class="inspector-priority-action"><span>${inspEsc(x.action||x.task)}</span><button type="button" class="inspector-mini-btn" onclick="proposeInspectorFinding(${inspectorFindings.indexOf(x)})">+ Agregar</button></div></td>
-  </tr>`).join(''):'<tr><td colspan="7" class="empty-cell">Sin líneas debajo de 90% ni conductores con 3 días consecutivos de incumplimiento.</td></tr>';
+  </tr>`).join(''):'<tr><td colspan="7" class="empty-cell">Sin líneas debajo de 90% ni conductores recurrentes con impacto relevante sobre la brecha al 90%.</td></tr>';
 }
 async function initInspector(){
   if(!document.getElementById('inspectorWeek'))return;
