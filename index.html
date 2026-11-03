@@ -2418,7 +2418,7 @@ function inspSaveLastImport(){
   try{
     localStorage.setItem(INSPECTOR_LAST_IMPORT_KEY,JSON.stringify({
       files:inspectorImportedFiles,
-      findings:inspectorFindings,
+      findings:inspNormalizeFindings(inspectorFindings),
       updatedAt:new Date().toISOString()
     }));
   }catch(e){}
@@ -2428,7 +2428,7 @@ function inspRestoreLastImport(){
     const rec=JSON.parse(localStorage.getItem(INSPECTOR_LAST_IMPORT_KEY)||'null');
     if(!rec)return false;
     inspectorImportedFiles=Array.isArray(rec.files)?rec.files:[];
-    inspectorFindings=Array.isArray(rec.findings)?rec.findings:[];
+    inspectorFindings=Array.isArray(rec.findings)?inspNormalizeFindings(rec.findings):[];
     return inspectorImportedFiles.length>0||inspectorFindings.length>0;
   }catch(e){return false}
 }
@@ -2705,6 +2705,18 @@ function inspNormalizeStoredTasks(tasks){
     };
   });
 }
+function inspNormalizeFindings(findings){
+  return (findings||[]).map(f=>{
+    if(f?.kind!=='driver')return f;
+    const streak=Number(f.streak)||Number((String(f.metric||'').match(/(\d+)/)||[])[1])||3;
+    return {
+      ...f,
+      metric:streak+' días reincidencia',
+      hallazgo:streak+' días consecutivos de '+(/adelant/i.test(String(f.action||f.hallazgo||''))?'adelantos':'atrasos'),
+      action:'Seguimiento de conductor · '+(/adelant/i.test(String(f.action||f.hallazgo||''))?'Adelantos':'Atrasos')
+    };
+  });
+}
 function inspFindingCalendarCount(f){
   return inspectorTasks.filter(t=>inspTaskMatchesFinding(t,f)).length;
 }
@@ -2914,6 +2926,7 @@ function saveInspectorCalendar(){
   const week=document.getElementById('inspectorWeek').value;
   const all=inspGetStore();
   inspectorTasks=inspNormalizeStoredTasks(inspectorTasks);
+  inspectorFindings=inspNormalizeFindings(inspectorFindings);
   all[week]={week,tasks:inspectorTasks,findings:inspectorFindings,files:inspectorImportedFiles,updatedAt:new Date().toISOString(),updatedBy:'local'};
   inspSetStore(all);
   renderInspectorSaved();
@@ -2924,7 +2937,7 @@ function loadInspectorWeek(force=true){
   const rec=inspGetStore()[week];
   if(rec){
     inspectorTasks=Array.isArray(rec.tasks)?inspNormalizeStoredTasks(rec.tasks):[];
-    inspectorFindings=Array.isArray(rec.findings)?rec.findings:[];
+    inspectorFindings=Array.isArray(rec.findings)?inspNormalizeFindings(rec.findings):[];
     inspectorImportedFiles=Array.isArray(rec.files)?rec.files:[];
     document.getElementById('inspectorSaveState').textContent='Guardado '+new Date(rec.updatedAt).toLocaleString('es-AR');
   }else if(force||inspectorTasks.length===0){
