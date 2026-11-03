@@ -2310,8 +2310,10 @@ const TSJ_SUPABASE_URL='https://xmosbwnredpzsrziqeux.supabase.co';
 const TSJ_SUPABASE_KEY='sb_publishable_M_X1Lv-0SQuzXqd3-Seb7w_IXqbzsGK';
 const TSJ_AUTH_USERS=['tr01','tr02','tr03'];
 const TSJ_AUTH_ENFORCED=true;
+const TSJ_SESSION_KEY='tsj_dashboard_session_v1';
 let tsjSupabase=null;
 let tsjCurrentUser='';
+let tsjSessionToken='';
 
 async function getTsjSupabase(){
   if(tsjSupabase)return tsjSupabase;
@@ -2328,6 +2330,28 @@ function tsjUsernameFromSession(session){
 }
 function tsjSetLoginError(msg){
   const e=document.getElementById('tsjLoginError');if(e)e.textContent=msg||'';
+}
+function tsjHexBytes(hex){
+  const clean=String(hex||'').trim();
+  const out=new Uint8Array(Math.floor(clean.length/2));
+  for(let i=0;i<out.length;i++)out[i]=parseInt(clean.slice(i*2,i*2+2),16);
+  return out;
+}
+async function tsjDeriveProof(secret,saltHex,iterations){
+  const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits(
+    {name:'PBKDF2',salt:tsjHexBytes(saltHex),iterations:Number(iterations)||210000,hash:'SHA-256'},
+    material,
+    256
+  );
+  return Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function tsjReadSession(){
+  try{return JSON.parse(localStorage.getItem(TSJ_SESSION_KEY)||'null')}catch(e){return null}
+}
+function tsjWriteSession(v){
+  if(v)localStorage.setItem(TSJ_SESSION_KEY,JSON.stringify(v));
+  else localStorage.removeItem(TSJ_SESSION_KEY);
 }
 function tsjUnlock(session){
   const username=tsjUsernameFromSession(session);
