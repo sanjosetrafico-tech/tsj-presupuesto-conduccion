@@ -1865,7 +1865,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
             <label>Legajo<input id="inspEditLegajo" type="text" inputmode="numeric" placeholder="Opcional"></label>
           </div>
           <label>Motivo<textarea id="inspEditReason" rows="3" placeholder="Motivo del control"></textarea></label>
-          <label>Observación<textarea id="inspEditNotes" rows="3" placeholder="Opcional"></textarea></label>
+          <label>Inspector<select id="inspEditInspector"><option value="">Sin asignar</option><option>Acevedo</option><option>Bruzzoni</option><option>Casalongue</option><option>Gimenez</option><option>Godoy</option><option>Techeira</option></select></label>
           <label>Prioridad<select id="inspEditPriority"><option value="high">Alta</option><option value="medium">Media</option><option value="normal">Normal</option></select></label>
           <div class="section-actions">
             <button class="btn primary" type="button" onclick="saveInspectorTask()">Guardar tarea</button>
@@ -2688,10 +2688,16 @@ function inspNormalizeTaskReason(t){
   return n+' días consecutivos de '+focus;
 }
 function inspNormalizeStoredTasks(tasks){
-  return (tasks||[]).map(t=>({
-    ...t,
-    reason:inspNormalizeTaskReason(t)
-  }));
+  const inspectors=['Acevedo','Bruzzoni','Casalongue','Gimenez','Godoy','Techeira'];
+  return (tasks||[]).map(t=>{
+    const legacyInspector=!t.inspector&&inspectors.includes(String(t.notes||'').trim())?String(t.notes).trim():'';
+    return {
+      ...t,
+      reason:inspNormalizeTaskReason(t),
+      inspector:t.inspector||legacyInspector||'',
+      notes:''
+    };
+  });
 }
 function inspFindingCalendarCount(f){
   return inspectorTasks.filter(t=>inspTaskMatchesFinding(t,f)).length;
@@ -2819,7 +2825,7 @@ function renderInspectorCalendar(){
       const arr=inspectorTasks.filter(t=>t.date===date&&t.shift===shift);
       out+='<div class="inspector-day-cell '+(shift==='Mañana'?'tm':'tt')+'">'+arr.map(t=>`<div class="inspector-task-card ${t.priority}">
         <strong>${inspEsc(t.task)}</strong>
-        <span>Línea ${inspEsc(t.line||'—')} · Leg. ${inspEsc(t.legajo||'—')}</span>
+        <span>Línea ${inspEsc(t.line||'—')} · Leg. ${inspEsc(t.legajo||'—')}${t.inspector?' · Insp. '+inspEsc(t.inspector):''}</span>
         <div class="inspector-task-actions"><button class="inspector-mini-btn" onclick="editInspectorTask('${t.id}')">Editar</button><button class="inspector-mini-btn delete" onclick="deleteInspectorTask('${t.id}')">Eliminar</button></div>
       </div>`).join('')+`<button class="inspector-add-cell" onclick="openInspectorEditor('${date}','${shift}')">+ Agregar tarea</button></div>`;
     });
@@ -2854,7 +2860,7 @@ function clearInspectorEditor(){
   document.getElementById('inspEditLine').value='';
   document.getElementById('inspEditLegajo').value='';
   document.getElementById('inspEditReason').value='';
-  document.getElementById('inspEditNotes').value='';
+  document.getElementById('inspEditInspector').value='';
   document.getElementById('inspEditPriority').value='normal';
 }
 function editInspectorTask(id){
@@ -2867,7 +2873,7 @@ function editInspectorTask(id){
   document.getElementById('inspEditLine').value=t.line||'';
   document.getElementById('inspEditLegajo').value=t.legajo||'';
   document.getElementById('inspEditReason').value=t.reason||'';
-  document.getElementById('inspEditNotes').value=t.notes||'';
+  document.getElementById('inspEditInspector').value=t.inspector||'';
   document.getElementById('inspEditPriority').value=t.priority||'normal';
   document.getElementById('inspectorEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
@@ -2881,7 +2887,8 @@ function saveInspectorTask(){
     line:document.getElementById('inspEditLine').value,
     legajo:document.getElementById('inspEditLegajo').value.trim(),
     reason:document.getElementById('inspEditReason').value.trim(),
-    notes:document.getElementById('inspEditNotes').value.trim(),
+    inspector:document.getElementById('inspEditInspector').value,
+    notes:'',
     priority:document.getElementById('inspEditPriority').value,
     manual:true,
     source:'Manual'
@@ -2983,6 +2990,7 @@ function exportInspectorPDF(record){
       t.line||'—',
       t.legajo||'—',
       t.reason||'',
+      t.inspector||'—',
       inspPriorityLabel(t.priority)
     ]);
     rowMeta.push({spacer:false,priority:inspPriorityLabel(t.priority)});
@@ -2996,7 +3004,7 @@ function exportInspectorPDF(record){
 
   doc.autoTable({
     startY:28,
-    head:[['Día','Turno','Tarea','Línea','Legajo','Motivo','Prioridad']],
+    head:[['Día','Turno','Tarea','Línea','Legajo','Motivo','Inspector','Prioridad']],
     body,
     theme:'grid',
     styles:{
@@ -3015,13 +3023,14 @@ function exportInspectorPDF(record){
     },
     alternateRowStyles:{fillColor:[249,248,249]},
     columnStyles:{
-      0:{cellWidth:25},
-      1:{cellWidth:22},
-      2:{cellWidth:50},
-      3:{cellWidth:18},
-      4:{cellWidth:22},
-      5:{cellWidth:112},
-      6:{cellWidth:28}
+      0:{cellWidth:23},
+      1:{cellWidth:20},
+      2:{cellWidth:46},
+      3:{cellWidth:17},
+      4:{cellWidth:20},
+      5:{cellWidth:96},
+      6:{cellWidth:28},
+      7:{cellWidth:24}
     },
     margin:{left,right:12},
     didParseCell:function(data){
@@ -3037,7 +3046,7 @@ function exportInspectorPDF(record){
         return;
       }
 
-      if(data.column.index===6){
+      if(data.column.index===7){
         if(meta.priority==='Alta'){
           data.cell.styles.fillColor=[248,221,221];
           data.cell.styles.textColor=[184,45,45];
@@ -3080,7 +3089,7 @@ function exportInspectorPDF(record){
     t.task||'—',
     '',
     '',
-    ''
+    t.inspector||''
   ]);
 
   doc.autoTable({
