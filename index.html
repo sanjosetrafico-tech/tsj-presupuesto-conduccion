@@ -53,6 +53,9 @@ table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;border
 }
 .service-tab-panel{display:none}
 .service-tab-panel.active{display:block}
+body.inspector-only .service-tabs{display:none}
+body.inspector-only .service-tab-panel{display:none!important}
+body.inspector-only #tab-calendario-inspector{display:block!important}
 .budget-context{
   display:flex;
   justify-content:space-between;
@@ -3319,6 +3322,12 @@ function showServiceTab(name){
   if(name==='calendario-inspector')setTimeout(initInspector,20);
 }
 function restoreServiceTab(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('view')==='inspector'){
+    document.body.classList.add('inspector-only');
+    showServiceTab('calendario-inspector');
+    return;
+  }
   let saved='';
   try{saved=sessionStorage.getItem('tsj_plan_servicio_tab')||''}catch(e){}
   const allowed=['plan-diario','plan-mensual','presupuesto-conduccion','presupuesto-km','calendario-inspector'];
