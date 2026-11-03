@@ -2843,6 +2843,8 @@ function exportInspectorPDF(record){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const left=12,right=285;
+  const monday=inspMonday(rec.week||document.getElementById('inspectorWeek').value);
+  const sunday=inspISO(new Date(new Date(monday+'T12:00:00').getTime()+6*86400000));
 
   doc.setFont('helvetica','bold');
   doc.setFontSize(18);
@@ -2852,8 +2854,7 @@ function exportInspectorPDF(record){
   doc.setFontSize(10);
   doc.setTextColor(90,84,90);
   doc.text(
-    'Plan Servicio · Semana '+inspDateLabel(rec.week)+' al '+
-    inspDateLabel(inspISO(new Date(new Date(rec.week+'T12:00:00').getTime()+6*86400000))),
+    'Plan Servicio · Semana '+inspDateLabel(monday)+' al '+inspDateLabel(sunday),
     left,21
   );
   doc.setTextColor(0,0,0);
