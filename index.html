@@ -790,22 +790,40 @@ h1{
 }
 
 
-/* Plan diario: módulo Plan Serv vivo del dashboard Rutina */
-.plan-daily-embed{
-  width:100%;
-  background:transparent;
-  border:0;
-  border-radius:0;
-  overflow:hidden;
+/* Plan diario: contenido propio de Plan Servicio */
+.plan-daily{display:flex;flex-direction:column;gap:14px}
+.plan-daily-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.plan-daily-head h2{margin:0;font-size:22px;font-weight:900}
+.plan-daily-head p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.plan-daily-status{display:flex;align-items:center;gap:8px}
+.plan-daily-status span{font-size:10px;color:var(--muted);font-weight:800}
+.plan-daily-overview{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px}
+.plan-daily-gauge-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.plan-daily-gauge{
+  --p:0;--c:#0b9b73;width:150px;height:150px;border-radius:50%;
+  background:conic-gradient(var(--c) calc(var(--p)*1%),#ece9eb 0);
+  display:grid;place-items:center;position:relative
 }
-.plan-daily-frame{
-  display:block;
-  width:100%;
-  height:620px;
-  border:0;
-  background:transparent;
-  overflow:hidden;
-}
+.plan-daily-gauge:after{content:"";position:absolute;inset:13px;border-radius:50%;background:#fff}
+.plan-daily-gauge-content{position:relative;z-index:1;text-align:center}
+.plan-daily-gauge-content strong{display:block;font-size:34px;line-height:1;font-weight:950;color:var(--ink)}
+.plan-daily-gauge-content span{display:block;margin-top:5px;font-size:12px;font-weight:900;color:#5e575c}
+.plan-daily-gauge-label{margin-top:10px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:900;color:var(--muted)}
+.plan-daily-main{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.plan-daily-stat{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 15px;min-height:80px}
+.plan-daily-stat span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:900}
+.plan-daily-stat strong{display:block;margin-top:7px;font-size:24px;line-height:1;font-weight:950;color:var(--ink)}
+.plan-daily-stat.good strong{color:#0b9b73}.plan-daily-stat.warn strong{color:#d77817}.plan-daily-stat.bad strong{color:#c93c35}
+.plan-daily-detail{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.6fr);gap:14px}
+.plan-daily-dotacion{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.plan-daily-last{background:#171417;color:#fff;border-radius:16px;padding:20px;display:flex;flex-direction:column;justify-content:center;box-shadow:var(--shadow)}
+.plan-daily-last span{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#cfc8cd;font-weight:900}
+.plan-daily-last strong{font-size:30px;line-height:1.05;margin-top:8px}
+.plan-daily-last small{margin-top:8px;color:#d9d4d8;font-size:10px}
+.plan-daily-note{border:1px solid #ead59e;background:#fff9e8;color:#8a6510;border-radius:10px;padding:9px 11px;font-size:10.5px;font-weight:800}
+.plan-daily-loading{padding:32px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:1050px){.plan-daily-overview{grid-template-columns:1fr}.plan-daily-main{grid-template-columns:repeat(2,1fr)}.plan-daily-detail{grid-template-columns:1fr}}
+@media(max-width:600px){.plan-daily-main,.plan-daily-dotacion{grid-template-columns:1fr}}
 
 
 /* Plan mensual */
@@ -1401,14 +1419,18 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
   </nav>
 
   <section class="service-tab-panel active" id="tab-plan-diario">
-    <div class="plan-daily-embed">
-      <iframe
-        id="planDailyFrame"
-        class="plan-daily-frame"
-        title="Plan diario TSJ"
-        src="https://sanjosetrafico-tech.github.io/tsj-kpi-dashboard/?tab=plan"
-        onload="preparePlanDailyFrame()"
-      ></iframe>
+    <div class="plan-daily">
+      <div class="plan-daily-head">
+        <div>
+          <h2>Plan diario</h2>
+          <p id="planDailyMeta">Plan de servicio operativo del día.</p>
+        </div>
+        <div class="plan-daily-status">
+          <span id="planDailyState">Actualizando…</span>
+          <button class="btn ghost" type="button" onclick="loadPlanDaily(true)">Actualizar</button>
+        </div>
+      </div>
+      <div id="planDailyContent" class="plan-daily-loading">Cargando plan diario…</div>
     </div>
   </section>
 
@@ -2169,51 +2191,122 @@ function initMonthlyPlan(){
   loadMonthlyPlan(input.value||'2026-11');
 }
 
-function preparePlanDailyFrame(){
-  const frame=document.getElementById('planDailyFrame');
-  if(!frame)return;
-  try{
-    const doc=frame.contentDocument||frame.contentWindow.document;
-    if(!doc)return;
-    if(!doc.getElementById('tsj-plan-embed-style')){
-      const st=doc.createElement('style');
-      st.id='tsj-plan-embed-style';
-      st.textContent=`
-        html,body{margin:0!important;padding:0!important;background:#f6f4f5!important;overflow:hidden!important}
-        .top,.hero,.tabs,.foot,#errorBox,.chart-modal,.recorridos-open,.date-control{display:none!important}
-        .shell{width:100%!important;max-width:none!important;min-height:0!important;margin:0!important;padding:0!important;display:block!important}
-        .shell>main{display:block!important;margin:0!important;padding:0!important}
-        .tab-panel{display:none!important}
-        #plan{display:block!important;margin:0!important;padding:0!important}
-        #plan .section-head{margin:6px 0 14px!important}
-      `;
-      doc.head.appendChild(st);
-    }
-    const resize=()=>{
-      try{
-        const h=Math.max(
-          doc.body?.scrollHeight||0,
-          doc.documentElement?.scrollHeight||0,
-          doc.querySelector('#plan')?.scrollHeight||0,
-          520
-        );
-        frame.style.height=(h+4)+'px';
-      }catch(e){}
-    };
-    resize();
-    setTimeout(resize,300);
-    setTimeout(resize,1000);
-    setTimeout(resize,2500);
-    if(!frame._tsjResizeObserver && frame.contentWindow.ResizeObserver){
-      const ro=new frame.contentWindow.ResizeObserver(resize);
-      ro.observe(doc.body);
-      frame._tsjResizeObserver=ro;
-    }
-  }catch(e){
-    frame.style.height='620px';
-  }
-}
+const PLAN_DAILY_STATIC='https://raw.githubusercontent.com/sanjosetrafico-tech/tsj-kpi-dashboard/data-cache/data/planServ.json';
+const PLAN_DAILY_API='https://script.google.com/macros/s/AKfycbxzu1Mob_Z7E0-33nMXmFDk1zsaOWnUyzb1s58z1NH_2qDK4utHfvtO9-N31GtMuYwyEA/exec';
+let planDailyData=null;
+let planDailyLoading=null;
 
+function planDailyNum(v){return Number(v||0).toLocaleString('es-AR')}
+function planDailyStat(label,value,tone=''){
+  return '<div class="plan-daily-stat '+tone+'"><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong></div>';
+}
+function renderPlanDaily(){
+  const root=document.getElementById('planDailyContent');
+  if(!root)return;
+  const d=planDailyData||{};
+  if(!Object.keys(d).length){
+    root.className='plan-daily-loading';
+    root.textContent='No hay datos disponibles para el plan diario.';
+    return;
+  }
+  const done=Number(d.serviceDone||0)+Number(d.cortadoDone||0);
+  const planned=Number(d.servicePlanned||0);
+  const rawCompliance=planned?done/planned*100:Number(d.compliance||0);
+  const compliance=Math.max(0,Math.min(100,rawCompliance));
+  const color=rawCompliance>=100?'#0b9b73':rawCompliance>=95?'#d77817':'#c93c35';
+  const total=Number(d.conductoresTM||0)+Number(d.conductoresTT||0);
+  const note=(Number(d.inasistenciasTM||0)>0&&rawCompliance>=100)
+    ?'<div class="plan-daily-note">Se cambia franco para cumplir con el servicio.</div>':'';
+
+  root.className='';
+  root.innerHTML=
+    '<div class="plan-daily-overview">'+
+      '<article class="plan-daily-gauge-card">'+
+        '<div class="plan-daily-gauge" style="--p:'+compliance+';--c:'+color+'">'+
+          '<div class="plan-daily-gauge-content"><strong>'+Math.round(compliance)+'%</strong><span>'+planDailyNum(done)+' / '+planDailyNum(planned)+'</span></div>'+
+        '</div>'+
+        '<div class="plan-daily-gauge-label">Cumplimiento TM / TT</div>'+
+      '</article>'+
+      '<div class="plan-daily-main">'+
+        planDailyStat('Servicio completo',planDailyNum(d.serviceDone)+' / '+planDailyNum(d.servicePlanned),rawCompliance>=100?'good':'')+
+        planDailyStat('Cortados',planDailyNum(d.cortadoDone)+' / '+planDailyNum(d.cortadoPlanned))+
+        planDailyStat('Refuerzos',planDailyNum(d.refuerzoDone)+' / '+planDailyNum(d.refuerzoPlanned))+
+        planDailyStat('Especiales',planDailyNum(d.especialDone)+' / '+planDailyNum(d.especialPlanned))+
+        planDailyStat('Francos trabajados',planDailyNum(d.francos))+
+        planDailyStat('Relevantes citados',planDailyNum(d.relevantesTM)+' TM · '+planDailyNum(d.relevantesTT)+' TT')+
+        planDailyStat('Inasist. relevantes',planDailyNum(d.inasistenciaRelevantes),Number(d.inasistenciaRelevantes||0)>0?'bad':'good')+
+        planDailyStat('Inasistencias TM',planDailyNum(d.inasistenciasTM),Number(d.inasistenciasTM||0)>0?'bad':'good')+
+      '</div>'+
+    '</div>'+
+    note+
+    '<div class="plan-daily-detail">'+
+      '<section class="panel">'+
+        '<div class="panel-head"><div><h2>Dotación / conducción</h2><p class="help">Conductores citados para la jornada.</p></div></div>'+
+        '<div class="plan-daily-dotacion">'+
+          planDailyStat('Conductores TM',planDailyNum(d.conductoresTM))+
+          planDailyStat('Conductores TT',planDailyNum(d.conductoresTT))+
+          planDailyStat('Total citados',planDailyNum(total))+
+        '</div>'+
+      '</section>'+
+      '<article class="plan-daily-last">'+
+        '<span>Última salida TM</span>'+
+        '<strong>'+esc(d.ultimaSalida||'—')+' hs</strong>'+
+        '<small>Coche '+esc(d.ultimoCoche||'—')+' · salida desde Base</small>'+
+      '</article>'+
+    '</div>';
+}
+function loadPlanDailyLive(){
+  return new Promise((resolve,reject)=>{
+    const cb='tsj_plan_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    let done=false;
+    const finish=(err,payload)=>{
+      if(done)return;done=true;
+      try{delete window[cb]}catch(e){}
+      script.remove();
+      err?reject(err):resolve(payload);
+    };
+    const timer=setTimeout(()=>finish(new Error('timeout')),20000);
+    window[cb]=payload=>{clearTimeout(timer);finish(null,payload)};
+    script.onerror=()=>{clearTimeout(timer);finish(new Error('network'))};
+    script.src=PLAN_DAILY_API+'?section=planServ&callback='+encodeURIComponent(cb)+'&_='+Date.now();
+    document.body.appendChild(script);
+  });
+}
+async function loadPlanDaily(force=false){
+  if(planDailyLoading)return planDailyLoading;
+  const state=document.getElementById('planDailyState');
+  const meta=document.getElementById('planDailyMeta');
+  if(state)state.textContent='Actualizando…';
+  planDailyLoading=(async()=>{
+    try{
+      let payload=null;
+      if(force){
+        payload=await loadPlanDailyLive();
+      }else{
+        try{
+          const res=await fetch(PLAN_DAILY_STATIC+'?_='+Date.now(),{cache:'no-store',mode:'cors'});
+          if(!res.ok)throw new Error('HTTP '+res.status);
+          payload=await res.json();
+        }catch(e){
+          payload=await loadPlanDailyLive();
+        }
+      }
+      if(!payload?.planServ)throw new Error('Sin datos');
+      planDailyData=payload.planServ;
+      if(meta)meta.textContent=(planDailyData.date||'Plan de servicio operativo del día')+' · '+(payload.sources?.planServ?.name||planDailyData.source?.name||'Plan de Servicio');
+      if(state)state.textContent='Datos disponibles';
+      renderPlanDaily();
+    }catch(e){
+      if(state)state.textContent='Sin datos';
+      const root=document.getElementById('planDailyContent');
+      if(root){root.className='plan-daily-loading';root.textContent='No se pudieron cargar los datos del plan diario.'}
+    }finally{
+      planDailyLoading=null;
+    }
+  })();
+  return planDailyLoading;
+}
 
 
 const TSJ_SUPABASE_URL='https://xmosbwnredpzsrziqeux.supabase.co';
@@ -2709,7 +2802,7 @@ function showServiceTab(name){
     panel.classList.toggle('active', panel.id==='tab-'+name);
   });
   try{sessionStorage.setItem('tsj_plan_servicio_tab',name)}catch(e){}
-  if(name==='plan-diario')setTimeout(preparePlanDailyFrame,50);
+  if(name==='plan-diario')setTimeout(()=>loadPlanDaily(false),20);
   if(name==='plan-mensual')setTimeout(initMonthlyPlan,20);
   if(name==='presupuesto-km')setTimeout(initKmBudget,20);
   if(name==='calendario-inspector')setTimeout(initInspector,20);
