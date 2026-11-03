@@ -2403,6 +2403,20 @@ function inspSetStore(v){localStorage.setItem(INSPECTOR_KEY,JSON.stringify(v))}
 function inspFindHeaderIndex(headers,tests){
   return headers.findIndex(h=>tests.some(t=>t.test(inspNorm(h))));
 }
+function inspField(rec,names){
+  const hs=rec.headers||[];
+  for(const name of names){
+    const target=inspNorm(name);
+    const i=hs.findIndex(h=>inspNorm(h)===target);
+    if(i>=0)return rec.row?.[i]??'';
+  }
+  for(const name of names){
+    const target=inspNorm(name);
+    const i=hs.findIndex(h=>inspNorm(h).includes(target));
+    if(i>=0)return rec.row?.[i]??'';
+  }
+  return '';
+}
 function inspReadWorkbookRows(wb,fileName){
   const out=[];
   (wb.SheetNames||[]).forEach(sheetName=>{
@@ -2506,26 +2520,18 @@ function analyzeInspectorRows(rows){
   const driverStats=new Map();
 
   rows.forEach(rec=>{
-    const hs=rec.headers||[];
-    const li=inspFindHeaderIndex(hs,[/^linea$/,/línea/,/linea/,/ramal/]);
-    const gi=inspFindHeaderIndex(hs,[/^legajo$/,/legajo/,/nro.*emple/,/empleado/]);
-    const ti=inspFindHeaderIndex(hs,[/^turno$/,/turno/,/franja/]);
-    const ei=inspFindHeaderIndex(hs,[/^estado$/,/estado/,/resultado/]);
+    const line=inspCanonicalLine(inspField(rec,['Linea','Línea','Ramal']));
+    const legajo=String(inspField(rec,['Legajo','Nro Empleado','Empleado'])||'').replace(/\.0$/,'').trim();
+    const shift=inspShift(inspField(rec,['Turno','Franja']));
+    const estado=inspEstado(inspField(rec,['Estado','Resultado']));
+    const date=inspParseDate(inspField(rec,['Fecha','Dia','Día']))||inspParseDate(rec.fileName)||inspParseDate(rec.sheetName);
 
-    const line=inspCanonicalLine(li>=0?rec.row[li]:'');
-    const legajo=gi>=0?String(rec.row[gi]||'').replace(/\.0$/,'').trim():'';
-    const shift=ti>=0?inspShift(rec.row[ti]):'';
-    const estado=inspEstado(ei>=0?rec.row[ei]:'');
-    const date=inspRecordDate(rec);
-
-    // En MediasVueltas los registros sin Estado no tienen ejecución/GPS.
-    // No forman parte del denominador de cumplimiento horario.
     if(line&&estado){
       const ls=lineStats.get(line)||{
         line,horario:0,adelanto:0,atraso:0,total:0,
         days:new Set(),shifts:new Map()
       };
-      ls[estado]++;
+      ls[estado]=(ls[estado]||0)+1;
       ls.total++;
       if(date)ls.days.add(date);
       if(shift)ls.shifts.set(shift,(ls.shifts.get(shift)||0)+1);
@@ -2575,8 +2581,6 @@ function analyzeInspectorRows(rows){
     });
   });
 
-  // Se mantiene el criterio adicional de recurrencia por conductor:
-  // 3 o más días consecutivos con ADELANTADO o ATRASADO.
   driverStats.forEach(ds=>{
     const streak=inspConsecutiveDays(ds.dates);
     if(streak<3)return;
