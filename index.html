@@ -2642,7 +2642,7 @@ function renderInspectorAnalysis(){
     <td class="num">${inspEsc(pct(x.pctAdelanto))}</td>
     <td class="num">${inspEsc(pct(x.pctAtraso))}</td>
     <td class="num">${inspEsc(x.kind==='driver'?x.metric:pct(x.pctHorario))}</td>
-    <td>${inspEsc(x.action||x.task)}</td>
+    <td>${inspEsc(x.action||x.task)} <button type="button" class="inspector-mini-btn" onclick="proposeInspectorFinding(${inspectorFindings.indexOf(x)})">+ Agregar</button></td>
   </tr>`).join(''):'<tr><td colspan="7" class="empty-cell">Sin líneas debajo de 90% ni conductores con 3 días consecutivos de incumplimiento.</td></tr>';
 }
 async function initInspector(){
@@ -2696,6 +2696,20 @@ function openInspectorEditor(date,shift){
   clearInspectorEditor();
   document.getElementById('inspEditDate').value=date||inspWeekDates()[0];
   document.getElementById('inspEditShift').value=shift||'Mañana';
+  document.getElementById('inspectorEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function proposeInspectorFinding(index){
+  const f=inspectorFindings[index];if(!f)return;
+  clearInspectorEditor();
+  document.getElementById('inspectorEditorTitle').textContent='Agregar prioridad al calendario';
+  document.getElementById('inspEditDate').value=inspWeekDates()[0];
+  document.getElementById('inspEditShift').value=f.shift||'Mañana';
+  document.getElementById('inspEditTask').value=f.task||'Cumplimiento de horario';
+  document.getElementById('inspEditLine').value=f.line==='—'?'':(f.line||'');
+  document.getElementById('inspEditLegajo').value=f.legajo==='—'?'':(f.legajo||'');
+  document.getElementById('inspEditReason').value=f.hallazgo||f.action||'';
+  document.getElementById('inspEditPriority').value=f.priority||'normal';
+  document.getElementById('inspectorEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function clearInspectorEditor(){
   document.getElementById('inspEditId').value='';
