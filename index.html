@@ -2310,17 +2310,27 @@ const TSJ_SUPABASE_KEY='sb_publishable_M_X1Lv-0SQuzXqd3-Seb7w_IXqbzsGK';
 const TSJ_AUTH_USERS=['tr01','tr02','tr03'];
 const TSJ_AUTH_ENFORCED=true;
 const TSJ_SESSION_KEY='tsj_dashboard_session_v1';
-let tsjSupabase=null;
 let tsjCurrentUser='';
 let tsjSessionToken='';
 
-async function getTsjSupabase(){
-  if(tsjSupabase)return tsjSupabase;
-  const mod=await import('https://esm.sh/@supabase/supabase-js@2.95.0');
-  tsjSupabase=mod.createClient(TSJ_SUPABASE_URL,TSJ_SUPABASE_KEY,{
-    auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
+async function tsjRpc(name,args={}){
+  const res=await fetch(TSJ_SUPABASE_URL+'/rest/v1/rpc/'+encodeURIComponent(name),{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'apikey':TSJ_SUPABASE_KEY,
+      'Authorization':'Bearer '+TSJ_SUPABASE_KEY
+    },
+    body:JSON.stringify(args)
   });
-  return tsjSupabase;
+  const raw=await res.text();
+  let data=null;
+  try{data=raw?JSON.parse(raw):null}catch(e){data=raw}
+  if(!res.ok){
+    const msg=(data&&typeof data==='object'&&(data.message||data.error))||('HTTP '+res.status);
+    throw new Error(msg);
+  }
+  return data;
 }
 function tsjSetLoginError(msg){
   const e=document.getElementById('tsjLoginError');if(e)e.textContent=msg||'';
@@ -2368,10 +2378,9 @@ async function initTsjAuth(){
     return;
   }
   try{
-    const sb=await getTsjSupabase();
-    const {data,error}=await sb.rpc('inspector_validate_session',{p_token:saved.token});
+    const data=await tsjRpc('inspector_validate_session',{p_token:saved.token});
     const row=Array.isArray(data)?data[0]:null;
-    if(error||!row?.valid||!TSJ_AUTH_USERS.includes(row.username))throw new Error('invalid_session');
+    if(!row?.valid||!TSJ_AUTH_USERS.includes(row.username))throw new Error('invalid_session');
     tsjWriteSession({token:saved.token,username:row.username,expiresAt:row.expires_at});
     tsjUnlock(row.username,saved.token);
   }catch(e){
@@ -2391,14 +2400,13 @@ async function tsjLogin(){
   if(!secret){tsjSetLoginError('Ingresá la contraseña.');return}
   if(btn){btn.disabled=true;btn.textContent='Ingresando…'}
   try{
-    const sb=await getTsjSupabase();
-    const {data:params,error:paramError}=await sb.rpc('inspector_auth_params',{p_username:username});
+    const params=await tsjRpc('inspector_auth_params',{p_username:username});
     const auth=Array.isArray(params)?params[0]:null;
-    if(paramError||!auth)throw new Error('invalid');
+    if(!auth)throw new Error('invalid');
     const proof=await tsjDeriveProof(secret,auth.password_salt,auth.password_iterations);
-    const {data,error}=await sb.rpc('inspector_login_proof',{p_user:username,p_proof:proof});
+    const data=await tsjRpc('inspector_login_proof',{p_user:username,p_proof:proof});
     const row=Array.isArray(data)?data[0]:null;
-    if(error||!row?.session_token)throw new Error('invalid');
+    if(!row?.session_token)throw new Error('invalid');
     tsjWriteSession({token:row.session_token,username:row.login_user,expiresAt:row.expires_at});
     document.getElementById('tsjLoginPassword').value='';
     tsjUnlock(row.login_user,row.session_token);
@@ -2412,8 +2420,7 @@ async function tsjLogout(){
   const token=tsjSessionToken||tsjReadSession()?.token||'';
   try{
     if(token){
-      const sb=await getTsjSupabase();
-      await sb.rpc('inspector_logout',{p_token:token});
+      await tsjRpc('inspector_logout',{p_token:token});
     }
   }catch(e){}
   tsjWriteSession(null);
@@ -2682,8 +2689,7 @@ async function saveInspectorCalendar(){
   const state=document.getElementById('inspectorSaveState');
   if(state)state.textContent='Guardando…';
   try{
-    const sb=await getTsjSupabase();
-    const {data,error}=await sb.rpc('inspector_save_calendar',{
+    const data=await tsjRpc('inspector_save_calendar',{
       p_token:tsjSessionToken,
       p_week_start:week,
       p_tasks:inspectorTasks,
@@ -2691,7 +2697,7 @@ async function saveInspectorCalendar(){
       p_source_files:inspectorImportedFiles
     });
     const row=Array.isArray(data)?data[0]:null;
-    if(error||!row)throw new Error('save_failed');
+    if(!row)throw new Error('save_failed');
     if(state)state.textContent='Guardado por '+(row.updated_username||tsjCurrentUser)+' · '+new Date(row.updated_at).toLocaleString('es-AR');
     await renderInspectorSaved();
   }catch(e){
@@ -2703,10 +2709,8 @@ async function loadInspectorWeek(force=true){
   const week=document.getElementById('inspectorWeek')?.value;if(!week)return;
   const state=document.getElementById('inspectorSaveState');
   try{
-    const sb=await getTsjSupabase();
-    const {data,error}=await sb.rpc('inspector_get_calendar',{p_token:tsjSessionToken,p_week_start:week});
+    const data=await tsjRpc('inspector_get_calendar',{p_token:tsjSessionToken,p_week_start:week});
     const rec=Array.isArray(data)?data[0]:null;
-    if(error)throw error;
     if(rec){
       inspectorTasks=Array.isArray(rec.tasks)?rec.tasks:[];
       inspectorFindings=Array.isArray(rec.findings)?rec.findings:[];
@@ -2728,9 +2732,7 @@ async function openInspectorSaved(week){
 async function deleteInspectorSaved(week){
   if(!confirm('¿Eliminar el calendario guardado de esta semana?'))return;
   try{
-    const sb=await getTsjSupabase();
-    const {error}=await sb.rpc('inspector_delete_calendar',{p_token:tsjSessionToken,p_week_start:week});
-    if(error)throw error;
+    await tsjRpc('inspector_delete_calendar',{p_token:tsjSessionToken,p_week_start:week});
     if(document.getElementById('inspectorWeek')?.value===week){
       inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
       renderInspectorAnalysis();renderInspectorCalendar();
@@ -2742,9 +2744,7 @@ async function deleteInspectorSaved(week){
 async function renderInspectorSaved(){
   const box=document.getElementById('inspectorSavedList');if(!box)return;
   try{
-    const sb=await getTsjSupabase();
-    const {data,error}=await sb.rpc('inspector_list_calendars',{p_token:tsjSessionToken});
-    if(error)throw error;
+    const data=await tsjRpc('inspector_list_calendars',{p_token:tsjSessionToken});
     const rows=Array.isArray(data)?data:[];
     box.innerHTML=rows.length?rows.map(r=>`<div class="inspector-saved-item"><div><b>Semana ${inspDateLabel(r.week_start)} · ${Array.isArray(r.tasks)?r.tasks.length:0} tareas</b><span>Última modificación: ${inspEsc(r.updated_username||'—')} · ${new Date(r.updated_at).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="openInspectorSaved('${r.week_start}')">Abrir</button><button class="btn pdf" onclick="exportInspectorSavedPDF('${r.week_start}')">PDF</button><button class="btn danger" onclick="deleteInspectorSaved('${r.week_start}')">Eliminar</button></div></div>`).join(''):'<div class="footer-note">Todavía no hay calendarios guardados.</div>';
   }catch(e){
@@ -2753,10 +2753,9 @@ async function renderInspectorSaved(){
 }
 async function exportInspectorSavedPDF(week){
   try{
-    const sb=await getTsjSupabase();
-    const {data,error}=await sb.rpc('inspector_get_calendar',{p_token:tsjSessionToken,p_week_start:week});
+    const data=await tsjRpc('inspector_get_calendar',{p_token:tsjSessionToken,p_week_start:week});
     const rec=Array.isArray(data)?data[0]:null;
-    if(error||!rec)throw new Error('not_found');
+    if(!rec)throw new Error('not_found');
     exportInspectorPDF({week:rec.week_start,tasks:rec.tasks||[]});
   }catch(e){alert('No se pudo abrir el calendario para exportar.')}
 }
