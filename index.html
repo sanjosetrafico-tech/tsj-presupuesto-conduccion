@@ -1330,6 +1330,9 @@ h1{
 .inspector-table-wrap{overflow:auto}
 .inspector-priority-table{min-width:760px}
 .inspector-priority-table td,.inspector-priority-table th{padding:7px 9px!important}
+.inspector-priority-action{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;box-sizing:border-box}
+.inspector-priority-action>span{display:block;line-height:1.25}
+.inspector-priority-action .inspector-mini-btn{flex:0 0 auto;white-space:nowrap}
 .priority-pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:9px;font-weight:900}
 .priority-pill.high{background:#ffe2e2;color:#c32c2c}.priority-pill.medium{background:#fff0d7;color:#b46313}.priority-pill.normal{background:#eee9fa;color:#6b55a2}
 .empty-cell{text-align:center!important;color:var(--muted);padding:20px!important}
@@ -2345,6 +2348,7 @@ async function loadPlanDaily(force=false){
 
 
 const INSPECTOR_KEY='tsj_inspector_calendars_v1';
+const INSPECTOR_LAST_IMPORT_KEY='tsj_inspector_last_import_v1';
 const INSPECTOR_TASKS=[
   'Seguimiento de conductor',
   'Cumplimiento de horario',
@@ -2400,6 +2404,24 @@ function inspShift(v){
 }
 function inspGetStore(){try{return JSON.parse(localStorage.getItem(INSPECTOR_KEY)||'{}')}catch(e){return{}}}
 function inspSetStore(v){localStorage.setItem(INSPECTOR_KEY,JSON.stringify(v))}
+function inspSaveLastImport(){
+  try{
+    localStorage.setItem(INSPECTOR_LAST_IMPORT_KEY,JSON.stringify({
+      files:inspectorImportedFiles,
+      findings:inspectorFindings,
+      updatedAt:new Date().toISOString()
+    }));
+  }catch(e){}
+}
+function inspRestoreLastImport(){
+  try{
+    const rec=JSON.parse(localStorage.getItem(INSPECTOR_LAST_IMPORT_KEY)||'null');
+    if(!rec)return false;
+    inspectorImportedFiles=Array.isArray(rec.files)?rec.files:[];
+    inspectorFindings=Array.isArray(rec.findings)?rec.findings:[];
+    return inspectorImportedFiles.length>0||inspectorFindings.length>0;
+  }catch(e){return false}
+}
 function inspFindHeaderIndex(headers,tests){
   return headers.findIndex(h=>tests.some(t=>t.test(inspNorm(h))));
 }
@@ -2462,6 +2484,7 @@ async function handleInspectorFiles(files){
     }
   }
   inspectorFindings=analyzeInspectorRows(inspectorImportedRows);
+  inspSaveLastImport();
   renderInspectorAnalysis();
   const state=document.getElementById('inspectorSaveState');
   if(state)state.textContent=importErrors.length
@@ -2642,7 +2665,7 @@ function renderInspectorAnalysis(){
     <td class="num">${inspEsc(pct(x.pctAdelanto))}</td>
     <td class="num">${inspEsc(pct(x.pctAtraso))}</td>
     <td class="num">${inspEsc(x.kind==='driver'?x.metric:pct(x.pctHorario))}</td>
-    <td>${inspEsc(x.action||x.task)} <button type="button" class="inspector-mini-btn" onclick="proposeInspectorFinding(${inspectorFindings.indexOf(x)})">+ Agregar</button></td>
+    <td><div class="inspector-priority-action"><span>${inspEsc(x.action||x.task)}</span><button type="button" class="inspector-mini-btn" onclick="proposeInspectorFinding(${inspectorFindings.indexOf(x)})">+ Agregar</button></div></td>
   </tr>`).join(''):'<tr><td colspan="7" class="empty-cell">Sin líneas debajo de 90% ni conductores con 3 días consecutivos de incumplimiento.</td></tr>';
 }
 async function initInspector(){
@@ -2660,6 +2683,11 @@ async function initInspector(){
     document.getElementById('inspectorTaskTypeList').innerHTML='<div class="inspector-task-types-list">'+INSPECTOR_TASKS.map(x=>`<div class="inspector-task-type">${x}</div>`).join('')+'</div>';
   }
   await loadInspectorWeek(false);
+  if(!inspectorImportedFiles.length&&!inspectorFindings.length&&inspRestoreLastImport()){
+    renderInspectorAnalysis();
+    const state=document.getElementById('inspectorSaveState');
+    if(state)state.textContent='Último Excel restaurado · calendario sin guardar';
+  }
 }
 function generateInspectorCalendar(){
   const dates=inspWeekDates();
