@@ -1790,8 +1790,8 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           </div>
           <div class="inspector-table-wrap">
             <table class="inspector-priority-table">
-              <thead><tr><th>Prioridad</th><th>Línea</th><th>Legajo</th><th>Hallazgo</th><th>Cumplimiento / recurrencia</th><th>Tarea sugerida</th></tr></thead>
-              <tbody id="inspectorFindingsBody"><tr><td colspan="6" class="empty-cell">Importá uno o varios Excel para generar el análisis.</td></tr></tbody>
+              <thead><tr><th>Prioridad</th><th>Línea</th><th>Legajo</th><th>% Adelanto</th><th>% Atraso</th><th>% Horario / recurrencia</th><th>Acción sugerida</th></tr></thead>
+              <tbody id="inspectorFindingsBody"><tr><td colspan="7" class="empty-cell">Importá uno o varios Excel para generar el análisis.</td></tr></tbody>
             </table>
           </div>
         </section>
@@ -2360,8 +2360,8 @@ function inspCanonicalLine(v){
 }
 function inspShift(v){
   const n=inspNorm(v);
-  if(/tt|tarde|vespertino/.test(n))return 'Tarde';
-  if(/tm|manana|mañana|matutino/.test(n))return 'Mañana';
+  if(n==='2'||/tt|tarde|vespertino/.test(n))return 'Tarde';
+  if(n==='1'||/tm|manana|mañana|matutino/.test(n))return 'Mañana';
   const m=String(v??'').match(/\b(\d{1,2}):/);
   if(m)return Number(m[1])<14?'Mañana':'Tarde';
   return '';
@@ -2411,12 +2411,6 @@ function inspParseNumber(v){
   const m=String(v??'').replace(/\s/g,'').replace(',','.').match(/-?\d+(?:\.\d+)?/);
   return m?Number(m[0]):NaN;
 }
-function inspCompliancePercent(v){
-  const n=inspParseNumber(v);
-  if(!Number.isFinite(n))return null;
-  const pct=(String(v??'').includes('%')||Math.abs(n)>1)?n:n*100;
-  return Math.max(0,Math.min(100,pct));
-}
 function inspParseDate(v){
   if(v instanceof Date&&!isNaN(v))return inspISO(v);
   const s=String(v??'').trim();
@@ -2447,56 +2441,56 @@ function inspConsecutiveDays(dateSet){
   }
   return best;
 }
+function inspEstado(v){
+  const n=inspNorm(v);
+  if(/adelant/.test(n))return 'adelanto';
+  if(/atras|demora/.test(n))return 'atraso';
+  if(/horario|a tiempo|en hora/.test(n))return 'horario';
+  return '';
+}
+function inspPct(n,total){
+  return total>0?(n/total*100):0;
+}
 function analyzeInspectorRows(rows){
   const lineStats=new Map();
   const driverStats=new Map();
 
   rows.forEach(rec=>{
     const hs=rec.headers||[];
-    const li=inspFindHeaderIndex(hs,[/linea/,/ramal/]);
-    const gi=inspFindHeaderIndex(hs,[/legajo/,/nro.*emple/,/empleado/]);
-    const ti=inspFindHeaderIndex(hs,[/turno/,/franja/,/hora/]);
-    const ci=inspFindHeaderIndex(hs,[/porcent.*cumpl/,/%.*cumpl/,/cumpl.*%/,/^cumplimiento$/,/cumplimiento/]);
-    const si=inspFindHeaderIndex(hs,[/estado/,/resultado/,/observ/,/^cumplimiento$/]);
-    const pi=inspFindHeaderIndex(hs,[/program/,/planif/,/previst/,/esperad/,/teoric/]);
-    const ei=inspFindHeaderIndex(hs,[/ejecut/,/realiz/,/cumplid/,/efectiv/]);
-    const di=inspFindHeaderIndex(hs,[/difer/,/atras/,/adelant/,/desvio/,/minuto/]);
+    const li=inspFindHeaderIndex(hs,[/^linea$/,/línea/,/linea/,/ramal/]);
+    const gi=inspFindHeaderIndex(hs,[/^legajo$/,/legajo/,/nro.*emple/,/empleado/]);
+    const ti=inspFindHeaderIndex(hs,[/^turno$/,/turno/,/franja/]);
+    const ei=inspFindHeaderIndex(hs,[/^estado$/,/estado/,/resultado/]);
 
     const line=inspCanonicalLine(li>=0?rec.row[li]:'');
     const legajo=gi>=0?String(rec.row[gi]||'').replace(/\.0$/,'').trim():'';
     const shift=ti>=0?inspShift(rec.row[ti]):'';
-    const status=si>=0?String(rec.row[si]||''):'';
-    const all=inspNorm(rec.row.join(' | '));
-    const diffNum=di>=0?inspParseNumber(rec.row[di]):NaN;
+    const estado=inspEstado(ei>=0?rec.row[ei]:'');
+    const date=inspRecordDate(rec);
 
-    let pct=ci>=0?inspCompliancePercent(rec.row[ci]):null;
-    if(pct===null&&pi>=0&&ei>=0){
-      const planned=inspParseNumber(rec.row[pi]),executed=inspParseNumber(rec.row[ei]);
-      if(Number.isFinite(planned)&&planned>0&&Number.isFinite(executed))pct=Math.max(0,Math.min(100,executed/planned*100));
-    }
-
-    const explicitIssue=/incumpl|no cumple|fuera|atras|adelant|desvio|irregular|error/.test(all);
-    const explicitOk=!explicitIssue&&/(^|\W)(cumple|ok|correcto|conforme)(\W|$)/.test(inspNorm(status));
-    if(pct===null){
-      if(explicitIssue)pct=0;
-      else if(explicitOk)pct=100;
-      else if(Number.isFinite(diffNum))pct=Math.abs(diffNum)>=3?0:100;
-    }
-
-    if(line&&pct!==null){
-      const ls=lineStats.get(line)||{line,sum:0,count:0,shifts:new Map()};
-      ls.sum+=pct;ls.count++;
+    // En MediasVueltas los registros sin Estado no tienen ejecución/GPS.
+    // No forman parte del denominador de cumplimiento horario.
+    if(line&&estado){
+      const ls=lineStats.get(line)||{
+        line,horario:0,adelanto:0,atraso:0,total:0,
+        days:new Set(),shifts:new Map()
+      };
+      ls[estado]++;
+      ls.total++;
+      if(date)ls.days.add(date);
       if(shift)ls.shifts.set(shift,(ls.shifts.get(shift)||0)+1);
       lineStats.set(line,ls);
     }
 
-    const issue=(pct!==null&&pct<90)||explicitIssue||(Number.isFinite(diffNum)&&Math.abs(diffNum)>=3);
-    if(legajo&&issue){
-      const date=inspRecordDate(rec);
-      const ds=driverStats.get(legajo)||{legajo,dates:new Set(),lines:new Map(),shifts:new Map()};
+    if(legajo&&estado&&estado!=='horario'){
+      const ds=driverStats.get(legajo)||{
+        legajo,dates:new Set(),lines:new Map(),shifts:new Map(),
+        adelanto:0,atraso:0
+      };
       if(date)ds.dates.add(date);
       if(line)ds.lines.set(line,(ds.lines.get(line)||0)+1);
       if(shift)ds.shifts.set(shift,(ds.shifts.get(shift)||0)+1);
+      ds[estado]=(ds[estado]||0)+1;
       driverStats.set(legajo,ds);
     }
   });
@@ -2504,36 +2498,53 @@ function analyzeInspectorRows(rows){
   const findings=[];
 
   lineStats.forEach(ls=>{
-    if(!ls.count)return;
-    const compliance=ls.sum/ls.count;
-    if(compliance>=90)return;
+    if(!ls.total)return;
+    const horario=inspPct(ls.horario,ls.total);
+    const adelanto=inspPct(ls.adelanto,ls.total);
+    const atraso=inspPct(ls.atraso,ls.total);
+    if(horario>=90)return;
+
+    const focus=atraso>=adelanto?'Atrasos':'Adelantos';
     const shift=[...ls.shifts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+
     findings.push({
       kind:'line',
       line:ls.line,
       legajo:'—',
       shift,
       task:'Cumplimiento de horario',
-      hallazgo:'Línea por debajo del 90% de cumplimiento',
-      metric:compliance.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%',
-      compliance,
-      count:ls.count,
-      priority:compliance<80?'high':'medium'
+      hallazgo:'Cumplimiento horario menor al 90% · foco en '+focus.toLowerCase(),
+      action:'Cumplimiento de horario · '+focus,
+      pctAdelanto:adelanto,
+      pctAtraso:atraso,
+      pctHorario:horario,
+      metric:horario.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%',
+      days:ls.days.size,
+      count:ls.total,
+      priority:horario<80?'high':'medium'
     });
   });
 
+  // Se mantiene el criterio adicional de recurrencia por conductor:
+  // 3 o más días consecutivos con ADELANTADO o ATRASADO.
   driverStats.forEach(ds=>{
     const streak=inspConsecutiveDays(ds.dates);
     if(streak<3)return;
     const line=[...ds.lines.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
     const shift=[...ds.shifts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+    const focus=(ds.atraso||0)>=(ds.adelanto||0)?'Atrasos':'Adelantos';
+
     findings.push({
       kind:'driver',
       line,
       legajo:ds.legajo,
       shift,
       task:'Seguimiento de conductor',
-      hallazgo:'Incumplimiento reiterado del conductor',
+      hallazgo:'Incumplimiento reiterado · '+focus.toLowerCase(),
+      action:'Seguimiento de conductor · '+focus,
+      pctAdelanto:null,
+      pctAtraso:null,
+      pctHorario:null,
       metric:streak+' días seguidos',
       streak,
       count:streak,
@@ -2544,8 +2555,8 @@ function analyzeInspectorRows(rows){
   return findings.sort((a,b)=>{
     if(a.kind!==b.kind)return a.kind==='driver'?-1:1;
     if(a.kind==='driver')return (b.streak||0)-(a.streak||0);
-    return (a.compliance??100)-(b.compliance??100);
-  }).slice(0,40);
+    return (a.pctHorario??100)-(b.pctHorario??100);
+  }).slice(0,60);
 }
 function renderInspectorAnalysis(){
   const files=document.getElementById('inspFilesKpi'),lines=document.getElementById('inspLinesKpi'),drivers=document.getElementById('inspDriversKpi'),tasks=document.getElementById('inspTasksKpi');
@@ -2555,11 +2566,19 @@ function renderInspectorAnalysis(){
   if(tasks)tasks.textContent=inspectorFindings.length;
   const fn=document.getElementById('inspFileNames');if(fn)fn.textContent=inspectorImportedFiles.length?inspectorImportedFiles.join(' · '):'Sin archivos importados';
   const body=document.getElementById('inspectorFindingsBody');
-  if(body)body.innerHTML=inspectorFindings.length?inspectorFindings.map(x=>`<tr>
+  if(!body)return;
+
+  const pct=v=>v===null||v===undefined?'—':v.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+
+  body.innerHTML=inspectorFindings.length?inspectorFindings.map(x=>`<tr>
     <td><span class="priority-pill ${x.priority}">${inspPriorityLabel(x.priority)}</span></td>
-    <td><b>${inspEsc(x.line)}</b></td><td>${inspEsc(x.legajo)}</td><td>${inspEsc(x.hallazgo)}</td>
-    <td class="num">${inspEsc(x.metric||x.count)}</td><td>${inspEsc(x.task)}</td>
-  </tr>`).join(''):'<tr><td colspan="6" class="empty-cell">Sin líneas debajo de 90% ni conductores con 3 días consecutivos de incumplimiento.</td></tr>';
+    <td><b>${inspEsc(x.line)}</b></td>
+    <td>${inspEsc(x.legajo)}</td>
+    <td class="num">${inspEsc(pct(x.pctAdelanto))}</td>
+    <td class="num">${inspEsc(pct(x.pctAtraso))}</td>
+    <td class="num">${inspEsc(x.kind==='driver'?x.metric:pct(x.pctHorario))}</td>
+    <td>${inspEsc(x.action||x.task)}</td>
+  </tr>`).join(''):'<tr><td colspan="7" class="empty-cell">Sin líneas debajo de 90% ni conductores con 3 días consecutivos de incumplimiento.</td></tr>';
 }
 async function initInspector(){
   if(!document.getElementById('inspectorWeek'))return;
