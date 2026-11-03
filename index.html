@@ -1348,6 +1348,8 @@ h1{
 .inspector-shift-label.tm{background:#edf9f4;color:#087456}.inspector-shift-label.tt{background:#f4f0ff;color:#6449a8}
 .inspector-shift-label strong{font-size:16px}.inspector-shift-label small{font-size:9px}
 .inspector-day-cell{padding:7px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-height:126px;background:#fff}
+.inspector-day-cell.tm{background:#f3fbf7}
+.inspector-day-cell.tt{background:#f7f4ff}
 .inspector-task-card{border:1px solid var(--line);border-left:4px solid #8c78cf;border-radius:9px;padding:7px;margin-bottom:6px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.03)}
 .inspector-task-card.high{border-left-color:#e34c4c}.inspector-task-card.medium{border-left-color:#f0a13a}.inspector-task-card.normal{border-left-color:#8c78cf}
 .inspector-task-card strong{display:block;font-size:9.7px;line-height:1.25}.inspector-task-card span{display:block;font-size:8.8px;color:#5d565d;margin-top:2px}
@@ -2619,7 +2621,7 @@ function renderInspectorCalendar(){
     out+=`<div class="inspector-shift-label ${shift==='Mañana'?'tm':'tt'}"><strong>${shift==='Mañana'?'TM':'TT'}</strong><small>${shift}</small></div>`;
     dates.forEach(date=>{
       const arr=inspectorTasks.filter(t=>t.date===date&&t.shift===shift);
-      out+='<div class="inspector-day-cell">'+arr.map(t=>`<div class="inspector-task-card ${t.priority}">
+      out+='<div class="inspector-day-cell '+(shift==='Mañana'?'tm':'tt')+'">'+arr.map(t=>`<div class="inspector-task-card ${t.priority}">
         <strong>${inspEsc(t.task)}</strong>
         <span>Línea ${inspEsc(t.line||'—')} · Leg. ${inspEsc(t.legajo||'—')}</span>
         <div class="inspector-task-actions"><button class="inspector-mini-btn" onclick="editInspectorTask('${t.id}')">Editar</button><button class="inspector-mini-btn delete" onclick="deleteInspectorTask('${t.id}')">Eliminar</button></div>
