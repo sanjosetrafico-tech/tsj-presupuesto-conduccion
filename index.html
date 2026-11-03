@@ -1334,6 +1334,9 @@ h1{
 .inspector-priority-action{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;box-sizing:border-box}
 .inspector-priority-action>span{display:block;line-height:1.25;text-align:center}
 .inspector-priority-action .inspector-mini-btn{flex:0 0 auto;white-space:nowrap}
+.inspector-priority-action-controls{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.inspector-calendar-status{font-size:9.5px;font-weight:700;color:#0b8d67;white-space:nowrap}
+.inspector-week-repeat{font-size:9.5px;font-weight:700;color:#6449a8;white-space:nowrap}
 .priority-pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:9px;font-weight:900}
 .priority-pill.high{background:#ffe2e2;color:#c32c2c}.priority-pill.medium{background:#fff0d7;color:#b46313}.priority-pill.normal{background:#eee9fa;color:#6b55a2}
 .empty-cell{text-align:center!important;color:var(--muted);padding:20px!important}
@@ -2646,12 +2649,12 @@ function analyzeInspectorRows(rows){
       legajo:ds.legajo,
       shift,
       task:'Seguimiento de conductor',
-      hallazgo:streak+' días seguidos · '+impactLevel.toLowerCase()+' · explica '+impactPct.toLocaleString('es-AR',{maximumFractionDigits:0})+'% de la brecha al 90% · cumplimiento simulado '+simulatedPct.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%',
-      action:'Seguimiento de conductor · '+focus+' · '+impactLevel,
+      hallazgo:streak+' días consecutivos de '+focus.toLowerCase(),
+      action:'Seguimiento de conductor · '+focus,
       pctAdelanto:null,
       pctAtraso:null,
       pctHorario:null,
-      metric:streak+' días · '+impactPct.toLocaleString('es-AR',{maximumFractionDigits:0})+'% brecha',
+      metric:streak+' días consecutivos',
       streak,
       impactPct,
       simulatedPct,
@@ -2667,7 +2670,31 @@ function analyzeInspectorRows(rows){
     return (b.streak||0)-(a.streak||0);
   }).slice(0,60);
 }
+function inspFindingKey(f){
+  return [f?.kind||'',f?.line||'',f?.legajo||'',f?.task||''].join('|');
+}
+function inspTaskMatchesFinding(t,f){
+  if(!t||!f)return false;
+  const line=(f.line==='—'?'':(f.line||''));
+  const legajo=(f.legajo==='—'?'':(f.legajo||''));
+  return (t.task||'')===(f.task||'')&&(t.line||'')===line&&(t.legajo||'')===legajo;
+}
+function inspFindingCalendarCount(f){
+  return inspectorTasks.filter(t=>inspTaskMatchesFinding(t,f)).length;
+}
+function inspPreviousWeekRecord(){
+  const current=inspMonday(document.getElementById('inspectorWeek')?.value||inspISO(new Date()));
+  const d=new Date(current+'T12:00:00');d.setDate(d.getDate()-7);
+  const prev=inspISO(d);
+  return inspGetStore()[prev]||null;
+}
+function inspMarkWeeklyRepeats(){
+  const prev=inspPreviousWeekRecord();
+  const keys=new Set((prev?.findings||[]).map(inspFindingKey));
+  inspectorFindings.forEach(f=>{f.weeklyRepeat=keys.has(inspFindingKey(f))});
+}
 function renderInspectorAnalysis(){
+  inspMarkWeeklyRepeats();
   const files=document.getElementById('inspFilesKpi'),lines=document.getElementById('inspLinesKpi'),drivers=document.getElementById('inspDriversKpi'),tasks=document.getElementById('inspTasksKpi');
   if(files)files.textContent=inspectorImportedFiles.length;
   if(lines)lines.textContent=inspectorFindings.filter(x=>x.kind==='line').length;
@@ -2686,7 +2713,7 @@ function renderInspectorAnalysis(){
     <td class="num">${inspEsc(pct(x.pctAdelanto))}</td>
     <td class="num">${inspEsc(pct(x.pctAtraso))}</td>
     <td class="num">${inspEsc(x.kind==='driver'?x.metric:pct(x.pctHorario))}</td>
-    <td><div class="inspector-priority-action"><span>${inspEsc(x.action||x.task)}</span><button type="button" class="inspector-mini-btn" onclick="proposeInspectorFinding(${inspectorFindings.indexOf(x)})">+ Agregar</button></div></td>
+    <td><div class="inspector-priority-action"><span>${inspEsc(x.action||x.task)}</span><div class="inspector-priority-action-controls">${x.weeklyRepeat?'<span class="inspector-week-repeat">↻ Repite semana anterior</span>':''}${inspFindingCalendarCount(x)>0?'<span class="inspector-calendar-status">✓ En calendario ('+inspFindingCalendarCount(x)+')</span>':''}<button type="button" class="inspector-mini-btn" onclick="proposeInspectorFinding(${inspectorFindings.indexOf(x)})">+ Agregar</button></div></div></td>
   </tr>`).join(''):'<tr><td colspan="7" class="empty-cell">Sin líneas debajo de 90% ni conductores recurrentes con impacto relevante sobre la brecha al 90%.</td></tr>';
 }
 async function initInspector(){
@@ -2713,13 +2740,57 @@ async function initInspector(){
 function generateInspectorCalendar(){
   const dates=inspWeekDates();
   if(!inspectorFindings.length){alert('Primero importá al menos un Excel con datos para analizar.');return}
+
   const existing=inspectorTasks.filter(t=>t.manual);
-  const generated=inspectorFindings.slice(0,Math.min(24,inspectorFindings.length)).map((f,i)=>{
-    const shift=f.shift||((i%2===0)?'Mañana':'Tarde');
-    const date=dates[Math.floor(i/2)%7];
-    return {id:inspUid(),date,shift,task:f.task,line:f.line==='—'?'':f.line,legajo:f.legajo==='—'?'':f.legajo,reason:f.hallazgo,notes:'',priority:f.priority,manual:false,source:'Análisis Excel'};
+  const loads=new Map();
+  dates.forEach(date=>['Mañana','Tarde'].forEach(shift=>{
+    loads.set(date+'|'+shift,existing.filter(t=>t.date===date&&t.shift===shift).length);
+  }));
+
+  const generated=[];
+  const candidates=inspectorFindings.slice(0,42);
+
+  candidates.forEach((f,i)=>{
+    const preferred=f.shift||'';
+    let slots=[];
+    dates.forEach(date=>{
+      ['Mañana','Tarde'].forEach(shift=>{
+        if(preferred&&shift!==preferred)return;
+        const key=date+'|'+shift;
+        const load=loads.get(key)||0;
+        if(load<3)slots.push({date,shift,load,key});
+      });
+    });
+
+    if(!slots.length&&!preferred){
+      dates.forEach(date=>['Mañana','Tarde'].forEach(shift=>{
+        const key=date+'|'+shift;
+        const load=loads.get(key)||0;
+        if(load<3)slots.push({date,shift,load,key});
+      }));
+    }
+    if(!slots.length)return;
+
+    slots.sort((a,b)=>a.load-b.load||a.date.localeCompare(b.date)||(a.shift==='Mañana'?-1:1));
+    const slot=slots[0];
+    generated.push({
+      id:inspUid(),
+      date:slot.date,
+      shift:slot.shift,
+      task:f.task,
+      line:f.line==='—'?'':f.line,
+      legajo:f.legajo==='—'?'':f.legajo,
+      reason:f.hallazgo,
+      notes:'',
+      priority:f.priority,
+      manual:false,
+      source:'Análisis Excel'
+    });
+    loads.set(slot.key,(loads.get(slot.key)||0)+1);
   });
+
   inspectorTasks=[...existing,...generated];
+  renderInspectorAnalysis();
   renderInspectorCalendar();
   document.getElementById('inspectorSaveState').textContent='Calendario generado · cambios sin guardar';
 }
@@ -2803,12 +2874,12 @@ function saveInspectorTask(){
   };
   if(!task.date){alert('Seleccioná una fecha.');return}
   const i=inspectorTasks.findIndex(x=>x.id===id);if(i>=0)inspectorTasks[i]=task;else inspectorTasks.push(task);
-  renderInspectorCalendar();clearInspectorEditor();
+  renderInspectorAnalysis();renderInspectorCalendar();clearInspectorEditor();
   document.getElementById('inspectorSaveState').textContent='Cambios sin guardar';
 }
 function deleteInspectorTask(id){
   if(!confirm('¿Eliminar esta tarea?'))return;
-  inspectorTasks=inspectorTasks.filter(x=>x.id!==id);renderInspectorCalendar();
+  inspectorTasks=inspectorTasks.filter(x=>x.id!==id);renderInspectorAnalysis();renderInspectorCalendar();
   document.getElementById('inspectorSaveState').textContent='Cambios sin guardar';
 }
 function saveInspectorCalendar(){
@@ -2974,6 +3045,68 @@ function exportInspectorPDF(record){
   doc.setTextColor(100,95,100);
   doc.text('Tareas totales: '+tasks.length,left,y);
   doc.text('Transporte San José S.A. · Área de Tráfico',right,y,{align:'right'});
+
+  doc.addPage('a4','landscape');
+  doc.setTextColor(0,0,0);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(17);
+  doc.text('Devolución semanal de intervenciones',left,15);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(90,84,90);
+  doc.text('Semana '+inspDateLabel(monday)+' al '+inspDateLabel(sunday)+' · completar por los inspectores sobre las acciones programadas',left,21);
+
+  const feedbackRows=tasks.map(t=>[
+    inspDateLabel(t.date,true),
+    t.shift||'—',
+    t.line||'—',
+    t.legajo||'—',
+    t.task||'—',
+    '',
+    '',
+    ''
+  ]);
+
+  doc.autoTable({
+    startY:27,
+    head:[['Día','Turno','Línea','Legajo','Acción propuesta','Intervención realizada','Resultado / observación','Inspector']],
+    body:feedbackRows.length?feedbackRows:[['—','—','—','—','Sin acciones programadas','','','']],
+    theme:'grid',
+    styles:{
+      font:'helvetica',
+      fontSize:7.5,
+      cellPadding:2,
+      lineColor:[205,202,205],
+      lineWidth:.2,
+      valign:'top',
+      minCellHeight:16
+    },
+    headStyles:{
+      fillColor:[24,21,24],
+      textColor:[255,255,255],
+      fontStyle:'bold',
+      valign:'middle'
+    },
+    columnStyles:{
+      0:{cellWidth:23},
+      1:{cellWidth:20},
+      2:{cellWidth:16},
+      3:{cellWidth:19},
+      4:{cellWidth:48},
+      5:{cellWidth:62},
+      6:{cellWidth:78},
+      7:{cellWidth:20}
+    },
+    margin:{left,right:12},
+    rowPageBreak:'avoid'
+  });
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.setTextColor(100,95,100);
+  const fy=Math.min(197,(doc.lastAutoTable?.finalY||40)+6);
+  doc.text('Transporte San José S.A. · Área de Tráfico',right,fy,{align:'right'});
+
   doc.save('Calendario_Inspector_'+rec.week+'.pdf');
 }
 
