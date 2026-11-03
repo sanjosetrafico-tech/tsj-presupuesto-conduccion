@@ -1375,7 +1375,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
-<body>
+<body class="tsj-auth-locked">
 <div id="tsjLoginOverlay" class="tsj-login-overlay">
   <div class="tsj-login-card">
     <div class="tsj-login-brand">
@@ -1400,10 +1400,6 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
     <div>
       <h1>Plan Servicio</h1>
       <div class="subtitle">Planificación operativa y presupuestaria del servicio.</div>
-    </div>
-    <div id="tsjAuthGuestBar" class="tsj-auth-userbar">
-      <span>Calendarios</span><strong>modo local</strong>
-      <button class="btn ghost" type="button" onclick="tsjOpenLogin()">Iniciar sesión</button>
     </div>
     <div id="tsjAuthUserBar" class="tsj-auth-userbar" hidden>
       <span>Usuario</span><strong id="tsjAuthUsername">—</strong>
@@ -2313,7 +2309,7 @@ async function loadPlanDaily(force=false){
 const TSJ_SUPABASE_URL='https://xmosbwnredpzsrziqeux.supabase.co';
 const TSJ_SUPABASE_KEY='sb_publishable_M_X1Lv-0SQuzXqd3-Seb7w_IXqbzsGK';
 const TSJ_AUTH_USERS=['tr01','tr02','tr03'];
-const TSJ_AUTH_ENFORCED=false;
+const TSJ_AUTH_ENFORCED=true;
 let tsjSupabase=null;
 let tsjCurrentUser='';
 
@@ -3211,7 +3207,6 @@ function downloadPDFFromSnapshot(s){
   doc.save(`${safeFileName(s.name)}_${s.period||'sin_periodo'}.pdf`);
 }
 function exportJSON(){let blob=new Blob([JSON.stringify(getSaved(),null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tsj-presupuestos-respaldo.json';a.click();URL.revokeObjectURL(a.href)}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}renderAll();
-restoreServiceTab();
 initTsjAuth();
 document.getElementById('tsjLoginPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')tsjLogin()});
 document.getElementById('tsjLoginUser')?.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('tsjLoginPassword')?.focus()});
