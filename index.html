@@ -3090,38 +3090,41 @@ function exportInspectorPDF(record){
     theme:'grid',
     styles:{
       font:'helvetica',
-      fontSize:7.5,
-      cellPadding:2,
+      fontSize:6.8,
+      cellPadding:1.5,
       lineColor:[205,202,205],
       lineWidth:.2,
       valign:'top',
-      minCellHeight:16
+      minCellHeight:12,
+      overflow:'linebreak'
     },
     headStyles:{
       fillColor:[24,21,24],
       textColor:[255,255,255],
       fontStyle:'bold',
-      valign:'middle'
+      valign:'middle',
+      minCellHeight:10
     },
     columnStyles:{
-      0:{cellWidth:23},
-      1:{cellWidth:20},
-      2:{cellWidth:16},
-      3:{cellWidth:19},
-      4:{cellWidth:48},
-      5:{cellWidth:62},
-      6:{cellWidth:78},
+      0:{cellWidth:22},
+      1:{cellWidth:18},
+      2:{cellWidth:14},
+      3:{cellWidth:17},
+      4:{cellWidth:46},
+      5:{cellWidth:58},
+      6:{cellWidth:72},
       7:{cellWidth:20}
     },
-    margin:{left,right:12},
-    rowPageBreak:'avoid'
+    margin:{left:8,right:8,top:27,bottom:12},
+    rowPageBreak:'avoid',
+    pageBreak:'auto'
   });
 
   doc.setFont('helvetica','normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(100,95,100);
-  const fy=Math.min(197,(doc.lastAutoTable?.finalY||40)+6);
-  doc.text('Transporte San José S.A. · Área de Tráfico',right,fy,{align:'right'});
+  const fy=Math.min(198,(doc.lastAutoTable?.finalY||40)+5);
+  doc.text('Transporte San José S.A. · Área de Tráfico',287,fy,{align:'right'});
 
   doc.save('Calendario_Inspector_'+rec.week+'.pdf');
 }
