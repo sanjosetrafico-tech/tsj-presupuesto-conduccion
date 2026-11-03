@@ -2797,34 +2797,28 @@ function currentBudgetPeriod(){
 function budgetNameForPeriod(p){
   return 'Presupuesto '+periodLabel(p);
 }
-function seedOctober2026Budget(){
-  const list=getSaved();
-  const exists=list.some(x=>x.period==='2026-10'&&(x.name==='Presupuesto Octubre 2026'||x.id==='tsj-budget-2026-10-base'));
-  if(exists)return;
-  const october={
-    id:'tsj-budget-2026-10-base',
-    name:'Presupuesto Octubre 2026',
-    period:'2026-10',
-    status:'Borrador',
-    plan:[
-      {type:'Hábil',desc:'Plan normal',fleet:116,days:20},
-      {type:'Sábado',desc:'Plan sábado',fleet:54,days:6},
-      {type:'Domingo',desc:'Plan domingo',fleet:36,days:5}
-    ],
-    staff:[
-      {count:36,workdays:24,francos:6},
-      {count:95,workdays:23,francos:7}
-    ],
-    deductions:[
-      {name:'Ausentismo estimado',kind:'percent',value:2.5},
-      {name:'Licencia medica',kind:'days',value:65},
-      {name:'Licencia especial',kind:'days',value:10},
-      {name:'Monitor escuela',kind:'days',value:32}
-    ],
-    updatedAt:'2026-10-31T12:00:00.000Z'
-  };
-  list.push(october);
-  localStorage.setItem(KEY,JSON.stringify(list));
+function migrateCurrentConductionBudget(){
+  let list=getSaved();
+  let changed=false;
+
+  // Quitar únicamente el presupuesto base de Octubre agregado por la página.
+  const filtered=list.filter(x=>x.id!=='tsj-budget-2026-10-base');
+  if(filtered.length!==list.length){
+    list=filtered;
+    changed=true;
+  }
+
+  // El presupuesto vigente informado por el usuario es 128 NOV 2026.
+  list=list.map(x=>{
+    const name=String(x?.name||'').trim().toUpperCase();
+    if(name==='128 NOV 2026'&&x.period!=='2026-11'){
+      changed=true;
+      return {...x,period:'2026-11'};
+    }
+    return x;
+  });
+
+  if(changed)localStorage.setItem(KEY,JSON.stringify(list));
 }
 function applyBudgetSnapshot(s){
   currentId=s?.id||null;
@@ -2836,11 +2830,13 @@ function applyBudgetSnapshot(s){
   deductions=structuredClone(s?.deductions||deductions);
 }
 function initConductionBudget(){
-  seedOctober2026Budget();
+  migrateCurrentConductionBudget();
   const current=currentBudgetPeriod();
-  const saved=getSaved().filter(x=>x.period===current).sort((a,b)=>new Date(b.updatedAt||0)-new Date(a.updatedAt||0));
-  if(saved.length){
-    applyBudgetSnapshot(saved[0]);
+  const saved=getSaved().filter(x=>x.period===current);
+  const vigente=saved.find(x=>String(x?.name||'').trim().toUpperCase()==='128 NOV 2026');
+  const selected=vigente||saved.sort((a,b)=>new Date(b.updatedAt||0)-new Date(a.updatedAt||0))[0];
+  if(selected){
+    applyBudgetSnapshot(selected);
     return;
   }
   currentId=null;
