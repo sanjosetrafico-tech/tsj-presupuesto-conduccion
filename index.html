@@ -2966,8 +2966,9 @@ function renderInspectorCalendar(){
   ['Mañana','Tarde','Ver Plan Diario'].forEach(shift=>{
     const isPlan=shift==='Ver Plan Diario';
     const cls=shift==='Mañana'?'tm':shift==='Tarde'?'tt':'plan';
-    const code=shift==='Mañana'?'TM':shift==='Tarde'?'TT':'';
-    out+=`<div class="inspector-shift-label ${cls}">${code?'<strong>'+code+'</strong>':''}<small>${shift}</small></div>`;
+    const code=shift==='Mañana'?'TM':shift==='Tarde'?'TT':'PLAN';
+    const sub=shift==='Ver Plan Diario'?'Diario':shift;
+    out+=`<div class="inspector-shift-label ${cls}"><strong>${code}</strong><small>${sub}</small></div>`;
     dates.forEach(date=>{
       const arr=inspectorTasks.filter(t=>t.date===date&&t.shift===shift);
       out+='<div class="inspector-day-cell '+cls+'">'+arr.map(t=>`<div class="inspector-task-card ${t.priority}">
