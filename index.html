@@ -822,6 +822,27 @@ h1{
 .plan-daily-last small{margin-top:8px;color:#d9d4d8;font-size:10px}
 .plan-daily-note{border:1px solid #ead59e;background:#fff9e8;color:#8a6510;border-radius:10px;padding:9px 11px;font-size:10.5px;font-weight:800}
 .plan-daily-loading{padding:32px;text-align:center;color:var(--muted);font-size:12px}
+@media(min-width:1051px){
+  #tab-plan-diario .plan-daily{gap:16px}
+  #tab-plan-diario .plan-daily-overview{grid-template-columns:285px minmax(0,1fr);gap:18px;align-items:stretch}
+  #tab-plan-diario .plan-daily-gauge-card{min-height:256px;padding:20px 16px}
+  #tab-plan-diario .plan-daily-gauge{width:175px;height:175px}
+  #tab-plan-diario .plan-daily-gauge:after{inset:20px}
+  #tab-plan-diario .plan-daily-gauge-content strong{font-size:36px}
+  #tab-plan-diario .plan-daily-gauge-content span{font-size:12px}
+  #tab-plan-diario .plan-daily-gauge-label{font-size:12px;margin-top:12px}
+  #tab-plan-diario .plan-daily-main{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;grid-auto-rows:1fr}
+  #tab-plan-diario .plan-daily-stat{min-height:121px;padding:20px 18px;border-radius:16px}
+  #tab-plan-diario .plan-daily-stat span{font-size:11px}
+  #tab-plan-diario .plan-daily-stat strong{font-size:29px;margin-top:10px}
+  #tab-plan-diario .plan-daily-detail{grid-template-columns:1fr 1fr;gap:16px}
+  #tab-plan-diario .plan-daily-detail>.panel,
+  #tab-plan-diario .plan-daily-last{min-height:198px}
+  #tab-plan-diario .plan-daily-dotacion{gap:16px;margin-top:14px}
+  #tab-plan-diario .plan-daily-dotacion .plan-daily-stat{min-height:102px;padding:18px}
+  #tab-plan-diario .plan-daily-last{padding:22px}
+  #tab-plan-diario .plan-daily-last strong{font-size:36px}
+}
 @media(max-width:1050px){.plan-daily-overview{grid-template-columns:1fr}.plan-daily-main{grid-template-columns:repeat(2,1fr)}.plan-daily-detail{grid-template-columns:1fr}}
 @media(max-width:600px){.plan-daily-main,.plan-daily-dotacion{grid-template-columns:1fr}}
 
@@ -1747,8 +1768,8 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
 
       <section class="inspector-kpis">
         <div class="inspector-kpi blue"><span>Archivos analizados</span><strong id="inspFilesKpi">0</strong><small id="inspFileNames">Sin archivos importados</small></div>
-        <div class="inspector-kpi green"><span>Líneas con prioridad</span><strong id="inspLinesKpi">0</strong><small>Con hallazgos para seguimiento</small></div>
-        <div class="inspector-kpi orange"><span>Conductores a seguir</span><strong id="inspDriversKpi">0</strong><small>Legajos detectados</small></div>
+        <div class="inspector-kpi green"><span>Líneas &lt; 90%</span><strong id="inspLinesKpi">0</strong><small>Por debajo de la meta de cumplimiento</small></div>
+        <div class="inspector-kpi orange"><span>Conductores a seguir</span><strong id="inspDriversKpi">0</strong><small>3 o más días consecutivos</small></div>
         <div class="inspector-kpi purple"><span>Tareas sugeridas</span><strong id="inspTasksKpi">0</strong><small>Según recurrencia e incumplimientos</small></div>
       </section>
 
@@ -1762,7 +1783,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           </div>
           <div class="inspector-table-wrap">
             <table class="inspector-priority-table">
-              <thead><tr><th>Prioridad</th><th>Línea</th><th>Legajo</th><th>Hallazgo</th><th>Recurrencia</th><th>Tarea sugerida</th></tr></thead>
+              <thead><tr><th>Prioridad</th><th>Línea</th><th>Legajo</th><th>Hallazgo</th><th>Cumplimiento / recurrencia</th><th>Tarea sugerida</th></tr></thead>
               <tbody id="inspectorFindingsBody"><tr><td colspan="6" class="empty-cell">Importá uno o varios Excel para generar el análisis.</td></tr></tbody>
             </table>
           </div>
@@ -2379,58 +2400,159 @@ async function handleInspectorFiles(files){
   renderInspectorAnalysis();
   document.getElementById('inspectorSaveState').textContent='Análisis actualizado · calendario sin guardar';
 }
+function inspParseNumber(v){
+  const m=String(v??'').replace(/\s/g,'').replace(',','.').match(/-?\d+(?:\.\d+)?/);
+  return m?Number(m[0]):NaN;
+}
+function inspCompliancePercent(v){
+  const n=inspParseNumber(v);
+  if(!Number.isFinite(n))return null;
+  const pct=(String(v??'').includes('%')||Math.abs(n)>1)?n:n*100;
+  return Math.max(0,Math.min(100,pct));
+}
+function inspParseDate(v){
+  if(v instanceof Date&&!isNaN(v))return inspISO(v);
+  const s=String(v??'').trim();
+  if(!s)return '';
+  let m=s.match(/\b(20\d{2})[-\/.](\d{1,2})[-\/.](\d{1,2})\b/);
+  if(m)return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+  m=s.match(/\b(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})\b/);
+  if(m){
+    let y=Number(m[3]);if(y<100)y+=2000;
+    return String(y)+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+  }
+  return '';
+}
+function inspRecordDate(rec){
+  const hs=rec.headers||[];
+  const di=inspFindHeaderIndex(hs,[/^fecha$/,/fecha/,/^dia$/,/día/]);
+  return inspParseDate(di>=0?rec.row[di]:'')||inspParseDate(rec.fileName)||inspParseDate(rec.sheetName);
+}
+function inspConsecutiveDays(dateSet){
+  const days=[...dateSet].filter(Boolean).map(x=>new Date(x+'T12:00:00')).filter(d=>!isNaN(d)).sort((a,b)=>a-b);
+  if(!days.length)return 0;
+  let best=1,run=1;
+  for(let i=1;i<days.length;i++){
+    const diff=Math.round((days[i]-days[i-1])/86400000);
+    if(diff===0)continue;
+    run=diff===1?run+1:1;
+    if(run>best)best=run;
+  }
+  return best;
+}
 function analyzeInspectorRows(rows){
-  const bucket=new Map();
+  const lineStats=new Map();
+  const driverStats=new Map();
+
   rows.forEach(rec=>{
     const hs=rec.headers||[];
     const li=inspFindHeaderIndex(hs,[/linea/,/ramal/]);
     const gi=inspFindHeaderIndex(hs,[/legajo/,/nro.*emple/,/empleado/]);
     const ti=inspFindHeaderIndex(hs,[/turno/,/franja/,/hora/]);
-    const si=inspFindHeaderIndex(hs,[/cumpl/,/estado/,/resultado/,/observ/]);
+    const ci=inspFindHeaderIndex(hs,[/porcent.*cumpl/,/%.*cumpl/,/cumpl.*%/,/^cumplimiento$/,/cumplimiento/]);
+    const si=inspFindHeaderIndex(hs,[/estado/,/resultado/,/observ/,/^cumplimiento$/]);
+    const pi=inspFindHeaderIndex(hs,[/program/,/planif/,/previst/,/esperad/,/teoric/]);
+    const ei=inspFindHeaderIndex(hs,[/ejecut/,/realiz/,/cumplid/,/efectiv/]);
     const di=inspFindHeaderIndex(hs,[/difer/,/atras/,/adelant/,/desvio/,/minuto/]);
+
     const line=inspCanonicalLine(li>=0?rec.row[li]:'');
     const legajo=gi>=0?String(rec.row[gi]||'').replace(/\.0$/,'').trim():'';
     const shift=ti>=0?inspShift(rec.row[ti]):'';
     const status=si>=0?String(rec.row[si]||''):'';
-    const diffRaw=di>=0?String(rec.row[di]||''):'';
     const all=inspNorm(rec.row.join(' | '));
-    const diffNum=Number(String(diffRaw).replace(',','.').match(/-?\d+(\.\d+)?/)?.[0]||0);
-    let task='Cumplimiento de horario',hallazgo='Incumplimiento de horario';
-    if(/porton/.test(all)){task='Cumplimiento de portón';hallazgo='Incumplimiento de portón'}
-    else if(/cabecera/.test(all)){task=/cumpl/.test(all)?'Cumplimiento de cabecera':'Control de cabecera';hallazgo='Desvío o incumplimiento de cabecera'}
-    else if(/poste|parada/.test(all)){task='Control de poste / parada';hallazgo='Incumplimiento en poste / parada'}
-    else if(/recorrido|desvio/.test(all)){task='Control de recorrido';hallazgo='Desvío o bajo cumplimiento de recorrido'}
-    else if(/salida|retome/.test(all)){task='Control de salida / retome';hallazgo='Incumplimiento de salida / retome'}
-    else if(/atras/.test(all)||diffNum>0){task='Cumplimiento de horario';hallazgo='Atrasos en recorrido'}
-    else if(/adelant/.test(all)||diffNum<0){task='Cumplimiento de horario';hallazgo='Adelantos en recorrido'}
-    const statusNorm=inspNorm(status);
-    const issue=/incumpl|no cumple|fuera|atras|adelant|desvio|observ|irregular|error/.test(all)||Math.abs(diffNum)>=3;
-    if(!issue)return;
-    const key=[line||'—',legajo||'—',task].join('|');
-    const prev=bucket.get(key)||{line:line||'—',legajo:legajo||'—',shift,task,hallazgo,count:0,diffTotal:0};
-    prev.count++;prev.diffTotal+=Math.abs(diffNum)||0;if(!prev.shift&&shift)prev.shift=shift;
-    bucket.set(key,prev);
+    const diffNum=di>=0?inspParseNumber(rec.row[di]):NaN;
+
+    let pct=ci>=0?inspCompliancePercent(rec.row[ci]):null;
+    if(pct===null&&pi>=0&&ei>=0){
+      const planned=inspParseNumber(rec.row[pi]),executed=inspParseNumber(rec.row[ei]);
+      if(Number.isFinite(planned)&&planned>0&&Number.isFinite(executed))pct=Math.max(0,Math.min(100,executed/planned*100));
+    }
+
+    const explicitIssue=/incumpl|no cumple|fuera|atras|adelant|desvio|irregular|error/.test(all);
+    const explicitOk=!explicitIssue&&/(^|\W)(cumple|ok|correcto|conforme)(\W|$)/.test(inspNorm(status));
+    if(pct===null){
+      if(explicitIssue)pct=0;
+      else if(explicitOk)pct=100;
+      else if(Number.isFinite(diffNum))pct=Math.abs(diffNum)>=3?0:100;
+    }
+
+    if(line&&pct!==null){
+      const ls=lineStats.get(line)||{line,sum:0,count:0,shifts:new Map()};
+      ls.sum+=pct;ls.count++;
+      if(shift)ls.shifts.set(shift,(ls.shifts.get(shift)||0)+1);
+      lineStats.set(line,ls);
+    }
+
+    const issue=(pct!==null&&pct<90)||explicitIssue||(Number.isFinite(diffNum)&&Math.abs(diffNum)>=3);
+    if(legajo&&issue){
+      const date=inspRecordDate(rec);
+      const ds=driverStats.get(legajo)||{legajo,dates:new Set(),lines:new Map(),shifts:new Map()};
+      if(date)ds.dates.add(date);
+      if(line)ds.lines.set(line,(ds.lines.get(line)||0)+1);
+      if(shift)ds.shifts.set(shift,(ds.shifts.get(shift)||0)+1);
+      driverStats.set(legajo,ds);
+    }
   });
-  const raw=[...bucket.values()].map(x=>{
-    let priority=x.count>=3?'high':x.count>=2?'medium':'normal';
-    if(x.legajo!=='—'&&x.count>=3){x.task='Seguimiento de conductor';x.hallazgo='Recurrencia de incumplimientos'}
-    return {...x,priority};
+
+  const findings=[];
+
+  lineStats.forEach(ls=>{
+    if(!ls.count)return;
+    const compliance=ls.sum/ls.count;
+    if(compliance>=90)return;
+    const shift=[...ls.shifts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+    findings.push({
+      kind:'line',
+      line:ls.line,
+      legajo:'—',
+      shift,
+      task:'Cumplimiento de horario',
+      hallazgo:'Línea por debajo del 90% de cumplimiento',
+      metric:compliance.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%',
+      compliance,
+      count:ls.count,
+      priority:compliance<80?'high':'medium'
+    });
   });
-  return raw.sort((a,b)=>((({high:3,medium:2,normal:1}[b.priority])-({high:3,medium:2,normal:1}[a.priority]))||(b.count-a.count))).slice(0,40);
+
+  driverStats.forEach(ds=>{
+    const streak=inspConsecutiveDays(ds.dates);
+    if(streak<3)return;
+    const line=[...ds.lines.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
+    const shift=[...ds.shifts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+    findings.push({
+      kind:'driver',
+      line,
+      legajo:ds.legajo,
+      shift,
+      task:'Seguimiento de conductor',
+      hallazgo:'Incumplimiento reiterado del conductor',
+      metric:streak+' días seguidos',
+      streak,
+      count:streak,
+      priority:'high'
+    });
+  });
+
+  return findings.sort((a,b)=>{
+    if(a.kind!==b.kind)return a.kind==='driver'?-1:1;
+    if(a.kind==='driver')return (b.streak||0)-(a.streak||0);
+    return (a.compliance??100)-(b.compliance??100);
+  }).slice(0,40);
 }
 function renderInspectorAnalysis(){
   const files=document.getElementById('inspFilesKpi'),lines=document.getElementById('inspLinesKpi'),drivers=document.getElementById('inspDriversKpi'),tasks=document.getElementById('inspTasksKpi');
   if(files)files.textContent=inspectorImportedFiles.length;
-  if(lines)lines.textContent=new Set(inspectorFindings.map(x=>x.line).filter(x=>x&&x!=='—')).size;
-  if(drivers)drivers.textContent=new Set(inspectorFindings.map(x=>x.legajo).filter(x=>x&&x!=='—')).size;
+  if(lines)lines.textContent=inspectorFindings.filter(x=>x.kind==='line').length;
+  if(drivers)drivers.textContent=inspectorFindings.filter(x=>x.kind==='driver').length;
   if(tasks)tasks.textContent=inspectorFindings.length;
   const fn=document.getElementById('inspFileNames');if(fn)fn.textContent=inspectorImportedFiles.length?inspectorImportedFiles.join(' · '):'Sin archivos importados';
   const body=document.getElementById('inspectorFindingsBody');
   if(body)body.innerHTML=inspectorFindings.length?inspectorFindings.map(x=>`<tr>
     <td><span class="priority-pill ${x.priority}">${inspPriorityLabel(x.priority)}</span></td>
     <td><b>${inspEsc(x.line)}</b></td><td>${inspEsc(x.legajo)}</td><td>${inspEsc(x.hallazgo)}</td>
-    <td class="num">${x.count}</td><td>${inspEsc(x.task)}</td>
-  </tr>`).join(''):'<tr><td colspan="6" class="empty-cell">No se detectaron incumplimientos en los archivos importados.</td></tr>';
+    <td class="num">${inspEsc(x.metric||x.count)}</td><td>${inspEsc(x.task)}</td>
+  </tr>`).join(''):'<tr><td colspan="6" class="empty-cell">Sin líneas debajo de 90% ni conductores con 3 días consecutivos de incumplimiento.</td></tr>';
 }
 async function initInspector(){
   if(!document.getElementById('inspectorWeek'))return;
