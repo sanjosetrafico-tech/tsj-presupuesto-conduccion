@@ -1337,7 +1337,7 @@ h1{
 .inspector-task-types-list{display:grid;gap:5px}
 .inspector-task-type{font-size:10.5px;padding:5px 0;border-bottom:1px solid #eee;color:#403a40}
 .inspector-task-type:before{content:"✓";font-weight:900;margin-right:7px;color:#5b4d82}
-.inspector-work-grid{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
+.inspector-work-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(250px,1fr);gap:14px;align-items:start}
 .inspector-calendar-panel{min-width:0}
 .inspector-priority-legend{display:flex;gap:12px;font-size:9.5px;color:var(--muted);font-weight:800}
 .inspector-priority-legend span{display:flex;align-items:center;gap:4px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%}.dot.high{background:#e34c4c}.dot.medium{background:#f0a13a}.dot.normal{background:#8c78cf}
@@ -1793,7 +1793,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
             <input id="inspectorWeek" type="date" aria-label="Inicio de semana">
           </label>
           <input id="inspectorFileInput" type="file" accept=".xlsx,.xls,.csv" multiple hidden onchange="handleInspectorFiles(this.files)">
-          <button class="btn soft" type="button" onclick="document.getElementById('inspectorFileInput').click()">Importar Excel</button>
+          <button class="btn soft" type="button" onclick="const input=document.getElementById('inspectorFileInput');input.value='';input.click()">Importar Excel</button>
           <button class="btn primary" type="button" onclick="generateInspectorCalendar()">Generar calendario</button>
           <button class="btn ghost" type="button" onclick="saveInspectorCalendar()">Guardar semana</button>
           <button class="btn pdf" type="button" onclick="exportInspectorPDF()">Exportar PDF</button>
@@ -2428,16 +2428,34 @@ async function handleInspectorFiles(files){
   if(!window.XLSX){alert('No se pudo cargar el lector de Excel.');return}
   inspectorImportedFiles=Array.from(files).map(f=>f.name);
   inspectorImportedRows=[];
+  let importErrors=[];
   for(const file of Array.from(files)){
     try{
-      const data=await file.arrayBuffer();
+      const data=file.arrayBuffer
+        ? await file.arrayBuffer()
+        : await new Promise((resolve,reject)=>{
+            const reader=new FileReader();
+            reader.onload=()=>resolve(reader.result);
+            reader.onerror=()=>reject(reader.error||new Error('No se pudo leer el archivo'));
+            reader.readAsArrayBuffer(file);
+          });
       const wb=XLSX.read(data,{type:'array'});
-      inspectorImportedRows.push(...inspReadWorkbookRows(wb,file.name));
-    }catch(e){}
+      const rows=inspReadWorkbookRows(wb,file.name);
+      inspectorImportedRows.push(...rows);
+      if(!rows.length)importErrors.push(file.name+': sin filas reconocidas');
+    }catch(e){
+      importErrors.push(file.name+': '+(e?.message||'error de lectura'));
+    }
   }
   inspectorFindings=analyzeInspectorRows(inspectorImportedRows);
   renderInspectorAnalysis();
-  document.getElementById('inspectorSaveState').textContent='Análisis actualizado · calendario sin guardar';
+  const state=document.getElementById('inspectorSaveState');
+  if(state)state.textContent=importErrors.length
+    ? 'Importación con observaciones · '+inspectorImportedRows.length+' registros leídos'
+    : 'Análisis actualizado · '+inspectorImportedRows.length+' registros leídos · calendario sin guardar';
+  const input=document.getElementById('inspectorFileInput');
+  if(input)input.value='';
+  if(!inspectorImportedRows.length&&importErrors.length)alert('No se pudieron leer datos del Excel. '+importErrors.join(' | '));
 }
 function inspParseNumber(v){
   const m=String(v??'').replace(/\s/g,'').replace(',','.').match(/-?\d+(?:\.\d+)?/);
