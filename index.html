@@ -2513,7 +2513,17 @@ function inspEstado(v){
   return '';
 }
 function inspPct(n,total){
-  return total>0?(n/total*100):0;
+  return total>0?(Number(n||0)/Number(total)*100):0;
+}
+function inspLinePct(horario,atraso,adelanto){
+  const h=Number(horario||0),a=Number(atraso||0),d=Number(adelanto||0);
+  const total=h+a+d;
+  return {
+    total,
+    horario:inspPct(h,total),
+    atraso:inspPct(a,total),
+    adelanto:inspPct(d,total)
+  };
 }
 function analyzeInspectorRows(rows){
   const lineStats=new Map();
@@ -2555,9 +2565,10 @@ function analyzeInspectorRows(rows){
 
   lineStats.forEach(ls=>{
     if(!ls.total)return;
-    const horario=inspPct(ls.horario,ls.total);
-    const adelanto=inspPct(ls.adelanto,ls.total);
-    const atraso=inspPct(ls.atraso,ls.total);
+    const calc=inspLinePct(ls.horario,ls.atraso,ls.adelanto);
+    const horario=calc.horario;
+    const adelanto=calc.adelanto;
+    const atraso=calc.atraso;
     if(horario>=90)return;
 
     const focus=atraso>=adelanto?'Atrasos':'Adelantos';
@@ -2574,7 +2585,7 @@ function analyzeInspectorRows(rows){
       pctAdelanto:adelanto,
       pctAtraso:atraso,
       pctHorario:horario,
-      metric:horario.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%',
+      metric:horario.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%',
       days:ls.days.size,
       count:ls.total,
       priority:horario<80?'high':'medium'
@@ -2622,7 +2633,7 @@ function renderInspectorAnalysis(){
   const body=document.getElementById('inspectorFindingsBody');
   if(!body)return;
 
-  const pct=v=>v===null||v===undefined?'—':v.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+  const pct=v=>v===null||v===undefined?'—':v.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
 
   body.innerHTML=inspectorFindings.length?inspectorFindings.map(x=>`<tr>
     <td><span class="priority-pill ${x.priority}">${inspPriorityLabel(x.priority)}</span></td>
