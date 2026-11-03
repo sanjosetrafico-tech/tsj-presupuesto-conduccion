@@ -1742,7 +1742,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
       </div>
 
       <div class="inspector-storage-note" id="inspectorStorageNote">
-        Calendarios compartidos en Supabase. Las semanas guardadas pueden abrirse y editarse desde cualquier equipo con acceso.
+        Calendarios semanales editables y exportables a PDF.
       </div>
 
       <section class="inspector-kpis">
@@ -2285,134 +2285,6 @@ async function loadPlanDaily(force=false){
 }
 
 
-const TSJ_SUPABASE_URL='https://xmosbwnredpzsrziqeux.supabase.co';
-const TSJ_SUPABASE_KEY='sb_publishable_M_X1Lv-0SQuzXqd3-Seb7w_IXqbzsGK';
-const TSJ_AUTH_USERS=['tr01','tr02','tr03'];
-const TSJ_AUTH_ENFORCED=true;
-const TSJ_SESSION_KEY='tsj_dashboard_session_v1';
-let tsjCurrentUser='';
-let tsjSessionToken='';
-
-async function tsjRpc(name,args={}){
-  const res=await fetch(TSJ_SUPABASE_URL+'/rest/v1/rpc/'+encodeURIComponent(name),{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'apikey':TSJ_SUPABASE_KEY,
-      'Authorization':'Bearer '+TSJ_SUPABASE_KEY
-    },
-    body:JSON.stringify(args)
-  });
-  const raw=await res.text();
-  let data=null;
-  try{data=raw?JSON.parse(raw):null}catch(e){data=raw}
-  if(!res.ok){
-    const msg=(data&&typeof data==='object'&&(data.message||data.error))||('HTTP '+res.status);
-    throw new Error(msg);
-  }
-  return data;
-}
-function tsjSetLoginError(msg){
-  const e=document.getElementById('tsjLoginError');if(e)e.textContent=msg||'';
-}
-function tsjHexBytes(hex){
-  const clean=String(hex||'').trim();
-  const out=new Uint8Array(Math.floor(clean.length/2));
-  for(let i=0;i<out.length;i++)out[i]=parseInt(clean.slice(i*2,i*2+2),16);
-  return out;
-}
-async function tsjDeriveProof(secret,saltHex,iterations){
-  const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveBits']);
-  const bits=await crypto.subtle.deriveBits(
-    {name:'PBKDF2',salt:tsjHexBytes(saltHex),iterations:Number(iterations)||210000,hash:'SHA-256'},
-    material,
-    256
-  );
-  return Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-function tsjReadSession(){
-  try{return JSON.parse(localStorage.getItem(TSJ_SESSION_KEY)||'null')}catch(e){return null}
-}
-function tsjWriteSession(v){
-  if(v)localStorage.setItem(TSJ_SESSION_KEY,JSON.stringify(v));
-  else localStorage.removeItem(TSJ_SESSION_KEY);
-}
-function tsjUnlock(username,token){
-  if(!TSJ_AUTH_USERS.includes(username)||!token)return false;
-  tsjCurrentUser=username;
-  tsjSessionToken=token;
-  
-  const bar=document.getElementById('tsjAuthUserBar'),name=document.getElementById('tsjAuthUsername');
-  if(bar)bar.hidden=false;
-  if(name)name.textContent=username;
-  tsjSetLoginError('');
-  restoreServiceTab();
-  return true;
-}
-async function initTsjAuth(){
-  
-  const bar=document.getElementById('tsjAuthUserBar');if(bar)bar.hidden=true;
-  const saved=tsjReadSession();
-  if(!saved?.token){
-    setTimeout(()=>document.getElementById('tsjLoginUser')?.focus(),20);
-    return;
-  }
-  try{
-    const data=await tsjRpc('inspector_validate_session',{p_token:saved.token});
-    const row=Array.isArray(data)?data[0]:null;
-    if(!row?.valid||!TSJ_AUTH_USERS.includes(row.username))throw new Error('invalid_session');
-    tsjWriteSession({token:saved.token,username:row.username,expiresAt:row.expires_at});
-    tsjUnlock(row.username,saved.token);
-  }catch(e){
-    tsjWriteSession(null);
-    tsjCurrentUser='';
-    tsjSessionToken='';
-    
-    setTimeout(()=>document.getElementById('tsjLoginUser')?.focus(),20);
-  }
-}
-async function tsjLogin(){
-  const username=String(document.getElementById('tsjLoginUser')?.value||'').trim().toLowerCase();
-  const secret=String(document.getElementById('tsjLoginPassword')?.value||'');
-  const btn=document.getElementById('tsjLoginButton');
-  tsjSetLoginError('');
-  if(!TSJ_AUTH_USERS.includes(username)){tsjSetLoginError('Usuario no autorizado.');return}
-  if(!secret){tsjSetLoginError('Ingresá la contraseña.');return}
-  if(btn){btn.disabled=true;btn.textContent='Ingresando…'}
-  try{
-    const params=await tsjRpc('inspector_auth_params',{p_username:username});
-    const auth=Array.isArray(params)?params[0]:null;
-    if(!auth)throw new Error('invalid');
-    const proof=await tsjDeriveProof(secret,auth.password_salt,auth.password_iterations);
-    const data=await tsjRpc('inspector_login_proof',{p_user:username,p_proof:proof});
-    const row=Array.isArray(data)?data[0]:null;
-    if(!row?.session_token)throw new Error('invalid');
-    tsjWriteSession({token:row.session_token,username:row.login_user,expiresAt:row.expires_at});
-    document.getElementById('tsjLoginPassword').value='';
-    tsjUnlock(row.login_user,row.session_token);
-  }catch(e){
-    tsjSetLoginError('Usuario o contraseña incorrectos.');
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent='Ingresar'}
-  }
-}
-async function tsjLogout(){
-  const token=tsjSessionToken||tsjReadSession()?.token||'';
-  try{
-    if(token){
-      await tsjRpc('inspector_logout',{p_token:token});
-    }
-  }catch(e){}
-  tsjWriteSession(null);
-  tsjCurrentUser='';
-  tsjSessionToken='';
-  const bar=document.getElementById('tsjAuthUserBar');if(bar)bar.hidden=true;
-  
-  document.getElementById('tsjLoginUser').value='';
-  document.getElementById('tsjLoginPassword').value='';
-  setTimeout(()=>document.getElementById('tsjLoginUser')?.focus(),20);
-}
-
 const INSPECTOR_KEY='tsj_inspector_calendars_v1';
 const INSPECTOR_TASKS=[
   'Seguimiento de conductor',
@@ -2544,7 +2416,7 @@ function analyzeInspectorRows(rows){
     if(x.legajo!=='—'&&x.count>=3){x.task='Seguimiento de conductor';x.hallazgo='Recurrencia de incumplimientos'}
     return {...x,priority};
   });
-  return raw.sort((a,b)=>({high:3,medium:2,normal:1}[b.priority]-({high:3,medium:2,normal:1}[a.priority])||b.count-a.count).slice(0,40);
+  return raw.sort((a,b)=>((({high:3,medium:2,normal:1}[b.priority])-({high:3,medium:2,normal:1}[a.priority]))||(b.count-a.count))).slice(0,40);
 }
 function renderInspectorAnalysis(){
   const files=document.getElementById('inspFilesKpi'),lines=document.getElementById('inspLinesKpi'),drivers=document.getElementById('inspDriversKpi'),tasks=document.getElementById('inspTasksKpi');
@@ -2664,80 +2536,50 @@ function deleteInspectorTask(id){
   inspectorTasks=inspectorTasks.filter(x=>x.id!==id);renderInspectorCalendar();
   document.getElementById('inspectorSaveState').textContent='Cambios sin guardar';
 }
-async function saveInspectorCalendar(){
+function saveInspectorCalendar(){
   const week=document.getElementById('inspectorWeek').value;
-  const state=document.getElementById('inspectorSaveState');
-  if(state)state.textContent='Guardando…';
-  try{
-    const data=await tsjRpc('inspector_save_calendar',{
-      p_token:tsjSessionToken,
-      p_week_start:week,
-      p_tasks:inspectorTasks,
-      p_findings:inspectorFindings,
-      p_source_files:inspectorImportedFiles
-    });
-    const row=Array.isArray(data)?data[0]:null;
-    if(!row)throw new Error('save_failed');
-    if(state)state.textContent='Guardado por '+(row.updated_username||tsjCurrentUser)+' · '+new Date(row.updated_at).toLocaleString('es-AR');
-    await renderInspectorSaved();
-  }catch(e){
-    if(state)state.textContent='Error al guardar';
-    alert('No se pudo guardar el calendario compartido.');
-  }
+  const all=inspGetStore();
+  all[week]={week,tasks:inspectorTasks,findings:inspectorFindings,files:inspectorImportedFiles,updatedAt:new Date().toISOString(),updatedBy:'local'};
+  inspSetStore(all);
+  renderInspectorSaved();
+  document.getElementById('inspectorSaveState').textContent='Guardado '+new Date().toLocaleString('es-AR');
 }
-async function loadInspectorWeek(force=true){
+function loadInspectorWeek(force=true){
   const week=document.getElementById('inspectorWeek')?.value;if(!week)return;
-  const state=document.getElementById('inspectorSaveState');
-  try{
-    const data=await tsjRpc('inspector_get_calendar',{p_token:tsjSessionToken,p_week_start:week});
-    const rec=Array.isArray(data)?data[0]:null;
-    if(rec){
-      inspectorTasks=Array.isArray(rec.tasks)?rec.tasks:[];
-      inspectorFindings=Array.isArray(rec.findings)?rec.findings:[];
-      inspectorImportedFiles=Array.isArray(rec.source_files)?rec.source_files:[];
-      if(state)state.textContent='Última modificación: '+(rec.updated_username||'—')+' · '+new Date(rec.updated_at).toLocaleString('es-AR');
-    }else if(force||inspectorTasks.length===0){
-      inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
-      if(state)state.textContent='Semana nueva · sin guardar';
-    }
-  }catch(e){
-    if(state)state.textContent='Error de conexión';
+  const rec=inspGetStore()[week];
+  if(rec){
+    inspectorTasks=Array.isArray(rec.tasks)?rec.tasks:[];
+    inspectorFindings=Array.isArray(rec.findings)?rec.findings:[];
+    inspectorImportedFiles=Array.isArray(rec.files)?rec.files:[];
+    document.getElementById('inspectorSaveState').textContent='Guardado '+new Date(rec.updatedAt).toLocaleString('es-AR');
+  }else if(force||inspectorTasks.length===0){
+    inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
+    document.getElementById('inspectorSaveState').textContent='Semana nueva · sin guardar';
   }
-  renderInspectorAnalysis();renderInspectorCalendar();await renderInspectorSaved();clearInspectorEditor();
+  renderInspectorAnalysis();
+  renderInspectorCalendar();
+  renderInspectorSaved();
+  clearInspectorEditor();
 }
-async function openInspectorSaved(week){
+function openInspectorSaved(week){
   document.getElementById('inspectorWeek').value=week;
-  await loadInspectorWeek(true);
+  loadInspectorWeek(true);
 }
-async function deleteInspectorSaved(week){
+function deleteInspectorSaved(week){
   if(!confirm('¿Eliminar el calendario guardado de esta semana?'))return;
-  try{
-    await tsjRpc('inspector_delete_calendar',{p_token:tsjSessionToken,p_week_start:week});
-    if(document.getElementById('inspectorWeek')?.value===week){
-      inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
-      renderInspectorAnalysis();renderInspectorCalendar();
-      document.getElementById('inspectorSaveState').textContent='Semana nueva · sin guardar';
-    }
-    await renderInspectorSaved();
-  }catch(e){alert('No se pudo eliminar el calendario.')}
+  const all=inspGetStore();
+  delete all[week];
+  inspSetStore(all);
+  renderInspectorSaved();
 }
-async function renderInspectorSaved(){
+function renderInspectorSaved(){
   const box=document.getElementById('inspectorSavedList');if(!box)return;
-  try{
-    const data=await tsjRpc('inspector_list_calendars',{p_token:tsjSessionToken});
-    const rows=Array.isArray(data)?data:[];
-    box.innerHTML=rows.length?rows.map(r=>`<div class="inspector-saved-item"><div><b>Semana ${inspDateLabel(r.week_start)} · ${Array.isArray(r.tasks)?r.tasks.length:0} tareas</b><span>Última modificación: ${inspEsc(r.updated_username||'—')} · ${new Date(r.updated_at).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="openInspectorSaved('${r.week_start}')">Abrir</button><button class="btn pdf" onclick="exportInspectorSavedPDF('${r.week_start}')">PDF</button><button class="btn danger" onclick="deleteInspectorSaved('${r.week_start}')">Eliminar</button></div></div>`).join(''):'<div class="footer-note">Todavía no hay calendarios guardados.</div>';
-  }catch(e){
-    box.innerHTML='<div class="footer-note">No se pudieron cargar los calendarios compartidos.</div>';
-  }
+  const all=inspGetStore(),keys=Object.keys(all).sort().reverse();
+  box.innerHTML=keys.length?keys.map(k=>{const r=all[k];return `<div class="inspector-saved-item"><div><b>Semana ${inspDateLabel(k)} · ${(r.tasks||[]).length} tareas</b><span>Última modificación: ${new Date(r.updatedAt).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="openInspectorSaved('${k}')">Abrir</button><button class="btn pdf" onclick="exportInspectorSavedPDF('${k}')">PDF</button><button class="btn danger" onclick="deleteInspectorSaved('${k}')">Eliminar</button></div></div>`}).join(''):'<div class="footer-note">Todavía no hay calendarios guardados.</div>';
 }
-async function exportInspectorSavedPDF(week){
-  try{
-    const data=await tsjRpc('inspector_get_calendar',{p_token:tsjSessionToken,p_week_start:week});
-    const rec=Array.isArray(data)?data[0]:null;
-    if(!rec)throw new Error('not_found');
-    exportInspectorPDF({week:rec.week_start,tasks:rec.tasks||[]});
-  }catch(e){alert('No se pudo abrir el calendario para exportar.')}
+function exportInspectorSavedPDF(week){
+  const rec=inspGetStore()[week];if(!rec)return;
+  exportInspectorPDF(rec);
 }
 function exportInspectorPDF(record){
   if(!window.jspdf||!window.jspdf.jsPDF){alert('No se pudo cargar el generador de PDF.');return}
