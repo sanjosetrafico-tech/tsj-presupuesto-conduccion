@@ -2319,14 +2319,9 @@ async function getTsjSupabase(){
   if(tsjSupabase)return tsjSupabase;
   const mod=await import('https://esm.sh/@supabase/supabase-js@2.95.0');
   tsjSupabase=mod.createClient(TSJ_SUPABASE_URL,TSJ_SUPABASE_KEY,{
-    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+    auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
   });
   return tsjSupabase;
-}
-function tsjUsernameFromSession(session){
-  const email=String(session?.user?.email||'').toLowerCase();
-  const name=email.split('@')[0];
-  return TSJ_AUTH_USERS.includes(name)?name:'';
 }
 function tsjSetLoginError(msg){
   const e=document.getElementById('tsjLoginError');if(e)e.textContent=msg||'';
@@ -2353,66 +2348,83 @@ function tsjWriteSession(v){
   if(v)localStorage.setItem(TSJ_SESSION_KEY,JSON.stringify(v));
   else localStorage.removeItem(TSJ_SESSION_KEY);
 }
-function tsjUnlock(session){
-  const username=tsjUsernameFromSession(session);
-  if(!username)return false;
+function tsjUnlock(username,token){
+  if(!TSJ_AUTH_USERS.includes(username)||!token)return false;
   tsjCurrentUser=username;
+  tsjSessionToken=token;
   document.body.classList.remove('tsj-auth-locked');
-  const bar=document.getElementById('tsjAuthUserBar'),guest=document.getElementById('tsjAuthGuestBar'),name=document.getElementById('tsjAuthUsername');
-  if(bar)bar.hidden=false;if(guest)guest.hidden=true;if(name)name.textContent=username;
+  const bar=document.getElementById('tsjAuthUserBar'),name=document.getElementById('tsjAuthUsername');
+  if(bar)bar.hidden=false;
+  if(name)name.textContent=username;
   tsjSetLoginError('');
   restoreServiceTab();
   return true;
 }
 async function initTsjAuth(){
+  document.body.classList.add('tsj-auth-locked');
+  const bar=document.getElementById('tsjAuthUserBar');if(bar)bar.hidden=true;
+  const saved=tsjReadSession();
+  if(!saved?.token){
+    setTimeout(()=>document.getElementById('tsjLoginUser')?.focus(),20);
+    return;
+  }
   try{
     const sb=await getTsjSupabase();
-    const {data:{session}}=await sb.auth.getSession();
-    if(session&&tsjUnlock(session))return;
-    if(TSJ_AUTH_ENFORCED)document.body.classList.add('tsj-auth-locked');else document.body.classList.remove('tsj-auth-locked');
-    const bar=document.getElementById('tsjAuthUserBar'),guest=document.getElementById('tsjAuthGuestBar');
-    if(bar)bar.hidden=true;if(guest)guest.hidden=false;
-    restoreServiceTab();
+    const {data,error}=await sb.rpc('inspector_validate_session',{p_token:saved.token});
+    const row=Array.isArray(data)?data[0]:null;
+    if(error||!row?.valid||!TSJ_AUTH_USERS.includes(row.username))throw new Error('invalid_session');
+    tsjWriteSession({token:saved.token,username:row.username,expiresAt:row.expires_at});
+    tsjUnlock(row.username,saved.token);
   }catch(e){
-    if(TSJ_AUTH_ENFORCED)document.body.classList.add('tsj-auth-locked');else document.body.classList.remove('tsj-auth-locked');
-    tsjSetLoginError('No se pudo conectar con el servicio de acceso.');
-    restoreServiceTab();
+    tsjWriteSession(null);
+    tsjCurrentUser='';
+    tsjSessionToken='';
+    document.body.classList.add('tsj-auth-locked');
+    setTimeout(()=>document.getElementById('tsjLoginUser')?.focus(),20);
   }
-}
-function tsjOpenLogin(){
-  tsjSetLoginError('');
-  document.body.classList.add('tsj-auth-locked');
-  setTimeout(()=>document.getElementById('tsjLoginUser')?.focus(),20);
 }
 async function tsjLogin(){
   const username=String(document.getElementById('tsjLoginUser')?.value||'').trim().toLowerCase();
-  const password=String(document.getElementById('tsjLoginPassword')?.value||'');
+  const secret=String(document.getElementById('tsjLoginPassword')?.value||'');
   const btn=document.getElementById('tsjLoginButton');
   tsjSetLoginError('');
   if(!TSJ_AUTH_USERS.includes(username)){tsjSetLoginError('Usuario no autorizado.');return}
-  if(!password){tsjSetLoginError('Ingresá la contraseña.');return}
+  if(!secret){tsjSetLoginError('Ingresá la contraseña.');return}
   if(btn){btn.disabled=true;btn.textContent='Ingresando…'}
   try{
     const sb=await getTsjSupabase();
-    const {data,error}=await sb.auth.signInWithPassword({email:username+'@tsj.local',password});
-    if(error||!data.session||!tsjUnlock(data.session)){
-      tsjSetLoginError('Usuario o contraseña incorrectos.');
-      return;
-    }
-    if(document.getElementById('tsjLoginPassword'))document.getElementById('tsjLoginPassword').value='';
+    const {data:params,error:paramError}=await sb.rpc('inspector_auth_params',{p_username:username});
+    const auth=Array.isArray(params)?params[0]:null;
+    if(paramError||!auth)throw new Error('invalid');
+    const proof=await tsjDeriveProof(secret,auth.password_salt,auth.password_iterations);
+    const {data,error}=await sb.rpc('inspector_login_hash',{p_username:username,p_password_hash:proof});
+    const row=Array.isArray(data)?data[0]:null;
+    if(error||!row?.session_token)throw new Error('invalid');
+    tsjWriteSession({token:row.session_token,username:row.username,expiresAt:row.expires_at});
+    document.getElementById('tsjLoginPassword').value='';
+    tsjUnlock(row.username,row.session_token);
   }catch(e){
-    tsjSetLoginError('No se pudo iniciar sesión.');
+    tsjSetLoginError('Usuario o contraseña incorrectos.');
   }finally{
     if(btn){btn.disabled=false;btn.textContent='Ingresar'}
   }
 }
 async function tsjLogout(){
-  try{const sb=await getTsjSupabase();await sb.auth.signOut()}catch(e){}
+  const token=tsjSessionToken||tsjReadSession()?.token||'';
+  try{
+    if(token){
+      const sb=await getTsjSupabase();
+      await sb.rpc('inspector_logout',{p_token:token});
+    }
+  }catch(e){}
+  tsjWriteSession(null);
   tsjCurrentUser='';
-  if(TSJ_AUTH_ENFORCED)document.body.classList.add('tsj-auth-locked');else document.body.classList.remove('tsj-auth-locked');
-  const bar=document.getElementById('tsjAuthUserBar'),guest=document.getElementById('tsjAuthGuestBar');
-  if(bar)bar.hidden=true;if(guest)guest.hidden=false;
-  const u=document.getElementById('tsjLoginUser');if(u)u.focus();
+  tsjSessionToken='';
+  const bar=document.getElementById('tsjAuthUserBar');if(bar)bar.hidden=true;
+  document.body.classList.add('tsj-auth-locked');
+  document.getElementById('tsjLoginUser').value='';
+  document.getElementById('tsjLoginPassword').value='';
+  setTimeout(()=>document.getElementById('tsjLoginUser')?.focus(),20);
 }
 
 const INSPECTOR_KEY='tsj_inspector_calendars_v1';
