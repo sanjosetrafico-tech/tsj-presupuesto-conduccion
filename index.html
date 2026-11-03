@@ -1763,7 +1763,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
       </div>
 
       <div class="inspector-storage-note" id="inspectorStorageNote">
-        La base compartida en Supabase ya está preparada. Hasta completar el alta de usuarios, el calendario mantiene guardado local de respaldo.
+        Calendarios compartidos en Supabase. Las semanas guardadas pueden abrirse y editarse desde cualquier equipo con acceso.
       </div>
 
       <section class="inspector-kpis">
@@ -2681,53 +2681,32 @@ function deleteInspectorTask(id){
 async function saveInspectorCalendar(){
   const week=document.getElementById('inspectorWeek').value;
   const state=document.getElementById('inspectorSaveState');
-  if(!tsjCurrentUser){
-    const all=inspGetStore();
-    all[week]={week,tasks:inspectorTasks,findings:inspectorFindings,files:inspectorImportedFiles,updatedAt:new Date().toISOString(),updatedBy:'local'};
-    inspSetStore(all);await renderInspectorSaved();
-    if(state)state.textContent='Guardado local · sin sincronizar';
-    return;
-  }
   if(state)state.textContent='Guardando…';
   try{
     const sb=await getTsjSupabase();
-    const payload={
-      week_start:week,
-      tasks:inspectorTasks,
-      findings:inspectorFindings,
-      source_files:inspectorImportedFiles
-    };
-    const {data,error}=await sb.from('inspector_calendars').upsert(payload,{onConflict:'week_start'}).select('week_start,updated_at,updated_username').single();
-    if(error)throw error;
-    if(state)state.textContent='Guardado por '+(data.updated_username||tsjCurrentUser)+' · '+new Date(data.updated_at).toLocaleString('es-AR');
+    const {data,error}=await sb.rpc('inspector_save_calendar',{
+      p_token:tsjSessionToken,
+      p_week_start:week,
+      p_tasks:inspectorTasks,
+      p_findings:inspectorFindings,
+      p_source_files:inspectorImportedFiles
+    });
+    const row=Array.isArray(data)?data[0]:null;
+    if(error||!row)throw new Error('save_failed');
+    if(state)state.textContent='Guardado por '+(row.updated_username||tsjCurrentUser)+' · '+new Date(row.updated_at).toLocaleString('es-AR');
     await renderInspectorSaved();
   }catch(e){
     if(state)state.textContent='Error al guardar';
-    alert('No se pudo guardar el calendario compartido. '+(e?.message||''));
+    alert('No se pudo guardar el calendario compartido.');
   }
 }
 async function loadInspectorWeek(force=true){
   const week=document.getElementById('inspectorWeek')?.value;if(!week)return;
   const state=document.getElementById('inspectorSaveState');
-  if(!tsjCurrentUser){
-    const rec=inspGetStore()[week];
-    if(rec){
-      inspectorTasks=Array.isArray(rec.tasks)?rec.tasks:[];
-      inspectorFindings=Array.isArray(rec.findings)?rec.findings:[];
-      inspectorImportedFiles=Array.isArray(rec.files)?rec.files:[];
-      if(state)state.textContent='Guardado local · '+new Date(rec.updatedAt).toLocaleString('es-AR');
-    }else if(force||inspectorTasks.length===0){
-      inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
-      if(state)state.textContent='Semana nueva · sin guardar';
-    }
-    renderInspectorAnalysis();renderInspectorCalendar();await renderInspectorSaved();clearInspectorEditor();
-    return;
-  }
   try{
     const sb=await getTsjSupabase();
-    const {data:rec,error}=await sb.from('inspector_calendars')
-      .select('week_start,tasks,findings,source_files,updated_at,updated_username')
-      .eq('week_start',week).maybeSingle();
+    const {data,error}=await sb.rpc('inspector_get_calendar',{p_token:tsjSessionToken,p_week_start:week});
+    const rec=Array.isArray(data)?data[0]:null;
     if(error)throw error;
     if(rec){
       inspectorTasks=Array.isArray(rec.tasks)?rec.tasks:[];
@@ -2739,27 +2718,19 @@ async function loadInspectorWeek(force=true){
       if(state)state.textContent='Semana nueva · sin guardar';
     }
   }catch(e){
-    if(state)state.textContent='Sin conexión con calendarios compartidos';
+    if(state)state.textContent='Error de conexión';
   }
   renderInspectorAnalysis();renderInspectorCalendar();await renderInspectorSaved();clearInspectorEditor();
 }
 async function openInspectorSaved(week){
-  document.getElementById('inspectorWeek').value=week;await loadInspectorWeek(true);
+  document.getElementById('inspectorWeek').value=week;
+  await loadInspectorWeek(true);
 }
 async function deleteInspectorSaved(week){
   if(!confirm('¿Eliminar el calendario guardado de esta semana?'))return;
-  if(!tsjCurrentUser){
-    const all=inspGetStore();delete all[week];inspSetStore(all);
-    if(document.getElementById('inspectorWeek')?.value===week){
-      inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
-      renderInspectorAnalysis();renderInspectorCalendar();
-      document.getElementById('inspectorSaveState').textContent='Semana nueva · sin guardar';
-    }
-    await renderInspectorSaved();return;
-  }
   try{
     const sb=await getTsjSupabase();
-    const {error}=await sb.from('inspector_calendars').delete().eq('week_start',week);
+    const {error}=await sb.rpc('inspector_delete_calendar',{p_token:tsjSessionToken,p_week_start:week});
     if(error)throw error;
     if(document.getElementById('inspectorWeek')?.value===week){
       inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
@@ -2767,36 +2738,26 @@ async function deleteInspectorSaved(week){
       document.getElementById('inspectorSaveState').textContent='Semana nueva · sin guardar';
     }
     await renderInspectorSaved();
-  }catch(e){alert('No se pudo eliminar el calendario. '+(e?.message||''))}
+  }catch(e){alert('No se pudo eliminar el calendario.')}
 }
 async function renderInspectorSaved(){
   const box=document.getElementById('inspectorSavedList');if(!box)return;
-  if(!tsjCurrentUser){
-    const all=inspGetStore(),keys=Object.keys(all).sort().reverse();
-    box.innerHTML=keys.length?keys.map(k=>{const r=all[k];return `<div class="inspector-saved-item"><div><b>Semana ${inspDateLabel(k)} · ${(r.tasks||[]).length} tareas</b><span>Guardado local · ${new Date(r.updatedAt).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="openInspectorSaved('${k}')">Abrir</button><button class="btn pdf" onclick="exportInspectorSavedPDF('${k}')">PDF</button><button class="btn danger" onclick="deleteInspectorSaved('${k}')">Eliminar</button></div></div>`}).join(''):'<div class="footer-note">Todavía no hay calendarios guardados.</div>';
-    return;
-  }
   try{
     const sb=await getTsjSupabase();
-    const {data,error}=await sb.from('inspector_calendars')
-      .select('week_start,tasks,updated_at,updated_username')
-      .order('week_start',{ascending:false});
+    const {data,error}=await sb.rpc('inspector_list_calendars',{p_token:tsjSessionToken});
     if(error)throw error;
-    const rows=data||[];
+    const rows=Array.isArray(data)?data:[];
     box.innerHTML=rows.length?rows.map(r=>`<div class="inspector-saved-item"><div><b>Semana ${inspDateLabel(r.week_start)} · ${Array.isArray(r.tasks)?r.tasks.length:0} tareas</b><span>Última modificación: ${inspEsc(r.updated_username||'—')} · ${new Date(r.updated_at).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="openInspectorSaved('${r.week_start}')">Abrir</button><button class="btn pdf" onclick="exportInspectorSavedPDF('${r.week_start}')">PDF</button><button class="btn danger" onclick="deleteInspectorSaved('${r.week_start}')">Eliminar</button></div></div>`).join(''):'<div class="footer-note">Todavía no hay calendarios guardados.</div>';
   }catch(e){
     box.innerHTML='<div class="footer-note">No se pudieron cargar los calendarios compartidos.</div>';
   }
 }
 async function exportInspectorSavedPDF(week){
-  if(!tsjCurrentUser){
-    const rec=inspGetStore()[week];if(rec)exportInspectorPDF(rec);return;
-  }
   try{
     const sb=await getTsjSupabase();
-    const {data:rec,error}=await sb.from('inspector_calendars')
-      .select('week_start,tasks').eq('week_start',week).single();
-    if(error)throw error;
+    const {data,error}=await sb.rpc('inspector_get_calendar',{p_token:tsjSessionToken,p_week_start:week});
+    const rec=Array.isArray(data)?data[0]:null;
+    if(error||!rec)throw new Error('not_found');
     exportInspectorPDF({week:rec.week_start,tasks:rec.tasks||[]});
   }catch(e){alert('No se pudo abrir el calendario para exportar.')}
 }
