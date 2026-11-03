@@ -2397,12 +2397,12 @@ async function tsjLogin(){
     const auth=Array.isArray(params)?params[0]:null;
     if(paramError||!auth)throw new Error('invalid');
     const proof=await tsjDeriveProof(secret,auth.password_salt,auth.password_iterations);
-    const {data,error}=await sb.rpc('inspector_login_hash',{p_username:username,p_password_hash:proof});
+    const {data,error}=await sb.rpc('inspector_login_proof',{p_user:username,p_proof:proof});
     const row=Array.isArray(data)?data[0]:null;
     if(error||!row?.session_token)throw new Error('invalid');
-    tsjWriteSession({token:row.session_token,username:row.username,expiresAt:row.expires_at});
+    tsjWriteSession({token:row.session_token,username:row.login_user,expiresAt:row.expires_at});
     document.getElementById('tsjLoginPassword').value='';
-    tsjUnlock(row.username,row.session_token);
+    tsjUnlock(row.login_user,row.session_token);
   }catch(e){
     tsjSetLoginError('Usuario o contraseña incorrectos.');
   }finally{
