@@ -2744,15 +2744,21 @@ function renderInspectorAnalysis(){
 
   const pct=v=>v===null||v===undefined?'—':v.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
 
-  body.innerHTML=inspectorFindings.length?inspectorFindings.map(x=>`<tr>
+  body.innerHTML=inspectorFindings.length?inspectorFindings.map(x=>{
+    const driverStreak=x.kind==='driver'?(Number(x.streak)||Number((String(x.metric||'').match(/(\\d+)/)||[])[1])||3):0;
+    const driverFocus=x.kind==='driver'&&/adelant/i.test(String(x.action||x.hallazgo||''))?'Adelantos':'Atrasos';
+    const displayMetric=x.kind==='driver'?driverStreak+' días reincidencia':pct(x.pctHorario);
+    const displayAction=x.kind==='driver'?'Seguimiento de conductor · '+driverFocus:(x.action||x.task);
+    return `<tr>
     <td><span class="priority-pill ${x.priority}">${inspPriorityLabel(x.priority)}</span></td>
     <td><b>${inspEsc(x.line)}</b></td>
     <td>${inspEsc(x.legajo)}</td>
     <td class="num">${inspEsc(pct(x.pctAdelanto))}</td>
     <td class="num">${inspEsc(pct(x.pctAtraso))}</td>
-    <td class="num">${inspEsc(x.kind==='driver'?x.metric:pct(x.pctHorario))}</td>
-    <td><div class="inspector-priority-action"><span>${inspEsc(x.action||x.task)}</span><div class="inspector-priority-action-controls">${x.weeklyRepeat?'<span class="inspector-week-repeat">↻ Repite semana anterior</span>':''}${inspFindingCalendarCount(x)>0?'<span class="inspector-calendar-status">✓ En calendario ('+inspFindingCalendarCount(x)+')</span>':''}<button type="button" class="inspector-mini-btn" onclick="proposeInspectorFinding(${inspectorFindings.indexOf(x)})">+ Agregar</button></div></div></td>
-  </tr>`).join(''):'<tr><td colspan="7" class="empty-cell">Sin líneas debajo de 90% ni conductores recurrentes con impacto relevante sobre la brecha al 90%.</td></tr>';
+    <td class="num">${inspEsc(displayMetric)}</td>
+    <td><div class="inspector-priority-action"><span>${inspEsc(displayAction)}</span><div class="inspector-priority-action-controls">${x.weeklyRepeat?'<span class="inspector-week-repeat">↻ Repite semana anterior</span>':''}${inspFindingCalendarCount(x)>0?'<span class="inspector-calendar-status">✓ En calendario ('+inspFindingCalendarCount(x)+')</span>':''}<button type="button" class="inspector-mini-btn" onclick="proposeInspectorFinding(${inspectorFindings.indexOf(x)})">+ Agregar</button></div></div></td>
+  </tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty-cell">Sin líneas debajo de 90% ni conductores recurrentes con impacto relevante sobre la brecha al 90%.</td></tr>';
 }
 async function initInspector(){
   if(!document.getElementById('inspectorWeek'))return;
