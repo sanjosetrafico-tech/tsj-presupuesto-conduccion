@@ -2360,6 +2360,10 @@ async function loadPlanDaily(force=false){
 
 const INSPECTOR_KEY='tsj_inspector_calendars_v1';
 const INSPECTOR_LAST_IMPORT_KEY='tsj_inspector_last_import_v1';
+const INSPECTOR_SHARED_URL='https://xmosbwnredpzsrziqeux.supabase.co/rest/v1/inspector_calendars';
+const INSPECTOR_SHARED_KEY='sb_publishable_M_X1Lv-0SQuzXqd3-Seb7w_IXqbzsGK';
+let inspectorSharedStore={};
+let inspectorSharedLoaded=false;
 const INSPECTOR_TASKS=[
   'Cumplimiento de horario',
   'Cumplimiento de cabecera',
@@ -2423,6 +2427,93 @@ function inspShift(v){
 }
 function inspGetStore(){try{return JSON.parse(localStorage.getItem(INSPECTOR_KEY)||'{}')}catch(e){return{}}}
 function inspSetStore(v){localStorage.setItem(INSPECTOR_KEY,JSON.stringify(v))}
+function inspSharedHeaders(extra={}){
+  return {
+    apikey:INSPECTOR_SHARED_KEY,
+    Authorization:'Bearer '+INSPECTOR_SHARED_KEY,
+    'Content-Type':'application/json',
+    ...extra
+  };
+}
+async function inspSharedRequest(url='',options={}){
+  const res=await fetch(INSPECTOR_SHARED_URL+url,{...options,headers:inspSharedHeaders(options.headers||{})});
+  if(!res.ok){
+    const msg=await res.text().catch(()=>res.statusText);
+    throw new Error(msg||('HTTP '+res.status));
+  }
+  if(res.status===204)return null;
+  const text=await res.text();
+  return text?JSON.parse(text):null;
+}
+function inspSharedRowToRec(row){
+  if(!row)return null;
+  return {
+    week:row.week_start,
+    tasks:inspNormalizeStoredTasks(Array.isArray(row.tasks)?row.tasks:[]),
+    findings:inspNormalizeFindings(Array.isArray(row.findings)?row.findings:[]),
+    files:Array.isArray(row.source_files)?row.source_files:[],
+    updatedAt:row.updated_at||new Date().toISOString(),
+    updatedBy:row.updated_username||'Compartido'
+  };
+}
+async function inspLoadSharedCalendars(){
+  try{
+    const rows=await inspSharedRequest('?select=week_start,tasks,findings,source_files,updated_at,updated_username&order=week_start.desc',{method:'GET'});
+    inspectorSharedStore={};
+    (rows||[]).forEach(row=>{
+      const rec=inspSharedRowToRec(row);
+      if(rec)inspectorSharedStore[rec.week]=rec;
+    });
+    inspectorSharedLoaded=true;
+    return inspectorSharedStore;
+  }catch(e){
+    inspectorSharedLoaded=false;
+    return inspectorSharedStore;
+  }
+}
+async function inspSaveSharedCalendar(rec){
+  const week=inspMonday(rec.week);
+  const payload=[{
+    week_start:week,
+    tasks:inspNormalizeStoredTasks(rec.tasks||[]),
+    findings:inspNormalizeFindings(rec.findings||[]),
+    source_files:Array.isArray(rec.files)?rec.files:[],
+    updated_username:'Plan Servicio Web',
+    updated_at:new Date().toISOString()
+  }];
+  const rows=await inspSharedRequest('?on_conflict=week_start',{
+    method:'POST',
+    headers:{Prefer:'resolution=merge-duplicates,return=representation'},
+    body:JSON.stringify(payload)
+  });
+  const saved=inspSharedRowToRec(rows?.[0]||payload[0]);
+  if(saved)inspectorSharedStore[week]=saved;
+  inspectorSharedLoaded=true;
+  return saved;
+}
+async function inspDeleteSharedCalendar(week){
+  await inspSharedRequest('?week_start=eq.'+encodeURIComponent(inspMonday(week)),{
+    method:'DELETE',
+    headers:{Prefer:'return=minimal'}
+  });
+  delete inspectorSharedStore[inspMonday(week)];
+}
+async function inspMigrateLocalCalendars(){
+  const local=inspGetStore();
+  for(const [rawWeek,rec] of Object.entries(local)){
+    const week=inspMonday(rawWeek);
+    if(inspectorSharedStore[week])continue;
+    try{
+      await inspSaveSharedCalendar({
+        week,
+        tasks:rec.tasks||[],
+        findings:rec.findings||[],
+        files:rec.files||[],
+        updatedAt:rec.updatedAt||new Date().toISOString()
+      });
+    }catch(e){}
+  }
+}
 function inspSaveLastImport(){
   try{
     localStorage.setItem(INSPECTOR_LAST_IMPORT_KEY,JSON.stringify({
@@ -2784,6 +2875,8 @@ async function initInspector(){
     lineSel.innerHTML='<option value="">—</option>'+INSPECTOR_LINES.map(x=>`<option>${x}</option>`).join('');
     document.getElementById('inspectorTaskTypeList').innerHTML='<div class="inspector-task-types-list">'+INSPECTOR_TASKS.map(x=>`<div class="inspector-task-type">${x}</div>`).join('')+'</div>';
   }
+  await inspLoadSharedCalendars();
+  await inspMigrateLocalCalendars();
   await loadInspectorWeek(false);
   if(!inspectorImportedFiles.length&&!inspectorFindings.length&&inspRestoreLastImport()){
     renderInspectorAnalysis();
@@ -2938,51 +3031,90 @@ function deleteInspectorTask(id){
   inspectorTasks=inspectorTasks.filter(x=>x.id!==id);renderInspectorAnalysis();renderInspectorCalendar();
   document.getElementById('inspectorSaveState').textContent='Cambios sin guardar';
 }
-function saveInspectorCalendar(){
-  const week=document.getElementById('inspectorWeek').value;
-  const all=inspGetStore();
+async function saveInspectorCalendar(){
+  const rawWeek=document.getElementById('inspectorWeek').value;
+  const week=inspMonday(rawWeek);
   inspectorTasks=inspNormalizeStoredTasks(inspectorTasks);
   inspectorFindings=inspNormalizeFindings(inspectorFindings);
-  all[week]={week,tasks:inspectorTasks,findings:inspectorFindings,files:inspectorImportedFiles,updatedAt:new Date().toISOString(),updatedBy:'local'};
-  inspSetStore(all);
-  renderInspectorSaved();
-  document.getElementById('inspectorSaveState').textContent='Guardado '+new Date().toLocaleString('es-AR');
+  const rec={week,tasks:inspectorTasks,findings:inspectorFindings,files:inspectorImportedFiles,updatedAt:new Date().toISOString(),updatedBy:'Plan Servicio Web'};
+
+  const state=document.getElementById('inspectorSaveState');
+  if(state)state.textContent='Guardando…';
+
+  try{
+    const saved=await inspSaveSharedCalendar(rec);
+    const all=inspGetStore();
+    all[week]=saved||rec;
+    inspSetStore(all);
+    await renderInspectorSaved();
+    if(state)state.textContent='Guardado para todos · '+new Date((saved||rec).updatedAt).toLocaleString('es-AR');
+  }catch(e){
+    const all=inspGetStore();
+    all[week]=rec;
+    inspSetStore(all);
+    if(state)state.textContent='Guardado solo en esta PC · sin conexión compartida';
+    alert('No se pudo guardar en el calendario compartido. Se conservó una copia local.');
+  }
 }
-function loadInspectorWeek(force=true){
-  const week=document.getElementById('inspectorWeek')?.value;if(!week)return;
-  const rec=inspGetStore()[week];
+async function loadInspectorWeek(force=true){
+  const rawWeek=document.getElementById('inspectorWeek')?.value;if(!rawWeek)return;
+  const week=inspMonday(rawWeek);
+
+  if(!inspectorSharedLoaded)await inspLoadSharedCalendars();
+  let rec=inspectorSharedStore[week];
+
+  if(!rec){
+    const local=inspGetStore();
+    rec=local[week]||local[rawWeek]||null;
+  }
+
   if(rec){
     inspectorTasks=Array.isArray(rec.tasks)?inspNormalizeStoredTasks(rec.tasks):[];
     inspectorFindings=Array.isArray(rec.findings)?inspNormalizeFindings(rec.findings):[];
     inspectorImportedFiles=Array.isArray(rec.files)?rec.files:[];
-    document.getElementById('inspectorSaveState').textContent='Guardado '+new Date(rec.updatedAt).toLocaleString('es-AR');
+    document.getElementById('inspectorSaveState').textContent=(inspectorSharedStore[week]?'Compartido · ':'Local · ')+new Date(rec.updatedAt||Date.now()).toLocaleString('es-AR');
   }else if(force||inspectorTasks.length===0){
     inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
     document.getElementById('inspectorSaveState').textContent='Semana nueva · sin guardar';
   }
+
   renderInspectorAnalysis();
   renderInspectorCalendar();
-  renderInspectorSaved();
+  await renderInspectorSaved();
   clearInspectorEditor();
 }
-function openInspectorSaved(week){
+async function openInspectorSaved(week){
   document.getElementById('inspectorWeek').value=week;
-  loadInspectorWeek(true);
+  await loadInspectorWeek(true);
 }
-function deleteInspectorSaved(week){
-  if(!confirm('¿Eliminar el calendario guardado de esta semana?'))return;
-  const all=inspGetStore();
-  delete all[week];
-  inspSetStore(all);
-  renderInspectorSaved();
+async function deleteInspectorSaved(week){
+  if(!confirm('¿Eliminar el calendario guardado de esta semana para todos?'))return;
+  try{
+    await inspDeleteSharedCalendar(week);
+    const all=inspGetStore();
+    delete all[week];
+    inspSetStore(all);
+    await renderInspectorSaved();
+    if(inspMonday(document.getElementById('inspectorWeek')?.value||'')===inspMonday(week)){
+      inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
+      renderInspectorAnalysis();renderInspectorCalendar();clearInspectorEditor();
+      document.getElementById('inspectorSaveState').textContent='Semana eliminada';
+    }
+  }catch(e){
+    alert('No se pudo eliminar el calendario compartido.');
+  }
 }
-function renderInspectorSaved(){
+async function renderInspectorSaved(){
   const box=document.getElementById('inspectorSavedList');if(!box)return;
-  const all=inspGetStore(),keys=Object.keys(all).sort().reverse();
-  box.innerHTML=keys.length?keys.map(k=>{const r=all[k];return `<div class="inspector-saved-item"><div><b>Semana ${inspDateLabel(k)} · ${(r.tasks||[]).length} tareas</b><span>Última modificación: ${new Date(r.updatedAt).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="openInspectorSaved('${k}')">Abrir</button><button class="btn pdf" onclick="exportInspectorSavedPDF('${k}')">PDF</button><button class="btn danger" onclick="deleteInspectorSaved('${k}')">Eliminar</button></div></div>`}).join(''):'<div class="footer-note">Todavía no hay calendarios guardados.</div>';
+  if(!inspectorSharedLoaded)await inspLoadSharedCalendars();
+  const all=Object.keys(inspectorSharedStore).length?inspectorSharedStore:inspGetStore();
+  const keys=Object.keys(all).sort().reverse();
+  box.innerHTML=keys.length?keys.map(k=>{const r=all[k];return `<div class="inspector-saved-item"><div><b>Semana ${inspDateLabel(k)} · ${(r.tasks||[]).length} tareas</b><span>Última modificación: ${new Date(r.updatedAt||Date.now()).toLocaleString('es-AR')} · ${inspectorSharedStore[k]?'Compartido':'Local'}</span></div><div class="section-actions"><button class="btn ghost" onclick="openInspectorSaved('${k}')">Abrir</button><button class="btn pdf" onclick="exportInspectorSavedPDF('${k}')">PDF</button><button class="btn danger" onclick="deleteInspectorSaved('${k}')">Eliminar</button></div></div>`}).join(''):'<div class="footer-note">Todavía no hay calendarios guardados.</div>';
 }
-function exportInspectorSavedPDF(week){
-  const rec=inspGetStore()[week];if(!rec)return;
+async function exportInspectorSavedPDF(week){
+  if(!inspectorSharedLoaded)await inspLoadSharedCalendars();
+  const rec=inspectorSharedStore[inspMonday(week)]||inspGetStore()[week];
+  if(!rec)return;
   exportInspectorPDF(rec);
 }
 function exportInspectorPDF(record){
