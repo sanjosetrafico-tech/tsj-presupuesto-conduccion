@@ -2966,8 +2966,8 @@ function renderInspectorCalendar(){
   ['Mañana','Tarde','Ver Plan Diario'].forEach(shift=>{
     const isPlan=shift==='Ver Plan Diario';
     const cls=shift==='Mañana'?'tm':shift==='Tarde'?'tt':'plan';
-    const code=shift==='Mañana'?'TM':shift==='Tarde'?'TT':'PLAN';
-    out+=`<div class="inspector-shift-label ${cls}"><strong>${code}</strong><small>${shift}</small></div>`;
+    const code=shift==='Mañana'?'TM':shift==='Tarde'?'TT':'';
+    out+=`<div class="inspector-shift-label ${cls}">${code?'<strong>'+code+'</strong>':''}<small>${shift}</small></div>`;
     dates.forEach(date=>{
       const arr=inspectorTasks.filter(t=>t.date===date&&t.shift===shift);
       out+='<div class="inspector-day-cell '+cls+'">'+arr.map(t=>`<div class="inspector-task-card ${t.priority}">
@@ -2983,6 +2983,8 @@ function openInspectorEditor(date,shift){
   clearInspectorEditor();
   document.getElementById('inspEditDate').value=date||inspWeekDates()[0];
   document.getElementById('inspEditShift').value=shift||'Mañana';
+  document.getElementById('inspEditTask').value='Seguimiento de conductor';
+  if((shift||'')==='Ver Plan Diario')document.getElementById('inspEditShift').value='Ver Plan Diario';
   document.getElementById('inspectorEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function proposeInspectorFinding(index){
