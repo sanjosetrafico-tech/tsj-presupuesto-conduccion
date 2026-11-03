@@ -2372,7 +2372,8 @@ function inspMonday(value){
   const day=d.getDay()||7;d.setDate(d.getDate()-day+1);return inspISO(d)
 }
 function inspWeekDates(){
-  const base=new Date((document.getElementById('inspectorWeek')?.value||inspMonday())+'T12:00:00');
+  const selected=document.getElementById('inspectorWeek')?.value||inspISO(new Date());
+  const base=new Date(inspMonday(selected)+'T12:00:00');
   return Array.from({length:7},(_,i)=>{const d=new Date(base);d.setDate(base.getDate()+i);return inspISO(d)})
 }
 function inspDateLabel(iso,short=false){
@@ -2615,9 +2616,8 @@ async function initInspector(){
   if(!document.getElementById('inspectorWeek'))return;
   if(!inspectorReady){
     inspectorReady=true;
-    document.getElementById('inspectorWeek').value=inspMonday();
+    document.getElementById('inspectorWeek').value=inspISO(new Date());
     document.getElementById('inspectorWeek').addEventListener('change',async()=>{
-      document.getElementById('inspectorWeek').value=inspMonday(document.getElementById('inspectorWeek').value);
       await loadInspectorWeek(false);
     });
     const taskSel=document.getElementById('inspEditTask');
