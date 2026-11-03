@@ -1376,6 +1376,7 @@ h1{
 .inspector-editor .panel-head .help{font-size:10.5px;line-height:1.35}
 .inspector-editor label{font-size:10.5px;font-weight:900;color:#403a40}
 .inspector-editor input,.inspector-editor select,.inspector-editor textarea{width:100%;margin-top:5px;border:1px solid var(--line);border-radius:10px;padding:10px 11px;font:inherit;font-size:10.5px;background:#fff;box-sizing:border-box}
+#inspEditTask option.insp-task-highlight{font-weight:700}
 .inspector-editor input,.inspector-editor select{min-height:38px}
 .inspector-editor textarea{min-height:74px;resize:vertical;line-height:1.4}
 .inspector-editor-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -2369,8 +2370,15 @@ const INSPECTOR_TASKS=[
   'Control de parada',
   'Control de poste',
   'Control de carga GNC',
-  'Relevamiento operativo'
+  'Relevamiento del servicio',
+  'Relevamiento 5S'
 ];
+const INSPECTOR_TASKS_HIGHLIGHTED=new Set([
+  'Cumplimiento de horario',
+  'Seguimiento de conductor',
+  'Control de poste',
+  'Relevamiento del servicio'
+]);
 const INSPECTOR_LINES=['A','B','C','D','E','F','G','H','L','M','P','R','S'];
 let inspectorTasks=[];
 let inspectorFindings=[];
@@ -2701,6 +2709,7 @@ function inspNormalizeStoredTasks(tasks){
     return {
       ...t,
       reason:inspNormalizeTaskReason(t),
+      task:t.task==='Relevamiento operativo'?'Relevamiento del servicio':t.task,
       inspector:t.inspector||legacyInspector||'',
       notes:''
     };
@@ -2770,7 +2779,7 @@ async function initInspector(){
       await loadInspectorWeek(false);
     });
     const taskSel=document.getElementById('inspEditTask');
-    taskSel.innerHTML=INSPECTOR_TASKS.map(x=>`<option>${x}</option>`).join('');
+    taskSel.innerHTML=INSPECTOR_TASKS.map(x=>`<option value="${inspEsc(x)}" class="${INSPECTOR_TASKS_HIGHLIGHTED.has(x)?'insp-task-highlight':''}">${INSPECTOR_TASKS_HIGHLIGHTED.has(x)?'★ ':''}${inspEsc(x)}</option>`).join('');
     const lineSel=document.getElementById('inspEditLine');
     lineSel.innerHTML='<option value="">—</option>'+INSPECTOR_LINES.map(x=>`<option>${x}</option>`).join('');
     document.getElementById('inspectorTaskTypeList').innerHTML='<div class="inspector-task-types-list">'+INSPECTOR_TASKS.map(x=>`<div class="inspector-task-type">${x}</div>`).join('')+'</div>';
