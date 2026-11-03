@@ -2825,7 +2825,7 @@ function inspPreviousWeekRecord(){
   const current=inspMonday(document.getElementById('inspectorWeek')?.value||inspISO(new Date()));
   const d=new Date(current+'T12:00:00');d.setDate(d.getDate()-7);
   const prev=inspISO(d);
-  return inspGetStore()[prev]||null;
+  return inspectorSharedStore[prev]||inspGetStore()[prev]||null;
 }
 function inspMarkWeeklyRepeats(){
   const prev=inspPreviousWeekRecord();
