@@ -2607,9 +2607,9 @@ function analyzeInspectorRows(rows){
   });
 
   return findings.sort((a,b)=>{
-    if(a.kind!==b.kind)return a.kind==='driver'?-1:1;
-    if(a.kind==='driver')return (b.streak||0)-(a.streak||0);
-    return (a.pctHorario??100)-(b.pctHorario??100);
+    if(a.kind!==b.kind)return a.kind==='line'?-1:1;
+    if(a.kind==='line')return (a.pctHorario??100)-(b.pctHorario??100);
+    return (b.streak||0)-(a.streak||0);
   }).slice(0,60);
 }
 function renderInspectorAnalysis(){
