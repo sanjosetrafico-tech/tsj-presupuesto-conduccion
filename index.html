@@ -1397,6 +1397,38 @@ h1{
 
 
 
+/* FC Área */
+.fc-module{display:grid;gap:16px}
+.fc-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
+.fc-head h2{margin:0;font-size:25px;font-weight:900;letter-spacing:-.02em}
+.fc-head p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.fc-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.fc-nav-btn{min-width:38px;padding-left:10px!important;padding-right:10px!important}
+.fc-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.fc-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 16px;box-shadow:var(--shadow)}
+.fc-kpi span{display:block;color:#625b61;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.fc-kpi strong{display:block;margin-top:5px;font-size:26px;line-height:1;font-weight:900}
+.fc-kpi small{display:block;margin-top:7px;color:var(--muted);font-size:10px}
+.fc-kpi.received strong{color:var(--green)}.fc-kpi.pending strong{color:var(--orange)}.fc-kpi.amount strong{font-size:22px}
+.fc-table-wrap{overflow:auto}
+.fc-table{min-width:1120px}
+.fc-table th{font-size:10.5px!important}
+.fc-table td{font-size:11px!important;vertical-align:middle}
+.fc-table td.fc-money{text-align:right;font-weight:800;white-space:nowrap}
+.fc-table select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff;font:inherit;font-size:10.5px}
+.fc-fixed-check{width:16px;height:16px;accent-color:#181416;cursor:pointer}
+.fc-row-actions{display:flex;gap:5px;justify-content:flex-end;white-space:nowrap}
+.fc-status-received{font-weight:700;color:#087456}.fc-status-pending{font-weight:700;color:#b46313}
+.fc-editor{padding:16px}
+.fc-form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.fc-form-grid label{font-size:10.5px;font-weight:800;color:#403a40}
+.fc-form-grid input,.fc-form-grid select,.fc-form-grid textarea{width:100%;margin-top:5px;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:11px;background:#fff;box-sizing:border-box}
+.fc-fixed-label{display:flex;align-items:center;gap:8px;padding-top:23px}.fc-fixed-label input{width:16px!important;margin:0!important}.fc-fixed-label span{font-size:11px}
+.fc-notes-label{grid-column:span 2}
+.fc-editor .section-actions{margin-top:12px}
+@media(max-width:950px){.fc-head{align-items:flex-start;flex-direction:column}.fc-kpis{grid-template-columns:repeat(2,1fr)}.fc-form-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.fc-kpis,.fc-form-grid{grid-template-columns:1fr}.fc-notes-label{grid-column:auto}.fc-actions{justify-content:flex-start}.fc-fixed-label{padding-top:0}}
+
 /* Calendario Inspector · ajuste visual profesional */
 .inspector-module{font-weight:500}
 .inspector-head p{font-size:12px;font-weight:500}
@@ -1471,6 +1503,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
     <button class="service-tab" data-tab="plan-mensual" onclick="showServiceTab('plan-mensual')">Plan mensual</button>
     <button class="service-tab" data-tab="presupuesto-conduccion" onclick="showServiceTab('presupuesto-conduccion')">Presupuesto conducción</button>
     <button class="service-tab" data-tab="presupuesto-km" onclick="showServiceTab('presupuesto-km')">Presupuesto KM</button>
+    <button class="service-tab" data-tab="facturas-area" onclick="showServiceTab('facturas-area')">FC Área</button>
     <button class="service-tab" data-tab="calendario-inspector" onclick="showServiceTab('calendario-inspector')">Calendario Inspector</button>
   </nav>
 
@@ -1796,6 +1829,94 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
             </thead>
             <tbody id="kmBaseBody"></tbody>
           </table>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="service-tab-panel" id="tab-facturas-area">
+    <div class="fc-module">
+      <div class="fc-head">
+        <div>
+          <h2>FC del Área</h2>
+          <p>Control mensual de facturas y conceptos recurrentes del área.</p>
+        </div>
+        <div class="fc-actions">
+          <button class="btn ghost fc-nav-btn" type="button" onclick="moveFcPeriod(-1)">‹</button>
+          <input id="fcPeriod" class="monthly-month" type="month" value="2026-11" aria-label="Mes de facturas">
+          <button class="btn ghost fc-nav-btn" type="button" onclick="moveFcPeriod(1)">›</button>
+          <button class="btn primary" type="button" onclick="openFcEditor()">+ Agregar FC</button>
+        </div>
+      </div>
+
+      <section class="fc-kpis">
+        <div class="fc-kpi"><span>Conceptos</span><strong id="fcKpiTotal">0</strong><small>Registros del mes</small></div>
+        <div class="fc-kpi received"><span>Recibidas</span><strong id="fcKpiReceived">0</strong><small>FC confirmadas</small></div>
+        <div class="fc-kpi pending"><span>Pendientes</span><strong id="fcKpiPending">0</strong><small>FC a recibir</small></div>
+        <div class="fc-kpi amount"><span>Importe recibido</span><strong id="fcKpiAmount">$ 0</strong><small>Total informado del mes</small></div>
+      </section>
+
+      <section class="panel fc-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Detalle mensual</h2>
+            <p class="help">Los conceptos marcados como Gasto fijo se precargan automáticamente en el mes siguiente.</p>
+          </div>
+          <span id="fcState" class="km-saved-state">Cargando…</span>
+        </div>
+        <div class="fc-table-wrap">
+          <table class="fc-table">
+            <thead>
+              <tr>
+                <th>Gasto fijo</th>
+                <th>Origen</th>
+                <th>Detalle</th>
+                <th>Proveedor</th>
+                <th>N° FC</th>
+                <th>Importe</th>
+                <th>Estado</th>
+                <th>Observación</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="fcBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel fc-editor" id="fcEditor" hidden>
+        <div class="panel-head">
+          <div>
+            <h2 id="fcEditorTitle">Agregar FC</h2>
+            <p class="help">Completá los datos del concepto o factura.</p>
+          </div>
+          <button class="btn ghost" type="button" onclick="closeFcEditor()">Cerrar</button>
+        </div>
+        <input id="fcEditId" type="hidden">
+        <div class="fc-form-grid">
+          <label>Origen
+            <select id="fcEditOrigin">
+              <option>Seguros</option>
+              <option>Combustibles</option>
+              <option>Cabeceras / BQ</option>
+              <option>Limpieza</option>
+              <option>Librería / Oficina</option>
+              <option>Ferretería / Mantenimiento</option>
+              <option>Matafuegos</option>
+              <option>Otro</option>
+            </select>
+          </label>
+          <label>Detalle<input id="fcEditDetail" type="text" placeholder="Ej. Gasoil"></label>
+          <label>Proveedor<input id="fcEditSupplier" type="text" placeholder="Opcional"></label>
+          <label>N° FC<input id="fcEditNumber" type="text" placeholder="Opcional"></label>
+          <label>Importe<input id="fcEditAmount" type="number" min="0" step="0.01" placeholder="0,00"></label>
+          <label>Estado<select id="fcEditStatus"><option>Pendiente</option><option>Recibida</option></select></label>
+          <label class="fc-fixed-label"><input id="fcEditFixed" type="checkbox"> <span>Gasto fijo</span></label>
+          <label class="fc-notes-label">Observación<textarea id="fcEditNotes" rows="2" placeholder="Opcional"></textarea></label>
+        </div>
+        <div class="section-actions">
+          <button class="btn primary" type="button" onclick="saveFcRecord()">Guardar</button>
+          <button class="btn ghost" type="button" onclick="closeFcEditor()">Cancelar</button>
         </div>
       </section>
     </div>
@@ -2364,6 +2485,185 @@ async function loadPlanDaily(force=false){
   return planDailyLoading;
 }
 
+
+const FC_SHARED_URL='https://xmosbwnredpzsrziqeux.supabase.co/rest/v1/area_invoices';
+const FC_SHARED_KEY='sb_publishable_M_X1Lv-0SQuzXqd3-Seb7w_IXqbzsGK';
+let fcRows=[];
+let fcReady=false;
+
+function fcHeaders(extra={}){
+  return {apikey:FC_SHARED_KEY,Authorization:'Bearer '+FC_SHARED_KEY,'Content-Type':'application/json',...extra};
+}
+async function fcRequest(url='',options={}){
+  const res=await fetch(FC_SHARED_URL+url,{...options,headers:fcHeaders(options.headers||{})});
+  if(!res.ok){const msg=await res.text().catch(()=>res.statusText);throw new Error(msg||('HTTP '+res.status))}
+  if(res.status===204)return null;
+  const txt=await res.text();return txt?JSON.parse(txt):null;
+}
+function fcMonthStart(period){return (period||'2026-11')+'-01'}
+function fcPrevPeriod(period){
+  const [y,m]=String(period).split('-').map(Number);
+  const d=new Date(y,m-2,1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function fcMoney(v){
+  if(v===null||v===undefined||v==='')return '—';
+  return '$ '+Number(v||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:2});
+}
+function moveFcPeriod(delta){
+  const input=document.getElementById('fcPeriod');if(!input)return;
+  const [y,m]=input.value.split('-').map(Number);
+  const d=new Date(y,m-1+delta,1);
+  input.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  loadFcMonth(input.value,true);
+}
+async function fcEnsureMonth(period){
+  const month=fcMonthStart(period);
+  const existing=await fcRequest('?period=eq.'+encodeURIComponent(month)+'&select=id&limit=1',{method:'GET'});
+  if(existing?.length)return;
+
+  const prev=fcMonthStart(fcPrevPeriod(period));
+  const fixed=await fcRequest('?period=eq.'+encodeURIComponent(prev)+'&is_fixed=eq.true&select=origin,detail&order=origin.asc,detail.asc',{method:'GET'});
+  if(!fixed?.length)return;
+
+  const payload=fixed.map(r=>({
+    period:month,
+    origin:r.origin,
+    detail:r.detail,
+    supplier:null,
+    invoice_number:null,
+    amount:null,
+    status:'Pendiente',
+    notes:null,
+    is_fixed:true
+  }));
+  await fcRequest('',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
+}
+async function loadFcMonth(period,ensure=true){
+  const input=document.getElementById('fcPeriod');if(!input)return;
+  const p=period||input.value||'2026-11';input.value=p;
+  const state=document.getElementById('fcState');if(state)state.textContent='Actualizando…';
+  try{
+    if(ensure)await fcEnsureMonth(p);
+    fcRows=await fcRequest('?period=eq.'+encodeURIComponent(fcMonthStart(p))+'&select=*&order=origin.asc,detail.asc',{method:'GET'})||[];
+    renderFcModule();
+    if(state)state.textContent='Compartido · '+fcRows.length+' conceptos';
+  }catch(e){
+    if(state)state.textContent='Error de conexión';
+    const body=document.getElementById('fcBody');
+    if(body)body.innerHTML='<tr><td colspan="9" class="empty-cell">No se pudieron cargar las FC del mes.</td></tr>';
+  }
+}
+function renderFcModule(){
+  const body=document.getElementById('fcBody');if(!body)return;
+  const received=fcRows.filter(r=>r.status==='Recibida');
+  const pending=fcRows.filter(r=>r.status==='Pendiente');
+  const amount=received.reduce((s,r)=>s+Number(r.amount||0),0);
+  document.getElementById('fcKpiTotal').textContent=fcRows.length;
+  document.getElementById('fcKpiReceived').textContent=received.length;
+  document.getElementById('fcKpiPending').textContent=pending.length;
+  document.getElementById('fcKpiAmount').textContent=fcMoney(amount);
+
+  body.innerHTML=fcRows.length?fcRows.map(r=>`<tr>
+    <td style="text-align:center"><input class="fc-fixed-check" type="checkbox" ${r.is_fixed?'checked':''} onchange="updateFcFixed('${r.id}',this.checked)"></td>
+    <td>${inspEsc(r.origin||'')}</td>
+    <td><b>${inspEsc(r.detail||'')}</b></td>
+    <td>${inspEsc(r.supplier||'—')}</td>
+    <td>${inspEsc(r.invoice_number||'—')}</td>
+    <td class="fc-money">${fcMoney(r.amount)}</td>
+    <td><select class="${r.status==='Recibida'?'fc-status-received':'fc-status-pending'}" onchange="updateFcStatus('${r.id}',this.value)"><option ${r.status==='Pendiente'?'selected':''}>Pendiente</option><option ${r.status==='Recibida'?'selected':''}>Recibida</option></select></td>
+    <td>${inspEsc(r.notes||'—')}</td>
+    <td><div class="fc-row-actions"><button class="inspector-mini-btn" type="button" onclick="editFcRecord('${r.id}')">Editar</button><button class="inspector-mini-btn delete" type="button" onclick="deleteFcRecord('${r.id}')">Eliminar</button></div></td>
+  </tr>`).join(''):'<tr><td colspan="9" class="empty-cell">No hay conceptos cargados para este mes.</td></tr>';
+}
+async function updateFcStatus(id,status){
+  try{
+    await fcRequest('?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status,updated_at:new Date().toISOString()})});
+    const r=fcRows.find(x=>x.id===id);if(r)r.status=status;
+    renderFcModule();
+  }catch(e){alert('No se pudo actualizar el estado.')}
+}
+async function updateFcFixed(id,is_fixed){
+  try{
+    await fcRequest('?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({is_fixed,updated_at:new Date().toISOString()})});
+    const r=fcRows.find(x=>x.id===id);if(r)r.is_fixed=is_fixed;
+  }catch(e){alert('No se pudo actualizar Gasto fijo.');loadFcMonth(document.getElementById('fcPeriod').value,false)}
+}
+function openFcEditor(){
+  document.getElementById('fcEditId').value='';
+  document.getElementById('fcEditorTitle').textContent='Agregar FC';
+  document.getElementById('fcEditOrigin').value='Seguros';
+  document.getElementById('fcEditDetail').value='';
+  document.getElementById('fcEditSupplier').value='';
+  document.getElementById('fcEditNumber').value='';
+  document.getElementById('fcEditAmount').value='';
+  document.getElementById('fcEditStatus').value='Pendiente';
+  document.getElementById('fcEditFixed').checked=false;
+  document.getElementById('fcEditNotes').value='';
+  const panel=document.getElementById('fcEditor');panel.hidden=false;
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function editFcRecord(id){
+  const r=fcRows.find(x=>x.id===id);if(!r)return;
+  document.getElementById('fcEditId').value=r.id;
+  document.getElementById('fcEditorTitle').textContent='Editar FC';
+  document.getElementById('fcEditOrigin').value=r.origin||'Otro';
+  document.getElementById('fcEditDetail').value=r.detail||'';
+  document.getElementById('fcEditSupplier').value=r.supplier||'';
+  document.getElementById('fcEditNumber').value=r.invoice_number||'';
+  document.getElementById('fcEditAmount').value=r.amount??'';
+  document.getElementById('fcEditStatus').value=r.status||'Pendiente';
+  document.getElementById('fcEditFixed').checked=!!r.is_fixed;
+  document.getElementById('fcEditNotes').value=r.notes||'';
+  const panel=document.getElementById('fcEditor');panel.hidden=false;
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closeFcEditor(){document.getElementById('fcEditor').hidden=true}
+async function saveFcRecord(){
+  const id=document.getElementById('fcEditId').value;
+  const detail=document.getElementById('fcEditDetail').value.trim();
+  if(!detail){alert('Completá el detalle.');return}
+  const amountRaw=document.getElementById('fcEditAmount').value;
+  const payload={
+    period:fcMonthStart(document.getElementById('fcPeriod').value),
+    origin:document.getElementById('fcEditOrigin').value,
+    detail,
+    supplier:document.getElementById('fcEditSupplier').value.trim()||null,
+    invoice_number:document.getElementById('fcEditNumber').value.trim()||null,
+    amount:amountRaw===''?null:Number(amountRaw),
+    status:document.getElementById('fcEditStatus').value,
+    notes:document.getElementById('fcEditNotes').value.trim()||null,
+    is_fixed:document.getElementById('fcEditFixed').checked,
+    updated_at:new Date().toISOString()
+  };
+  try{
+    if(id){
+      await fcRequest('?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
+    }else{
+      await fcRequest('',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify([payload])});
+    }
+    closeFcEditor();
+    await loadFcMonth(document.getElementById('fcPeriod').value,false);
+  }catch(e){alert('No se pudo guardar la FC.')}
+}
+async function deleteFcRecord(id){
+  if(!confirm('¿Eliminar esta FC?'))return;
+  try{
+    await fcRequest('?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{Prefer:'return=minimal'}});
+    await loadFcMonth(document.getElementById('fcPeriod').value,false);
+  }catch(e){alert('No se pudo eliminar la FC.')}
+}
+async function initFcModule(){
+  if(!document.getElementById('fcPeriod'))return;
+  if(!fcReady){
+    fcReady=true;
+    const input=document.getElementById('fcPeriod');
+    const now=new Date();
+    input.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    input.addEventListener('change',()=>loadFcMonth(input.value,true));
+  }
+  await loadFcMonth(document.getElementById('fcPeriod').value,true);
+}
 
 const INSPECTOR_KEY='tsj_inspector_calendars_v1';
 const INSPECTOR_LAST_IMPORT_KEY='tsj_inspector_last_import_v1';
@@ -3472,6 +3772,7 @@ function showServiceTab(name){
   if(name==='plan-diario')setTimeout(()=>loadPlanDaily(false),20);
   if(name==='plan-mensual')setTimeout(initMonthlyPlan,20);
   if(name==='presupuesto-km')setTimeout(initKmBudget,20);
+  if(name==='facturas-area')setTimeout(initFcModule,20);
   if(name==='calendario-inspector')setTimeout(initInspector,20);
 }
 function restoreServiceTab(){
@@ -3483,7 +3784,7 @@ function restoreServiceTab(){
   }
   let saved='';
   try{saved=sessionStorage.getItem('tsj_plan_servicio_tab')||''}catch(e){}
-  const allowed=['plan-diario','plan-mensual','presupuesto-conduccion','presupuesto-km','calendario-inspector'];
+  const allowed=['plan-diario','plan-mensual','presupuesto-conduccion','presupuesto-km','facturas-area','calendario-inspector'];
   showServiceTab(allowed.includes(saved)?saved:'plan-diario');
 }
 
