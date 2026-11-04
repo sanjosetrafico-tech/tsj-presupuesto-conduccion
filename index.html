@@ -798,6 +798,11 @@ h1{
 .plan-daily-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
 .plan-daily-head h2{margin:0;font-size:22px;font-weight:900}
 .plan-daily-head p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.plan-daily-head-reference{align-items:flex-start}
+.plan-daily-head-reference h2{font-size:25px;line-height:1;font-weight:950;letter-spacing:-.02em}
+.plan-daily-reference{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:2px;color:#6b6268}
+.plan-daily-reference span,.plan-daily-reference small{font-size:10px;line-height:1.2}
+.plan-daily-reference small{font-weight:500}
 .plan-daily-status{display:flex;align-items:center;gap:8px}
 .plan-daily-status span{font-size:10px;color:var(--muted);font-weight:800}
 .plan-daily-overview{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px}
@@ -816,7 +821,9 @@ h1{
 .plan-daily-stat{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 15px;min-height:80px}
 .plan-daily-stat span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:900}
 .plan-daily-stat strong{display:block;margin-top:7px;font-size:24px;line-height:1;font-weight:950;color:var(--ink)}
-.plan-daily-stat.good strong{color:#0b9b73}.plan-daily-stat.warn strong{color:#d77817}.plan-daily-stat.bad strong{color:#c93c35}
+.plan-daily-stat.good{background:#f2faf7}.plan-daily-stat.good strong{color:#0b9b73}
+.plan-daily-stat.warn{background:#fff9f1}.plan-daily-stat.warn strong{color:#d77817}
+.plan-daily-stat.bad{background:#fff5f6}.plan-daily-stat.bad strong{color:#c51f46}
 .plan-daily-detail{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.6fr);gap:14px}
 .plan-daily-dotacion{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
 .plan-daily-last{background:#171417;color:#fff;border-radius:16px;padding:20px;display:flex;flex-direction:column;justify-content:center;box-shadow:var(--shadow)}
@@ -826,25 +833,32 @@ h1{
 .plan-daily-note{border:1px solid #ead59e;background:#fff9e8;color:#8a6510;border-radius:10px;padding:9px 11px;font-size:10.5px;font-weight:800}
 .plan-daily-loading{padding:32px;text-align:center;color:var(--muted);font-size:12px}
 @media(min-width:1051px){
-  #tab-plan-diario .plan-daily{gap:16px}
-  #tab-plan-diario .plan-daily-overview{grid-template-columns:285px minmax(0,1fr);gap:18px;align-items:stretch}
-  #tab-plan-diario .plan-daily-gauge-card{min-height:256px;padding:20px 16px}
-  #tab-plan-diario .plan-daily-gauge{width:175px;height:175px}
+  #tab-plan-diario .plan-daily{gap:14px}
+  #tab-plan-diario .plan-daily-head{min-height:32px}
+  #tab-plan-diario .plan-daily-overview{grid-template-columns:288px minmax(0,1fr);gap:18px;align-items:stretch}
+  #tab-plan-diario .plan-daily-gauge-card{min-height:255px;padding:20px 16px}
+  #tab-plan-diario .plan-daily-gauge{width:170px;height:170px}
   #tab-plan-diario .plan-daily-gauge:after{inset:20px}
-  #tab-plan-diario .plan-daily-gauge-content strong{font-size:36px}
-  #tab-plan-diario .plan-daily-gauge-content span{font-size:12px}
-  #tab-plan-diario .plan-daily-gauge-label{font-size:12px;margin-top:12px}
+  #tab-plan-diario .plan-daily-gauge-content strong{font-size:34px}
+  #tab-plan-diario .plan-daily-gauge-content span{font-size:11px}
+  #tab-plan-diario .plan-daily-gauge-label{font-size:16px;line-height:1.15;margin-top:16px;text-transform:none;letter-spacing:0;color:var(--ink)}
   #tab-plan-diario .plan-daily-main{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;grid-auto-rows:1fr}
   #tab-plan-diario .plan-daily-stat{min-height:121px;padding:20px 18px;border-radius:16px}
-  #tab-plan-diario .plan-daily-stat span{font-size:11px}
-  #tab-plan-diario .plan-daily-stat strong{font-size:29px;margin-top:10px}
+  #tab-plan-diario .plan-daily-stat span{font-size:12px}
+  #tab-plan-diario .plan-daily-stat strong{font-size:29px;margin-top:12px}
+  #tab-plan-diario .plan-daily-note{border-radius:0;border-width:0 0 0 4px;padding:13px 16px;background:#effaf6;color:#006d55;font-size:12px}
   #tab-plan-diario .plan-daily-detail{grid-template-columns:1fr 1fr;gap:16px}
   #tab-plan-diario .plan-daily-detail>.panel,
   #tab-plan-diario .plan-daily-last{min-height:198px}
+  #tab-plan-diario .plan-daily-detail>.panel{padding:20px}
+  #tab-plan-diario .plan-daily-detail>.panel .panel-head h2{font-size:17px}
+  #tab-plan-diario .plan-daily-detail>.panel .panel-head .help{display:none}
   #tab-plan-diario .plan-daily-dotacion{gap:16px;margin-top:14px}
   #tab-plan-diario .plan-daily-dotacion .plan-daily-stat{min-height:102px;padding:18px}
   #tab-plan-diario .plan-daily-last{padding:22px}
+  #tab-plan-diario .plan-daily-last span{font-size:12px}
   #tab-plan-diario .plan-daily-last strong{font-size:36px}
+  #tab-plan-diario .plan-daily-last small{font-size:11px}
 }
 @media(max-width:1050px){.plan-daily-overview{grid-template-columns:1fr}.plan-daily-main{grid-template-columns:repeat(2,1fr)}.plan-daily-detail{grid-template-columns:1fr}}
 @media(max-width:600px){.plan-daily-main,.plan-daily-dotacion{grid-template-columns:1fr}}
@@ -1512,14 +1526,13 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
 
   <section class="service-tab-panel active" id="tab-plan-diario">
     <div class="plan-daily">
-      <div class="plan-daily-head">
+      <div class="plan-daily-head plan-daily-head-reference">
         <div>
-          <h2>Plan diario</h2>
-          <p id="planDailyMeta">Plan de servicio operativo del día.</p>
+          <h2>Plan Serv</h2>
         </div>
-        <div class="plan-daily-status">
-          <span id="planDailyState">Actualizando…</span>
-          <button class="btn ghost" type="button" onclick="loadPlanDaily(true)">Actualizar</button>
+        <div class="plan-daily-reference">
+          <span id="planDailyMeta">Fuente: Plan de Servicio</span>
+          <small id="planDailyState">Actualizando…</small>
         </div>
       </div>
       <div id="planDailyContent" class="plan-daily-loading">Cargando plan diario…</div>
@@ -2405,7 +2418,7 @@ function renderPlanDaily(){
         '<div class="plan-daily-gauge" style="--p:'+compliance+';--c:'+color+'">'+
           '<div class="plan-daily-gauge-content"><strong>'+Math.round(compliance)+'%</strong><span>'+planDailyNum(done)+' / '+planDailyNum(planned)+'</span></div>'+
         '</div>'+
-        '<div class="plan-daily-gauge-label">Cumplimiento TM / TT</div>'+
+        '<div class="plan-daily-gauge-label">Cumplimiento del servicio</div>'+
       '</article>'+
       '<div class="plan-daily-main">'+
         planDailyStat('Servicio completo',planDailyNum(d.serviceDone)+' / '+planDailyNum(d.servicePlanned),rawCompliance>=100?'good':'')+
@@ -2474,8 +2487,8 @@ async function loadPlanDaily(force=false){
       }
       if(!payload?.planServ)throw new Error('Sin datos');
       planDailyData=payload.planServ;
-      if(meta)meta.textContent=(planDailyData.date||'Plan de servicio operativo del día')+' · '+(payload.sources?.planServ?.name||planDailyData.source?.name||'Plan de Servicio');
-      if(state)state.textContent='Datos disponibles';
+      if(meta)meta.textContent='Fuente: '+(payload.sources?.planServ?.name||planDailyData.source?.name||'Plan de Servicio');
+      if(state)state.textContent=(planDailyData.date?'Hoy · '+planDailyData.date:'Datos disponibles');
       renderPlanDaily();
     }catch(e){
       if(state)state.textContent='Sin datos';
