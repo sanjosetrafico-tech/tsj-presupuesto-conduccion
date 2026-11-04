@@ -1369,6 +1369,9 @@ h1{
 .inspector-day-cell.tt{background:#f7f4ff}
 .inspector-task-card{border:1px solid var(--line);border-left:4px solid #8c78cf;border-radius:9px;padding:7px;margin-bottom:6px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.03)}
 .inspector-task-card.high{border-left-color:#e34c4c}.inspector-task-card.medium{border-left-color:#f0a13a}.inspector-task-card.normal{border-left-color:#8c78cf}
+.inspector-task-card.auto-proposal{border-style:dashed;background:#fcfbfc;opacity:.92}
+.inspector-task-card.auto-proposal strong:before{content:"Sugerido · ";font-weight:700;color:#756c72}
+.inspector-task-card.auto-proposal .inspector-mini-btn.confirm{color:#087456}
 .inspector-task-card strong{display:block;font-size:9.7px;line-height:1.25}.inspector-task-card span{display:block;font-size:8.8px;color:#5d565d;margin-top:2px}
 .inspector-task-actions{display:flex;gap:5px;justify-content:flex-end;margin-top:5px}
 .inspector-mini-btn{border:0;background:#f4f2f4;border-radius:6px;padding:3px 6px;font-size:8.5px;font-weight:900;cursor:pointer}
@@ -1826,7 +1829,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
         <div class="inspector-kpi blue"><span>Archivos analizados</span><strong id="inspFilesKpi">0</strong><small id="inspFileNames">Sin archivos importados</small></div>
         <div class="inspector-kpi green"><span>Líneas &lt; 90%</span><strong id="inspLinesKpi">0</strong><small>Por debajo de la meta de cumplimiento</small></div>
         <div class="inspector-kpi orange"><span>Conductores a seguir</span><strong id="inspDriversKpi">0</strong><small>3 o más días consecutivos</small></div>
-        <div class="inspector-kpi purple"><span>Tareas sugeridas</span><strong id="inspTasksKpi">0</strong><small>Según recurrencia e incumplimientos</small></div>
+        <div class="inspector-kpi purple"><span>Tareas sugeridas</span><strong id="inspTasksKpi">0</strong><small>Prioridades + relevamientos históricos propuestos</small></div>
       </section>
 
       <div class="inspector-analysis-grid">
@@ -2392,6 +2395,7 @@ let inspectorTasks=[];
 let inspectorFindings=[];
 let inspectorImportedFiles=[];
 let inspectorImportedRows=[];
+let inspectorAutoProposals=[];
 let inspectorReady=false;
 
 function inspNorm(v){return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
@@ -2958,9 +2962,132 @@ function generateInspectorCalendar(){
   renderInspectorCalendar();
   document.getElementById('inspectorSaveState').textContent='Calendario generado · cambios sin guardar';
 }
+function inspHistoricalLineCandidates(){
+  const current=inspMonday(document.getElementById('inspectorWeek')?.value||inspISO(new Date()));
+  const weeks=Object.keys(inspectorSharedStore)
+    .filter(w=>w<current)
+    .sort()
+    .reverse()
+    .slice(0,8);
+
+  const stats=new Map();
+  weeks.forEach(week=>{
+    const rec=inspectorSharedStore[week];
+    (rec?.findings||[]).filter(f=>f.kind==='line'&&Number.isFinite(Number(f.pctHorario))).forEach(f=>{
+      const line=f.line||'';
+      if(!line)return;
+      const s=stats.get(line)||{line,values:[],weeks:[]};
+      s.values.push(Number(f.pctHorario));
+      s.weeks.push(week);
+      stats.set(line,s);
+    });
+  });
+
+  // Sumamos el análisis actual como señal reciente, sin depender de que la semana esté guardada.
+  inspectorFindings.filter(f=>f.kind==='line'&&Number.isFinite(Number(f.pctHorario))).forEach(f=>{
+    const line=f.line||'';
+    if(!line)return;
+    const s=stats.get(line)||{line,values:[],weeks:[]};
+    s.values.unshift(Number(f.pctHorario));
+    s.weeks.unshift(current);
+    stats.set(line,s);
+  });
+
+  return [...stats.values()].map(s=>{
+    const vals=s.values.slice(0,8);
+    const avg=vals.reduce((a,b)=>a+b,0)/Math.max(1,vals.length);
+    const below90=vals.filter(v=>v<90).length;
+    const low7080=vals.filter(v=>v>=70&&v<85).length;
+    const above90=vals.filter(v=>v>=90).length;
+    const min=Math.min(...vals);
+    const score=(90-avg)*2+(below90*6)+(low7080*5)-(above90*2);
+    return {
+      ...s,
+      values:vals,
+      avg,
+      below90,
+      low7080,
+      above90,
+      min,
+      score,
+      priority:avg<80||low7080>=2?'high':'medium'
+    };
+  }).filter(s=>
+    s.values.length>=2 &&
+    s.below90>=2 &&
+    (s.avg<88||s.low7080>=1)
+  ).sort((a,b)=>b.score-a.score||a.avg-b.avg);
+}
+function inspBuildAutoProposals(){
+  const dates=inspWeekDates();
+  const candidates=inspHistoricalLineCandidates();
+  const proposals=[];
+  if(!candidates.length)return proposals;
+
+  let cursor=0;
+  dates.forEach(date=>{
+    ['Mañana','Tarde'].forEach(shift=>{
+      const confirmed=inspectorTasks.filter(t=>t.date===date&&t.shift===shift);
+      const missing=Math.max(0,3-confirmed.length);
+      const used=new Set(confirmed.map(t=>t.line).filter(Boolean));
+
+      for(let n=0;n<missing;n++){
+        let pick=null;
+        for(let tries=0;tries<candidates.length;tries++){
+          const cand=candidates[(cursor+tries)%candidates.length];
+          if(!used.has(cand.line)){pick=cand;cursor=(cursor+tries+1)%candidates.length;break}
+        }
+        if(!pick)break;
+        used.add(pick.line);
+        proposals.push({
+          id:'auto_'+date+'_'+shift+'_'+pick.line+'_'+n,
+          date,
+          shift,
+          task:'Relevamiento del servicio',
+          line:pick.line,
+          legajo:'',
+          reason:'Histórico: promedio '+pick.avg.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'% · '+pick.below90+'/'+pick.values.length+' semanas debajo de 90%',
+          priority:pick.priority,
+          source:'Propuesta automática'
+        });
+      }
+    });
+  });
+  return proposals;
+}
+function confirmInspectorProposal(id){
+  const p=inspectorAutoProposals.find(x=>x.id===id);if(!p)return;
+  inspectorTasks.push({
+    ...p,
+    id:inspUid(),
+    manual:true,
+    inspector:'',
+    notes:'',
+    source:'Propuesta automática'
+  });
+  renderInspectorAnalysis();
+  renderInspectorCalendar();
+  document.getElementById('inspectorSaveState').textContent='Cambios sin guardar';
+}
+function moveInspectorProposal(id){
+  const p=inspectorAutoProposals.find(x=>x.id===id);if(!p)return;
+  clearInspectorEditor();
+  document.getElementById('inspectorEditorTitle').textContent='Reubicar propuesta automática';
+  document.getElementById('inspEditDate').value=p.date;
+  document.getElementById('inspEditShift').value=p.shift;
+  document.getElementById('inspEditTask').value='Relevamiento del servicio';
+  document.getElementById('inspEditLine').value=p.line||'';
+  document.getElementById('inspEditLegajo').value='';
+  document.getElementById('inspEditReason').value=p.reason||'';
+  document.getElementById('inspEditPriority').value=p.priority||'medium';
+  document.getElementById('inspectorEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 function renderInspectorCalendar(){
   const grid=document.getElementById('inspectorCalendarGrid');if(!grid)return;
   const dates=inspWeekDates();
+  inspectorAutoProposals=inspBuildAutoProposals();
+  const tasksKpi=document.getElementById('inspTasksKpi');
+  if(tasksKpi)tasksKpi.textContent=inspectorFindings.length+inspectorAutoProposals.length;
   document.getElementById('inspectorWeekLabel').textContent='Semana '+inspWeekTitle();
   let out='<div class="inspector-day-head"></div>'+dates.map(d=>`<div class="inspector-day-head">${inspDateLabel(d,true)}</div>`).join('');
   ['Mañana','Tarde','Ver Plan Diario'].forEach(shift=>{
@@ -2971,10 +3098,15 @@ function renderInspectorCalendar(){
     out+=`<div class="inspector-shift-label ${cls}"><strong>${code}</strong><small>${sub}</small></div>`;
     dates.forEach(date=>{
       const arr=inspectorTasks.filter(t=>t.date===date&&t.shift===shift);
+      const proposed=inspectorAutoProposals.filter(t=>t.date===date&&t.shift===shift);
       out+='<div class="inspector-day-cell '+cls+'">'+arr.map(t=>`<div class="inspector-task-card ${t.priority}">
         <strong>${inspEsc(t.task)}</strong>
         <span>Línea ${inspEsc(t.line||'—')} · Leg. ${inspEsc(t.legajo||'—')}${t.inspector?' · Insp. '+inspEsc(t.inspector):''}</span>
         <div class="inspector-task-actions"><button class="inspector-mini-btn" onclick="editInspectorTask('${t.id}')">Editar</button><button class="inspector-mini-btn delete" onclick="deleteInspectorTask('${t.id}')">Eliminar</button></div>
+      </div>`).join('')+proposed.map(t=>`<div class="inspector-task-card auto-proposal ${t.priority}">
+        <strong>${inspEsc(t.task)}</strong>
+        <span>Línea ${inspEsc(t.line||'—')} · ${inspEsc(t.reason)}</span>
+        <div class="inspector-task-actions"><button class="inspector-mini-btn confirm" onclick="confirmInspectorProposal('${t.id}')">Confirmar</button><button class="inspector-mini-btn" onclick="moveInspectorProposal('${t.id}')">Mover</button></div>
       </div>`).join('')+`<button class="inspector-add-cell" onclick="openInspectorEditor('${date}','${shift}')">+ Agregar tarea</button></div>`;
     });
   });
