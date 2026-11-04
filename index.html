@@ -1426,12 +1426,13 @@ h1{
 .fc-kpi.received strong{color:var(--green)}.fc-kpi.pending strong{color:var(--orange)}.fc-kpi.amount strong{font-size:22px}
 .fc-table-wrap{overflow:auto}
 .fc-table{min-width:1120px}
-.fc-table th{font-size:10.5px!important}
-.fc-table td{font-size:12px!important;vertical-align:middle}
+.fc-table th{font-size:10.5px!important;text-align:center!important}
+.fc-table td{font-size:12px!important;vertical-align:middle;text-align:center}
+.fc-table td:nth-child(3){font-weight:800}
+.fc-table td.fc-money{text-align:center!important;font-weight:800;white-space:nowrap}
 .fc-rubro-row td{background:#f3f1f2!important;border-top:2px solid #d9d4d7!important;border-bottom:1px solid #ded9dc!important;padding:9px 12px!important;font-size:11px!important;font-weight:900!important;letter-spacing:.04em;text-transform:uppercase;color:#1f1a1d}
 .fc-rubro-row td span{display:inline-flex;align-items:center;gap:8px}
 .fc-rubro-row td small{font-size:9.5px;font-weight:700;color:var(--muted);letter-spacing:0;text-transform:none}
-.fc-table td.fc-money{text-align:right;font-weight:800;white-space:nowrap}
 .fc-table select{border:1px solid var(--line);border-radius:9px;padding:7px 9px;font:inherit;font-size:10.5px;font-weight:800;transition:.15s ease}
 .fc-fixed-check{width:16px;height:16px;accent-color:#181416;cursor:pointer}
 .fc-row-actions{display:flex;gap:7px;justify-content:flex-end;white-space:nowrap}
@@ -2587,9 +2588,18 @@ function renderFcModule(){
 
   const rubroOrder=['Seguros','Combustibles','Cabeceras / BQ','Limpieza','Librería / Oficina'];
   const rubroLabel={'Seguros':'SEGUROS','Combustibles':'COMBUSTIBLES','Cabeceras / BQ':'CABECERAS / BQ','Limpieza':'LIMPIEZA','Librería / Oficina':'LIBRERÍA'};
+  const sortByAmountDesc=(a,b)=>{
+    const av=(a.amount===null||a.amount===undefined||a.amount==='')?null:Number(a.amount);
+    const bv=(b.amount===null||b.amount===undefined||b.amount==='')?null:Number(b.amount);
+    if(av===null&&bv===null)return String(a.detail||'').localeCompare(String(b.detail||''),'es');
+    if(av===null)return 1;
+    if(bv===null)return -1;
+    if(bv!==av)return bv-av;
+    return String(a.detail||'').localeCompare(String(b.detail||''),'es');
+  };
   const ordered=[
-    ...rubroOrder.flatMap(origin=>fcRows.filter(r=>r.origin===origin)),
-    ...fcRows.filter(r=>!rubroOrder.includes(r.origin))
+    ...rubroOrder.flatMap(origin=>fcRows.filter(r=>r.origin===origin).sort(sortByAmountDesc)),
+    ...fcRows.filter(r=>!rubroOrder.includes(r.origin)).sort(sortByAmountDesc)
   ];
   let lastOrigin='';
   body.innerHTML=fcRows.length?ordered.map(r=>{
