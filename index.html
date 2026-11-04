@@ -1432,7 +1432,6 @@ h1{
 .fc-table td.fc-money{text-align:center!important;font-weight:800;white-space:nowrap}
 .fc-rubro-row td{background:#f3f1f2!important;border-top:2px solid #d9d4d7!important;border-bottom:1px solid #ded9dc!important;padding:9px 12px!important;font-size:11px!important;font-weight:900!important;letter-spacing:.04em;text-transform:uppercase;color:#1f1a1d}
 .fc-rubro-row td span{display:inline-flex;align-items:center;gap:8px}
-.fc-rubro-row td small{font-size:9.5px;font-weight:700;color:var(--muted);letter-spacing:0;text-transform:none}
 .fc-table select{border:1px solid var(--line);border-radius:9px;padding:7px 9px;font:inherit;font-size:10.5px;font-weight:800;transition:.15s ease}
 .fc-fixed-check{width:16px;height:16px;accent-color:#181416;cursor:pointer}
 .fc-row-actions{display:flex;gap:7px;justify-content:flex-end;white-space:nowrap}
@@ -2605,7 +2604,7 @@ function renderFcModule(){
   body.innerHTML=fcRows.length?ordered.map(r=>{
     const group=r.origin!==lastOrigin;
     lastOrigin=r.origin;
-    const groupRow=group?`<tr class="fc-rubro-row"><td colspan="9"><span>${inspEsc(rubroLabel[r.origin]||String(r.origin||'OTRO').toUpperCase())}<small>${fcRows.filter(x=>x.origin===r.origin).length} concepto${fcRows.filter(x=>x.origin===r.origin).length===1?'':'s'}</small></span></td></tr>`:'';
+    const groupRow=group?`<tr class="fc-rubro-row"><td colspan="9"><span>${inspEsc(rubroLabel[r.origin]||String(r.origin||'OTRO').toUpperCase())}</span></td></tr>`:'';
     return groupRow+`<tr>
       <td style="text-align:center"><input class="fc-fixed-check" type="checkbox" ${r.is_fixed?'checked':''} onchange="updateFcFixed('${r.id}',this.checked)"></td>
       <td>${inspEsc(r.origin||'')}</td>
