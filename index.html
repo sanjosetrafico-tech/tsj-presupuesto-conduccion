@@ -2543,7 +2543,7 @@ async function fcEnsureMonth(period){
   if(existing?.length)return;
 
   const prev=fcMonthStart(fcPrevPeriod(period));
-  const fixed=await fcRequest('?period=eq.'+encodeURIComponent(prev)+'&is_fixed=eq.true&select=origin,detail,supplier,amount,notes&order=origin.asc,detail.asc',{method:'GET'});
+  const fixed=await fcRequest('?period=eq.'+encodeURIComponent(prev)+'&is_fixed=eq.true&select=origin,detail,supplier,amount,notes,concept_key&order=origin.asc,detail.asc',{method:'GET'});
   if(!fixed?.length)return;
 
   const payload=fixed.map(r=>({
@@ -2555,7 +2555,8 @@ async function fcEnsureMonth(period){
     amount:r.amount??null,
     status:'Pendiente',
     notes:r.notes||null,
-    is_fixed:true
+    is_fixed:true,
+    concept_key:r.concept_key
   }));
   await fcRequest('',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
 }
