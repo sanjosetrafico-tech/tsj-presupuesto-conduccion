@@ -1434,13 +1434,17 @@ h1{
 .fc-table td.fc-money{text-align:right;font-weight:800;white-space:nowrap}
 .fc-table select{border:1px solid var(--line);border-radius:9px;padding:7px 9px;font:inherit;font-size:10.5px;font-weight:800;transition:.15s ease}
 .fc-fixed-check{width:16px;height:16px;accent-color:#181416;cursor:pointer}
-.fc-row-actions{display:flex;gap:5px;justify-content:flex-end;white-space:nowrap}
+.fc-row-actions{display:flex;gap:7px;justify-content:flex-end;white-space:nowrap}
+.fc-row-actions .inspector-mini-btn{min-height:32px;padding:7px 11px!important;font-size:11px!important;font-weight:800!important;border-radius:8px!important}
 .fc-status-received{background:#eaf8f1!important;border-color:#9fd8bd!important;color:#0b6b4f!important}
 .fc-status-pending{background:#fff4e8!important;border-color:#efc28f!important;color:#b46313!important}
 .fc-editor{padding:16px}
 .fc-form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.fc-form-grid label{font-size:10.5px;font-weight:800;color:#403a40}
-.fc-form-grid input,.fc-form-grid select,.fc-form-grid textarea{width:100%;margin-top:5px;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:11px;background:#fff;box-sizing:border-box}
+.fc-form-grid label{font-size:11px;font-weight:650;color:#403a40}
+.fc-form-grid input,.fc-form-grid select,.fc-form-grid textarea{width:100%;margin-top:5px;border:1px solid var(--line);border-radius:10px;padding:10px 11px;font:inherit;font-size:12px;font-weight:400;background:#fff;box-sizing:border-box;color:var(--ink)}
+.fc-form-grid textarea{line-height:1.4}
+.fc-editor .panel-head h2{font-weight:850}
+.fc-editor .panel-head .help{font-weight:400}
 .fc-fixed-label{display:flex;align-items:center;gap:8px;padding-top:23px}.fc-fixed-label input{width:16px!important;margin:0!important}.fc-fixed-label span{font-size:11px}
 .fc-notes-label{grid-column:span 2}
 .fc-editor .section-actions{margin-top:12px}
@@ -2540,16 +2544,16 @@ async function fcEnsureMonth(period){
   if(existing?.length)return;
 
   const prev=fcMonthStart(fcPrevPeriod(period));
-  const fixed=await fcRequest('?period=eq.'+encodeURIComponent(prev)+'&is_fixed=eq.true&select=origin,detail&order=origin.asc,detail.asc',{method:'GET'});
+  const fixed=await fcRequest('?period=eq.'+encodeURIComponent(prev)+'&is_fixed=eq.true&select=origin,detail,supplier,amount&order=origin.asc,detail.asc',{method:'GET'});
   if(!fixed?.length)return;
 
   const payload=fixed.map(r=>({
     period:month,
     origin:r.origin,
     detail:r.detail,
-    supplier:null,
+    supplier:r.supplier||null,
     invoice_number:null,
-    amount:null,
+    amount:r.amount??null,
     status:'Pendiente',
     notes:null,
     is_fixed:true
