@@ -1866,7 +1866,6 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           <button class="btn ghost fc-nav-btn" type="button" onclick="moveFcPeriod(-1)">‹</button>
           <input id="fcPeriod" class="monthly-month" type="month" value="2026-11" aria-label="Mes de facturas">
           <button class="btn ghost fc-nav-btn" type="button" onclick="moveFcPeriod(1)">›</button>
-          <button class="btn primary" type="button" onclick="openFcEditor()">+ Agregar FC</button>
         </div>
       </div>
 
@@ -1883,7 +1882,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
             <h2>Detalle mensual</h2>
             <p class="help">Los conceptos marcados como Gasto fijo se precargan automáticamente en el mes siguiente.</p>
           </div>
-          <span id="fcState" class="km-saved-state">Cargando…</span>
+          <button class="btn primary" type="button" onclick="openFcEditor()">+ Agregar FC</button>
         </div>
         <div class="fc-table-wrap">
           <table class="fc-table">
@@ -2563,14 +2562,11 @@ async function fcEnsureMonth(period){
 async function loadFcMonth(period,ensure=true){
   const input=document.getElementById('fcPeriod');if(!input)return;
   const p=period||input.value||'2026-11';input.value=p;
-  const state=document.getElementById('fcState');if(state)state.textContent='Actualizando…';
   try{
     if(ensure)await fcEnsureMonth(p);
     fcRows=await fcRequest('?period=eq.'+encodeURIComponent(fcMonthStart(p))+'&select=*&order=origin.asc,detail.asc',{method:'GET'})||[];
     renderFcModule();
-    if(state)state.textContent='Compartido · '+fcRows.length+' conceptos';
   }catch(e){
-    if(state)state.textContent='Error de conexión';
     const body=document.getElementById('fcBody');
     if(body)body.innerHTML='<tr><td colspan="9" class="empty-cell">No se pudieron cargar las FC del mes.</td></tr>';
   }
