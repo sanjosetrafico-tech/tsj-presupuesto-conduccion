@@ -1413,7 +1413,10 @@ h1{
 .fc-table-wrap{overflow:auto}
 .fc-table{min-width:1120px}
 .fc-table th{font-size:10.5px!important}
-.fc-table td{font-size:11px!important;vertical-align:middle}
+.fc-table td{font-size:12px!important;vertical-align:middle}
+.fc-rubro-row td{background:#f3f1f2!important;border-top:2px solid #d9d4d7!important;border-bottom:1px solid #ded9dc!important;padding:9px 12px!important;font-size:11px!important;font-weight:900!important;letter-spacing:.04em;text-transform:uppercase;color:#1f1a1d}
+.fc-rubro-row td span{display:inline-flex;align-items:center;gap:8px}
+.fc-rubro-row td small{font-size:9.5px;font-weight:700;color:var(--muted);letter-spacing:0;text-transform:none}
 .fc-table td.fc-money{text-align:right;font-weight:800;white-space:nowrap}
 .fc-table select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff;font:inherit;font-size:10.5px}
 .fc-fixed-check{width:16px;height:16px;accent-color:#181416;cursor:pointer}
@@ -1838,8 +1841,8 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
     <div class="fc-module">
       <div class="fc-head">
         <div>
-          <h2>FC del Área</h2>
-          <p>Control mensual de facturas y conceptos recurrentes del área.</p>
+          <h2>Control FC</h2>
+          <p>Seguimiento mensual de facturas y conceptos recurrentes.</p>
         </div>
         <div class="fc-actions">
           <button class="btn ghost fc-nav-btn" type="button" onclick="moveFcPeriod(-1)">‹</button>
@@ -2564,17 +2567,29 @@ function renderFcModule(){
   document.getElementById('fcKpiPending').textContent=pending.length;
   document.getElementById('fcKpiAmount').textContent=fcMoney(amount);
 
-  body.innerHTML=fcRows.length?fcRows.map(r=>`<tr>
-    <td style="text-align:center"><input class="fc-fixed-check" type="checkbox" ${r.is_fixed?'checked':''} onchange="updateFcFixed('${r.id}',this.checked)"></td>
-    <td>${inspEsc(r.origin||'')}</td>
-    <td><b>${inspEsc(r.detail||'')}</b></td>
-    <td>${inspEsc(r.supplier||'—')}</td>
-    <td>${inspEsc(r.invoice_number||'—')}</td>
-    <td class="fc-money">${fcMoney(r.amount)}</td>
-    <td><select class="${r.status==='Recibida'?'fc-status-received':'fc-status-pending'}" onchange="updateFcStatus('${r.id}',this.value)"><option ${r.status==='Pendiente'?'selected':''}>Pendiente</option><option ${r.status==='Recibida'?'selected':''}>Recibida</option></select></td>
-    <td>${inspEsc(r.notes||'—')}</td>
-    <td><div class="fc-row-actions"><button class="inspector-mini-btn" type="button" onclick="editFcRecord('${r.id}')">Editar</button><button class="inspector-mini-btn delete" type="button" onclick="deleteFcRecord('${r.id}')">Eliminar</button></div></td>
-  </tr>`).join(''):'<tr><td colspan="9" class="empty-cell">No hay conceptos cargados para este mes.</td></tr>';
+  const rubroOrder=['Seguros','Combustibles','Cabeceras / BQ','Limpieza','Librería / Oficina'];
+  const rubroLabel={'Seguros':'SEGUROS','Combustibles':'COMBUSTIBLES','Cabeceras / BQ':'CABECERAS / BQ','Limpieza':'LIMPIEZA','Librería / Oficina':'LIBRERÍA'};
+  const ordered=[
+    ...rubroOrder.flatMap(origin=>fcRows.filter(r=>r.origin===origin)),
+    ...fcRows.filter(r=>!rubroOrder.includes(r.origin))
+  ];
+  let lastOrigin='';
+  body.innerHTML=fcRows.length?ordered.map(r=>{
+    const group=r.origin!==lastOrigin;
+    lastOrigin=r.origin;
+    const groupRow=group?`<tr class="fc-rubro-row"><td colspan="9"><span>${inspEsc(rubroLabel[r.origin]||String(r.origin||'OTRO').toUpperCase())}<small>${fcRows.filter(x=>x.origin===r.origin).length} concepto${fcRows.filter(x=>x.origin===r.origin).length===1?'':'s'}</small></span></td></tr>`:'';
+    return groupRow+`<tr>
+      <td style="text-align:center"><input class="fc-fixed-check" type="checkbox" ${r.is_fixed?'checked':''} onchange="updateFcFixed('${r.id}',this.checked)"></td>
+      <td>${inspEsc(r.origin||'')}</td>
+      <td><b>${inspEsc(r.detail||'')}</b></td>
+      <td>${inspEsc(r.supplier||'—')}</td>
+      <td>${inspEsc(r.invoice_number||'—')}</td>
+      <td class="fc-money">${fcMoney(r.amount)}</td>
+      <td><select class="${r.status==='Recibida'?'fc-status-received':'fc-status-pending'}" onchange="updateFcStatus('${r.id}',this.value)"><option ${r.status==='Pendiente'?'selected':''}>Pendiente</option><option ${r.status==='Recibida'?'selected':''}>Recibida</option></select></td>
+      <td>${inspEsc(r.notes||'—')}</td>
+      <td><div class="fc-row-actions"><button class="inspector-mini-btn" type="button" onclick="editFcRecord('${r.id}')">Editar</button><button class="inspector-mini-btn delete" type="button" onclick="deleteFcRecord('${r.id}')">Eliminar</button></div></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="9" class="empty-cell">No hay conceptos cargados para este mes.</td></tr>';
 }
 async function updateFcStatus(id,status){
   try{
