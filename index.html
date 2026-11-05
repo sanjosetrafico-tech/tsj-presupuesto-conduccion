@@ -1265,6 +1265,8 @@ h1{
   text-align:center;
 }
 .staff-calc-francos,.staff-calc-workdays{font-weight:900;color:var(--ink)}
+.staff-total-row .staff-total-label{text-align:left!important;padding-left:12px!important;font-weight:900}
+.staff-total-row td{vertical-align:middle}
 .budget-main-split .plan-service-panel table{
   min-width:620px;
 }
@@ -1685,7 +1687,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
         <table class="staff-table">
           <thead><tr><th>Conductores</th><th>Días activos</th><th>Feriados Nac. no trab.</th><th>Francos</th><th>Jornadas por conductor</th><th>Disponibles</th><th></th></tr></thead>
           <tbody id="staffBody"></tbody>
-          <tfoot><tr class="total-row"><td class="num" id="staffCount">0</td><td colspan="4">Total</td><td class="num" id="staffTotal">0</td><td></td></tr></tfoot>
+          <tfoot><tr class="total-row staff-total-row"><td class="num" id="staffCount">0</td><td class="staff-total-label" colspan="2">Total</td><td colspan="2"></td><td class="num" id="staffTotal">0</td><td></td></tr></tfoot>
         </table>
       </div>
       <div id="staffShortageAlert" class="staff-shortage-alert" hidden>
