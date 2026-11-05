@@ -1697,11 +1697,11 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           </div>
           <div class="staff-franco-card franco-7">
             <div class="staff-franco-head"><strong>7</strong><b id="staffSummary7Count">0</b></div>
-            <span>Conductores con 7 francos<br>(no trabajan 1 feriado)</span>
+            <span>Conductores con 7 francos<br>(no trabajan 1 feriado nac.)</span>
           </div>
           <div class="staff-franco-card franco-8">
             <div class="staff-franco-head"><strong>8</strong><b id="staffSummary8Count">0</b></div>
-            <span>Conductores con 8 francos<br>(no trabajan 2 feriados)</span>
+            <span>Conductores con 8 francos<br>(no trabajan 2 feriados nac.)</span>
           </div>
           <div class="staff-franco-card franco-custom" id="staffSummaryCustomCard">
             <div class="staff-franco-head"><strong>Otros</strong><b id="staffSummaryCustomCount">0</b></div>
@@ -4178,8 +4178,8 @@ function downloadPDFFromSnapshot(s){
     {label:'Conductores',sub:'',value:fmt(M.count),fill:soft,text:ink},
     {label:'Jornadas',sub:'',value:fmt(M.gross),fill:soft,text:ink},
     {label:'6 francos',sub:'trabajan feriados',value:fmt(staff6),fill:greenSoft,text:green},
-    {label:'7 francos',sub:'no trabajan 1 feriado',value:fmt(staff7),fill:[255,246,237],text:[168,82,16]},
-    {label:'8 francos',sub:'no trabajan 2 feriados',value:fmt(staff8),fill:[246,240,255],text:[107,63,160]},
+    {label:'7 francos',sub:'no trabajan 1 feriado nac.',value:fmt(staff7),fill:[255,246,237],text:[168,82,16]},
+    {label:'8 francos',sub:'no trabajan 2 feriados nac.',value:fmt(staff8),fill:[246,240,255],text:[107,63,160]},
     {label:'Especiales',sub:'francos: '+staffCustomDetail,value:fmt(staffCustom),fill:[243,246,250],text:[71,85,105]}
   ];
   staffSummary.forEach((c,i)=>{
