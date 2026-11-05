@@ -4171,7 +4171,7 @@ function downloadPDFFromSnapshot(s){
     doc.setFontSize(6.3);
     doc.setTextColor(...muted);
     doc.text(c.label.toUpperCase(),x+2.7,cardY+5);
-    doc.setFontSize(13);
+    doc.setFontSize(11.8);
     doc.setTextColor(...(c.accent?(M.balance>=0?green:red):ink));
     doc.text(c.value,x+2.7,cardY+12.5);
   });
@@ -4270,7 +4270,7 @@ function downloadPDFFromSnapshot(s){
 
   // Primera fila: datos principales
   const topGap=3;
-  const topH=13.5;
+  const topH=11.8;
   const topW=(contentW-topGap)/2;
   const topCards=[
     {value:fmt(M.count),label:'Conductores totales',icon:'users',accent:[102,84,140],iconFill:[240,236,251]},
@@ -4308,17 +4308,17 @@ function downloadPDFFromSnapshot(s){
     }
 
     doc.setFont('helvetica','bold');
-    doc.setFontSize(14.5);
+    doc.setFontSize(13.2);
     doc.setTextColor(...ink);
-    doc.text(card.value,x+14,cursor+6.8);
+    doc.text(card.value,x+14,cursor+6.2);
 
     doc.setFont('helvetica','normal');
-    doc.setFontSize(6.8);
+    doc.setFontSize(6.3);
     doc.setTextColor(...muted);
-    doc.text(card.label,x+14,cursor+10.7);
+    doc.text(card.label,x+14,cursor+9.8);
   });
 
-  cursor+=topH+2.8;
+  cursor+=topH+2.3;
 
   // Segunda fila: detalle de francos; no mostrar grupos en 0.
   const detailCards=[];
@@ -4372,7 +4372,7 @@ function downloadPDFFromSnapshot(s){
 
   if(detailCards.length){
     const detailGap=3;
-    const detailH=15.5;
+    const detailH=13.6;
     const detailW=(contentW-detailGap*(detailCards.length-1))/detailCards.length;
 
     detailCards.forEach((card,i)=>{
@@ -4385,25 +4385,25 @@ function downloadPDFFromSnapshot(s){
       doc.setFont('helvetica','bold');
       doc.setFontSize(13);
       doc.setTextColor(...card.accent);
-      doc.text(card.count,x+3,cursor+5.8);
+      doc.text(card.count,x+3,cursor+5.3);
 
       doc.setFont('helvetica','normal');
-      doc.setFontSize(6.2);
+      doc.setFontSize(5.9);
       doc.setTextColor(...ink);
-      doc.text(card.label,x+12.5,cursor+5.6);
+      doc.text(card.label,x+11.8,cursor+5.1);
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(7.2);
+      doc.setFontSize(6.8);
       doc.setTextColor(...card.accent);
-      doc.text(card.sub,x+3,cursor+10.1,{maxWidth:detailW-6});
+      doc.text(card.sub,x+3,cursor+8.9,{maxWidth:detailW-6});
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(6.5);
+      doc.setFontSize(6.1);
       doc.setTextColor(51,65,85);
-      doc.text(card.workdays,x+3,cursor+13.4,{maxWidth:detailW-6});
+      doc.text(card.workdays,x+3,cursor+11.8,{maxWidth:detailW-6});
     });
 
-    cursor+=detailH+2.2;
+    cursor+=detailH+1.8;
   }else{
     cursor+=1.2;
   }
