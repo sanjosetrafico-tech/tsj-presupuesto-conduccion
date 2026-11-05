@@ -1199,6 +1199,9 @@ h1{
 .staff-summary-top{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .staff-summary-stat{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.78);border-radius:10px;padding:8px 10px}
 .staff-summary-mini{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:#e5f0ff;color:#1876ea;font-size:15px;line-height:1}
+.staff-summary-mini svg{display:block}
+.staff-summary-mini-users{color:#66548c;background:#f0ecfb}
+.staff-summary-mini-calendar{color:#1876ea;background:#e5f0ff}
 .staff-summary-stat strong{display:block;font-size:20px;line-height:1;font-weight:950;color:#111}
 .staff-summary-stat small{display:block;margin-top:3px;font-size:10px;color:#5f6270}
 .staff-summary-bottom{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
@@ -1733,34 +1736,34 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
         </div>
         <div class="staff-summary-top">
           <div class="staff-summary-stat">
-            <span class="staff-summary-mini">👥</span>
+            <span class="staff-summary-mini staff-summary-mini-users" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
             <div><strong id="staffSummaryCount">0</strong><small>Conductores totales</small></div>
           </div>
           <div class="staff-summary-stat">
-            <span class="staff-summary-mini" aria-hidden="true">🗓✓</span>
+            <span class="staff-summary-mini staff-summary-mini-calendar" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m8.5 15 2 2 4-4"/></svg></span>
             <div><strong id="staffSummaryGross">0</strong><small>Jornadas disponibles</small></div>
           </div>
         </div>
         <div class="staff-summary-bottom">
           <div class="staff-franco-card franco-6" id="staffSummary6Card">
-            <div class="staff-franco-main"><strong id="staffSummary6Count">0</strong><span>conductores</span></div>
+            <div class="staff-franco-main"><strong id="staffSummary6Count">0</strong><span id="staffSummary6Label">conductores</span></div>
             <b>6 francos</b>
             <small id="staffSummary6Workdays">0 jorn./cond.</small>
           </div>
           <div class="staff-franco-card franco-7" id="staffSummary7Card">
-            <div class="staff-franco-main"><strong id="staffSummary7Count">0</strong><span>conductores</span></div>
+            <div class="staff-franco-main"><strong id="staffSummary7Count">0</strong><span id="staffSummary7Label">conductores</span></div>
             <b>6 francos + 1 DNL</b>
             <small id="staffSummary7Workdays">0 jorn./cond.</small>
           </div>
           <div class="staff-franco-card franco-8" id="staffSummary8Card">
-            <div class="staff-franco-main"><strong id="staffSummary8Count">0</strong><span>conductores</span></div>
+            <div class="staff-franco-main"><strong id="staffSummary8Count">0</strong><span id="staffSummary8Label">conductores</span></div>
             <b>6 francos + 2 DNL</b>
             <small id="staffSummary8Workdays">0 jorn./cond.</small>
           </div>
           <div class="staff-franco-card franco-custom" id="staffSummaryCustomCard">
-            <div class="staff-franco-main"><strong id="staffSummaryCustomCount">0</strong><span>conductores</span></div>
-            <b>Esquema especial</b>
-            <small id="staffSummaryCustomDetail">Francos personalizados</small>
+            <div class="staff-franco-main"><strong id="staffSummaryCustomCount">0</strong><span id="staffSummaryCustomLabel">conductores</span></div>
+            <b id="staffSummaryCustomFrancos">Francos personalizados</b>
+            <small id="staffSummaryCustomWorkdays">0 jornadas por conductor</small>
           </div>
         </div>
       </aside>
@@ -3956,10 +3959,14 @@ const sf6=francoGroups[6]||0,sf7=francoGroups[7]||0,sf8=francoGroups[8]||0;
 const sfCustomRows=Object.entries(francoGroups).filter(([f])=>![6,7,8].includes(Number(f)));
 const sfCustom=sfCustomRows.reduce((a,[,count])=>a+count,0);
 const sfCustomDetail=sfCustomRows.sort((a,b)=>Number(a[0])-Number(b[0])).map(([f,count])=>f+' francos · '+fmt(count)+' cond.').join(' · ')||'Francos personalizados';
-const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross'),ss6=document.getElementById('staffSummary6Count'),ss7=document.getElementById('staffSummary7Count'),ss8=document.getElementById('staffSummary8Count'),ssCustom=document.getElementById('staffSummaryCustomCount'),ssCustomDetail=document.getElementById('staffSummaryCustomDetail'),ss6W=document.getElementById('staffSummary6Workdays'),ss7W=document.getElementById('staffSummary7Workdays'),ss8W=document.getElementById('staffSummary8Workdays');
+const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross'),ss6=document.getElementById('staffSummary6Count'),ss7=document.getElementById('staffSummary7Count'),ss8=document.getElementById('staffSummary8Count'),ssCustom=document.getElementById('staffSummaryCustomCount'),ssCustomLabel=document.getElementById('staffSummaryCustomLabel'),ssCustomFrancos=document.getElementById('staffSummaryCustomFrancos'),ssCustomWorkdays=document.getElementById('staffSummaryCustomWorkdays'),ss6Label=document.getElementById('staffSummary6Label'),ss7Label=document.getElementById('staffSummary7Label'),ss8Label=document.getElementById('staffSummary8Label'),ss6W=document.getElementById('staffSummary6Workdays'),ss7W=document.getElementById('staffSummary7Workdays'),ss8W=document.getElementById('staffSummary8Workdays');
 const ss6Card=document.getElementById('staffSummary6Card'),ss7Card=document.getElementById('staffSummary7Card'),ss8Card=document.getElementById('staffSummary8Card'),ssCustomCard=document.getElementById('staffSummaryCustomCard');
 const sf6W=staff.find(r=>staffFrancos(r)===6),sf7W=staff.find(r=>staffFrancos(r)===7),sf8W=staff.find(r=>staffFrancos(r)===8);
-if(ssc)ssc.textContent=fmt(m.count);if(ssg)ssg.textContent=fmt(m.gross);if(ss6)ss6.textContent=fmt(sf6);if(ss7)ss7.textContent=fmt(sf7);if(ss8)ss8.textContent=fmt(sf8);if(ssCustom)ssCustom.textContent=fmt(sfCustom);if(ssCustomDetail)ssCustomDetail.textContent=sfCustomDetail;
+const sfCustomFirst=staff.find(r=>![6,7,8].includes(staffFrancos(r)));
+if(ssc)ssc.textContent=fmt(m.count);if(ssg)ssg.textContent=fmt(m.gross);if(ss6)ss6.textContent=fmt(sf6);if(ss7)ss7.textContent=fmt(sf7);if(ss8)ss8.textContent=fmt(sf8);if(ssCustom)ssCustom.textContent=fmt(sfCustom);
+if(ss6Label)ss6Label.textContent=sf6===1?'conductor':'conductores';if(ss7Label)ss7Label.textContent=sf7===1?'conductor':'conductores';if(ss8Label)ss8Label.textContent=sf8===1?'conductor':'conductores';if(ssCustomLabel)ssCustomLabel.textContent=sfCustom===1?'conductor':'conductores';
+if(ssCustomFrancos)ssCustomFrancos.textContent=sfCustomFirst?fmt(staffFrancos(sfCustomFirst))+' francos':'Francos personalizados';
+if(ssCustomWorkdays)ssCustomWorkdays.textContent=(sfCustomFirst?fmt(staffWorkdays(sfCustomFirst)):'0')+' jornadas por conductor';
 if(ss6W)ss6W.textContent=(sf6W?fmt(staffWorkdays(sf6W)):'0')+' jornadas por conductor';
 if(ss7W)ss7W.textContent=(sf7W?fmt(staffWorkdays(sf7W)):'0')+' jornadas por conductor';
 if(ss8W)ss8W.textContent=(sf8W?fmt(staffWorkdays(sf8W)):'0')+' jornadas por conductor';
