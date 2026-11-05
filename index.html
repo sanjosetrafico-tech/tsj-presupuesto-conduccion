@@ -1252,18 +1252,16 @@ h1{
   line-height:1.15;
   white-space:normal;
 }
-.staff-table th:nth-child(1){width:14%}
-.staff-table th:nth-child(2){width:16%}
-.staff-table th:nth-child(3){width:21%}
-.staff-table th:nth-child(4){width:11%}
-.staff-table th:nth-child(5){width:18%}
-.staff-table th:nth-child(6){width:14%}
-.staff-table th:nth-child(7){width:6%}
 .staff-table input[type="number"]{
   width:100%!important;
   min-width:0!important;
   text-align:center;
 }
+.staff-table th,.staff-table td{box-sizing:border-box}
+.staff-table td.num,.staff-table .staff-calc-francos,.staff-table .staff-calc-workdays{text-align:center!important}
+.staff-table tfoot td{text-align:center!important}
+.staff-table tfoot .staff-total-left,.staff-table tfoot .staff-total-right{white-space:nowrap}
+
 .staff-calc-francos,.staff-calc-workdays{font-weight:900;color:var(--ink)}
 .staff-total-row td{vertical-align:middle}
 .staff-total-left{text-align:center!important;font-weight:700}
@@ -1688,6 +1686,15 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
     <div class="staff-layout">
       <div class="staff-table-wrap">
         <table class="staff-table">
+          <colgroup>
+            <col style="width:14%">
+            <col style="width:16%">
+            <col style="width:21%">
+            <col style="width:11%">
+            <col style="width:18%">
+            <col style="width:14%">
+            <col style="width:6%">
+          </colgroup>
           <thead><tr><th>Conductores</th><th>Días activos</th><th>Feriados Nac. no trab.</th><th>Francos</th><th>Jornadas por conductor</th><th>Disponibles</th><th></th></tr></thead>
           <tbody id="staffBody"></tbody>
           <tfoot><tr class="total-row staff-total-row"><td class="staff-total-left"><strong id="staffCount">0</strong> Conductores</td><td></td><td></td><td></td><td></td><td class="staff-total-right">Total <strong id="staffTotal">0</strong></td><td></td></tr></tfoot>
