@@ -4168,7 +4168,7 @@ function downloadPDFFromSnapshot(s){
     doc.setDrawColor(...line);
     doc.roundedRect(x,cardY,cardW,17,1.6,1.6,'FD');
     doc.setFont('helvetica','bold');
-    doc.setFontSize(6.3);
+    doc.setFontSize(5.5);
     doc.setTextColor(...muted);
     doc.text(c.label.toUpperCase(),x+2.7,cardY+5);
     doc.setFontSize(11.8);
@@ -4270,7 +4270,7 @@ function downloadPDFFromSnapshot(s){
 
   // Primera fila: datos principales
   const topGap=3;
-  const topH=11.8;
+  const topH=10.2;
   const topW=(contentW-topGap)/2;
   const topCards=[
     {value:fmt(M.count),label:'Conductores totales',icon:'users',accent:[102,84,140],iconFill:[240,236,251]},
@@ -4286,39 +4286,39 @@ function downloadPDFFromSnapshot(s){
 
     // bloque visual equivalente al icono de la web
     doc.setFillColor(...card.iconFill);
-    doc.roundedRect(x+2.6,cursor+2.4,9,8.7,1.5,1.5,'F');
+    doc.roundedRect(x+2.8,cursor+2.1,7.4,6.8,1.3,1.3,'F');
 
     if(card.icon==='users'){
       doc.setDrawColor(...card.accent);
       doc.setLineWidth(.45);
-      doc.circle(x+6.3,cursor+5.2,1.15,'S');
-      doc.circle(x+8.4,cursor+5.5,.85,'S');
-      doc.line(x+4.6,cursor+9.1,x+4.6,cursor+8.0);
-      doc.line(x+4.6,cursor+8.0,x+5.4,cursor+7.2);
-      doc.line(x+5.4,cursor+7.2,x+7.2,cursor+7.2);
-      doc.line(x+7.2,cursor+7.2,x+8.0,cursor+8.0);
-      doc.line(x+8.0,cursor+8.0,x+8.0,cursor+9.1);
+      doc.circle(x+5.9,cursor+4.5,.95,'S');
+      doc.circle(x+7.7,cursor+4.8,.7,'S');
+      doc.line(x+4.6,cursor+7.9,x+4.6,cursor+7.0);
+      doc.line(x+4.6,cursor+7.0,x+5.2,cursor+6.4);
+      doc.line(x+5.2,cursor+6.4,x+6.8,cursor+6.4);
+      doc.line(x+6.8,cursor+6.4,x+7.5,cursor+7.0);
+      doc.line(x+7.5,cursor+7.0,x+7.5,cursor+7.9);
     }else{
       doc.setDrawColor(...card.accent);
       doc.setLineWidth(.45);
-      doc.roundedRect(x+5,cursor+4.4,4.3,4.3,.45,.45,'S');
-      doc.line(x+5,cursor+5.6,x+9.3,cursor+5.6);
-      doc.line(x+6.1,cursor+3.9,x+6.1,cursor+5);
-      doc.line(x+8.2,cursor+3.9,x+8.2,cursor+5);
+      doc.roundedRect(x+4.7,cursor+3.8,3.8,3.8,.4,.4,'S');
+      doc.line(x+4.7,cursor+4.9,x+8.5,cursor+4.9);
+      doc.line(x+5.7,cursor+3.3,x+5.7,cursor+4.3);
+      doc.line(x+7.6,cursor+3.3,x+7.6,cursor+4.3);
     }
 
     doc.setFont('helvetica','bold');
-    doc.setFontSize(13.2);
+    doc.setFontSize(11.5);
     doc.setTextColor(...ink);
-    doc.text(card.value,x+14,cursor+6.2);
+    doc.text(card.value,x+12.2,cursor+5.5);
 
     doc.setFont('helvetica','normal');
     doc.setFontSize(6.3);
     doc.setTextColor(...muted);
-    doc.text(card.label,x+14,cursor+9.8);
+    doc.text(card.label,x+12.2,cursor+8.5);
   });
 
-  cursor+=topH+2.3;
+  cursor+=topH+1.8;
 
   // Segunda fila: detalle de francos; no mostrar grupos en 0.
   const detailCards=[];
@@ -4372,7 +4372,7 @@ function downloadPDFFromSnapshot(s){
 
   if(detailCards.length){
     const detailGap=3;
-    const detailH=13.6;
+    const detailH=11.6;
     const detailW=(contentW-detailGap*(detailCards.length-1))/detailCards.length;
 
     detailCards.forEach((card,i)=>{
@@ -4383,27 +4383,27 @@ function downloadPDFFromSnapshot(s){
       doc.roundedRect(x,cursor,detailW,detailH,1.6,1.6,'FD');
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(13);
+      doc.setFontSize(10.8);
       doc.setTextColor(...card.accent);
-      doc.text(card.count,x+3,cursor+5.3);
+      doc.text(card.count,x+3,cursor+4.7);
 
       doc.setFont('helvetica','normal');
       doc.setFontSize(5.9);
       doc.setTextColor(...ink);
-      doc.text(card.label,x+11.8,cursor+5.1);
+      doc.text(card.label,x+10.7,cursor+4.6);
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(6.8);
+      doc.setFontSize(6.2);
       doc.setTextColor(...card.accent);
-      doc.text(card.sub,x+3,cursor+8.9,{maxWidth:detailW-6});
+      doc.text(card.sub,x+3,cursor+7.6,{maxWidth:detailW-6});
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(6.1);
+      doc.setFontSize(5.8);
       doc.setTextColor(51,65,85);
-      doc.text(card.workdays,x+3,cursor+11.8,{maxWidth:detailW-6});
+      doc.text(card.workdays,x+3,cursor+10.1,{maxWidth:detailW-6});
     });
 
-    cursor+=detailH+1.8;
+    cursor+=detailH+1.4;
   }else{
     cursor+=1.2;
   }
