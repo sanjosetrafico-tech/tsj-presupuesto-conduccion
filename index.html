@@ -1265,7 +1265,6 @@ h1{
 .staff-calc-francos,.staff-calc-workdays{font-weight:900;color:var(--ink)}
 .staff-total-row td{vertical-align:middle}
 .staff-total-left,.staff-total-right{
-  position:relative;
   text-align:center!important;
   white-space:nowrap;
   font-weight:700
@@ -1276,12 +1275,7 @@ h1{
   text-align:center;
   font-weight:950
 }
-.staff-total-text{
-  position:absolute;
-  left:50%;
-  margin-left:24px;
-  font-weight:800
-}
+
 .budget-main-split .plan-service-panel table{
   min-width:620px;
 }
@@ -1711,7 +1705,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           </colgroup>
           <thead><tr><th>Conductores</th><th>Días activos</th><th>Feriados Nac. no trab.</th><th>Francos</th><th>Jornadas por conductor</th><th>Disponibles</th><th></th></tr></thead>
           <tbody id="staffBody"></tbody>
-          <tfoot><tr class="total-row staff-total-row"><td class="staff-total-left"><span class="staff-total-number" id="staffCount">0</span><span class="staff-total-text">Total</span></td><td></td><td></td><td></td><td></td><td class="staff-total-right"><span class="staff-total-number" id="staffTotal">0</span><span class="staff-total-text">Total</span></td><td></td></tr></tfoot>
+          <tfoot><tr class="total-row staff-total-row"><td class="staff-total-left"><span class="staff-total-number" id="staffCount">0</span></td><td></td><td></td><td></td><td></td><td class="staff-total-right"><span class="staff-total-number" id="staffTotal">0</span></td><td></td></tr></tfoot>
         </table>
       </div>
       <div id="staffShortageAlert" class="staff-shortage-alert" hidden>
@@ -4223,12 +4217,12 @@ function downloadPDFFromSnapshot(s){
     head:[['Conductores','Días activos','Feriados Nac. no trab.','Francos','Jornadas/cond.','Disponibles']],
     body:staffRows,
     foot:[[
-      {content:fmt(M.count)+'  Total',styles:{halign:'center'}},
+      {content:fmt(M.count),styles:{halign:'center'}},
       '',
       '',
       '',
       '',
-      {content:fmt(M.gross)+'  Total',styles:{halign:'center'}}
+      {content:fmt(M.gross),styles:{halign:'center'}}
     ]],
     columnStyles:{
       0:{halign:'center',cellWidth:27},
