@@ -1264,10 +1264,9 @@ h1{
 
 .staff-calc-francos,.staff-calc-workdays{font-weight:900;color:var(--ink)}
 .staff-total-row td{vertical-align:middle}
-.staff-total-left{text-align:center!important;font-weight:700}
-.staff-total-left strong{font-weight:950}
-.staff-total-right{text-align:center!important;font-weight:700}
-.staff-total-right strong{margin-left:5px;font-weight:950}
+.staff-total-left,.staff-total-right{text-align:center!important;font-weight:700;white-space:nowrap}
+.staff-total-left strong,.staff-total-right strong{font-weight:950}
+.staff-total-left span,.staff-total-right span{margin-left:4px;font-weight:800}
 .budget-main-split .plan-service-panel table{
   min-width:620px;
 }
@@ -1697,7 +1696,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           </colgroup>
           <thead><tr><th>Conductores</th><th>Días activos</th><th>Feriados Nac. no trab.</th><th>Francos</th><th>Jornadas por conductor</th><th>Disponibles</th><th></th></tr></thead>
           <tbody id="staffBody"></tbody>
-          <tfoot><tr class="total-row staff-total-row"><td class="staff-total-left"><strong id="staffCount">0</strong> Conductores</td><td></td><td></td><td></td><td></td><td class="staff-total-right">Total <strong id="staffTotal">0</strong></td><td></td></tr></tfoot>
+          <tfoot><tr class="total-row staff-total-row"><td class="staff-total-left"><strong id="staffCount">0</strong> <span>Total</span></td><td></td><td></td><td></td><td></td><td class="staff-total-right"><strong id="staffTotal">0</strong> <span>Total</span></td><td></td></tr></tfoot>
         </table>
       </div>
       <div id="staffShortageAlert" class="staff-shortage-alert" hidden>
@@ -4209,12 +4208,12 @@ function downloadPDFFromSnapshot(s){
     head:[['Conductores','Días activos','Feriados Nac. no trab.','Francos','Jornadas/cond.','Disponibles']],
     body:staffRows,
     foot:[[
-      {content:fmt(M.count)+' Conductores',styles:{halign:'center'}},
+      {content:fmt(M.count)+' Total',styles:{halign:'center'}},
       '',
       '',
       '',
       '',
-      {content:'Total '+fmt(M.gross),styles:{halign:'center'}}
+      {content:fmt(M.gross)+' Total',styles:{halign:'center'}}
     ]],
     columnStyles:{
       0:{halign:'center',cellWidth:27},
