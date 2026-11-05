@@ -4262,7 +4262,7 @@ function downloadPDFFromSnapshot(s){
 
   // Resumen de dotación compacto
   const sumGap=2;
-  const sumH=12;
+  const sumH=9.5;
   const staffSummary=[
     {label:'Conductores',sub:'',value:fmt(M.count),fill:soft,text:ink},
     {label:'Jornadas',sub:'',value:fmt(M.gross),fill:soft,text:ink}
@@ -4283,18 +4283,18 @@ function downloadPDFFromSnapshot(s){
     const x=left+i*(sumW+sumGap);
     doc.setFillColor(...c.fill);
     doc.setDrawColor(...line);
-    doc.roundedRect(x,cursor,sumW,sumH,1.4,1.4,'FD');
+    doc.roundedRect(x,cursor,sumW,sumH,1.2,1.2,'FD');
 
     doc.setFont('helvetica','bold');
-    doc.setFontSize(5.8);
+    doc.setFontSize(6.4);
     doc.setTextColor(...muted);
-    doc.text(c.label.toUpperCase(),x+2.4,cursor+3.5);
+    doc.text(c.label.toUpperCase(),x+2.2,cursor+3.2);
 
     if(c.sub){
       doc.setFont('helvetica','bold');
-      doc.setFontSize(5.1);
+      doc.setFontSize(5.7);
       doc.setTextColor(...c.text);
-      doc.text(c.sub,x+2.4,cursor+7.1,{maxWidth:sumW-4.8});
+      doc.text(c.sub,x+2.2,cursor+6.7,{maxWidth:sumW-4.4});
     }
     if(c.value){
       doc.setFont('helvetica','bold');
@@ -4304,7 +4304,7 @@ function downloadPDFFromSnapshot(s){
     }
   });
 
-  cursor+=sumH+2.5;
+  cursor+=sumH+1.8;
 
   // Alerta por dotación insuficiente para el plan Hábil
   if(staffShortage>0){
