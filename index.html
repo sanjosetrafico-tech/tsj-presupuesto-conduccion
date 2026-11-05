@@ -1217,9 +1217,9 @@ h1{
 .staff-franco-head strong{font-size:18px;line-height:1;font-weight:950}
 .staff-franco-head b{font-size:14px;font-weight:950}
 .staff-franco-main{display:flex;align-items:baseline;gap:6px}
-.staff-franco-main strong{font-size:22px;line-height:1;font-weight:950}
+.staff-franco-main strong{font-size:24px;line-height:1;font-weight:950}
 .staff-franco-main span{margin:0;font-size:9px;color:#475569}
-.staff-franco-card>b{display:block;margin-top:6px;font-size:11px;font-weight:900;color:inherit}
+.staff-franco-card>b{display:block;margin-top:7px;font-size:12.5px;font-weight:900;color:inherit}
 .staff-franco-card>small{display:block;margin-top:5px;font-size:11px;line-height:1.2;font-weight:800;color:#334155}
 .staff-franco-card span{display:block;margin-top:5px;font-size:10px;line-height:1.25;color:#334155}
 @media(max-width:1050px){.staff-layout{grid-template-columns:1fr}.staff-summary{min-height:0}}
@@ -1762,7 +1762,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           <div class="staff-franco-card franco-custom" id="staffSummaryCustomCard">
             <div class="staff-franco-main"><strong id="staffSummaryCustomCount">0</strong><span id="staffSummaryCustomLabel">conductores</span></div>
             <b id="staffSummaryCustomFrancos">Francos personalizados</b>
-            <small id="staffSummaryCustomWorkdays">0 jornadas por conductor</small>
+            
           </div>
         </div>
       </aside>
@@ -3958,17 +3958,12 @@ const sf6=francoGroups[6]||0,sf7=francoGroups[7]||0,sf8=francoGroups[8]||0;
 const sfCustomRows=Object.entries(francoGroups).filter(([f])=>![6,7,8].includes(Number(f)));
 const sfCustom=sfCustomRows.reduce((a,[,count])=>a+count,0);
 const sfCustomDetail=sfCustomRows.sort((a,b)=>Number(a[0])-Number(b[0])).map(([f,count])=>f+' francos · '+fmt(count)+' cond.').join(' · ')||'Francos personalizados';
-const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross'),ss6=document.getElementById('staffSummary6Count'),ss7=document.getElementById('staffSummary7Count'),ss8=document.getElementById('staffSummary8Count'),ssCustom=document.getElementById('staffSummaryCustomCount'),ssCustomLabel=document.getElementById('staffSummaryCustomLabel'),ssCustomFrancos=document.getElementById('staffSummaryCustomFrancos'),ssCustomWorkdays=document.getElementById('staffSummaryCustomWorkdays'),ss6Label=document.getElementById('staffSummary6Label'),ss7Label=document.getElementById('staffSummary7Label'),ss8Label=document.getElementById('staffSummary8Label'),ss6W=document.getElementById('staffSummary6Workdays'),ss7W=document.getElementById('staffSummary7Workdays'),ss8W=document.getElementById('staffSummary8Workdays');
+const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross'),ss6=document.getElementById('staffSummary6Count'),ss7=document.getElementById('staffSummary7Count'),ss8=document.getElementById('staffSummary8Count'),ssCustom=document.getElementById('staffSummaryCustomCount'),ssCustomLabel=document.getElementById('staffSummaryCustomLabel'),ssCustomFrancos=document.getElementById('staffSummaryCustomFrancos'),ss6Label=document.getElementById('staffSummary6Label'),ss7Label=document.getElementById('staffSummary7Label'),ss8Label=document.getElementById('staffSummary8Label');
 const ss6Card=document.getElementById('staffSummary6Card'),ss7Card=document.getElementById('staffSummary7Card'),ss8Card=document.getElementById('staffSummary8Card'),ssCustomCard=document.getElementById('staffSummaryCustomCard');
-const sf6W=staff.find(r=>staffFrancos(r)===6),sf7W=staff.find(r=>staffFrancos(r)===7),sf8W=staff.find(r=>staffFrancos(r)===8);
 const sfCustomFirst=staff.find(r=>![6,7,8].includes(staffFrancos(r)));
 if(ssc)ssc.textContent=fmt(m.count);if(ssg)ssg.textContent=fmt(m.gross);if(ss6)ss6.textContent=fmt(sf6);if(ss7)ss7.textContent=fmt(sf7);if(ss8)ss8.textContent=fmt(sf8);if(ssCustom)ssCustom.textContent=fmt(sfCustom);
 if(ss6Label)ss6Label.textContent=sf6===1?'conductor':'conductores';if(ss7Label)ss7Label.textContent=sf7===1?'conductor':'conductores';if(ss8Label)ss8Label.textContent=sf8===1?'conductor':'conductores';if(ssCustomLabel)ssCustomLabel.textContent=sfCustom===1?'conductor':'conductores';
 if(ssCustomFrancos)ssCustomFrancos.textContent=sfCustomFirst?fmt(staffFrancos(sfCustomFirst))+' francos':'Francos personalizados';
-if(ssCustomWorkdays)ssCustomWorkdays.textContent=(sfCustomFirst?fmt(staffWorkdays(sfCustomFirst)):'0')+' jornadas por conductor';
-if(ss6W)ss6W.textContent=(sf6W?fmt(staffWorkdays(sf6W)):'0')+' jornadas por conductor';
-if(ss7W)ss7W.textContent=(sf7W?fmt(staffWorkdays(sf7W)):'0')+' jornadas por conductor';
-if(ss8W)ss8W.textContent=(sf8W?fmt(staffWorkdays(sf8W)):'0')+' jornadas por conductor';
 if(ss6Card)ss6Card.hidden=sf6<=0;if(ss7Card)ss7Card.hidden=sf7<=0;if(ss8Card)ss8Card.hidden=sf8<=0;if(ssCustomCard)ssCustomCard.hidden=sfCustom<=0;
 const habilFleet=habilFleetRequirement();
 const shortage=Math.max(0,habilFleet-m.count);
