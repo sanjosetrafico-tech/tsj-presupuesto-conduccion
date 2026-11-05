@@ -4267,12 +4267,16 @@ function downloadPDFFromSnapshot(s){
     {label:'Conductores',sub:'',value:fmt(M.count),fill:soft,text:ink},
     {label:'Jornadas',sub:'',value:fmt(M.gross),fill:soft,text:ink}
   ];
-  if(staff6>0)staffSummary.push({label:'6 francos',sub:'base mensual',value:fmt(staff6),fill:greenSoft,text:green});
-  if(staff7>0)staffSummary.push({label:'6 francos + 1 DNL',sub:'1 feriado nac. no trabajado',value:fmt(staff7),fill:[255,246,237],text:[168,82,16]});
-  if(staff8>0)staffSummary.push({label:'6 francos + 2 DNL',sub:'2 feriados nac. no trabajados',value:fmt(staff8),fill:[246,240,255],text:[107,63,160]});
+  const pdfGroup6=pdfStaff.find(r=>staffFrancos(r)===6);
+  const pdfGroup7=pdfStaff.find(r=>staffFrancos(r)===7);
+  const pdfGroup8=pdfStaff.find(r=>staffFrancos(r)===8);
+  if(staff6>0)staffSummary.push({label:fmt(staff6)+' conductores',sub:'6 francos',detail:(pdfGroup6?fmt(staffWorkdays(pdfGroup6)):'0')+' jornadas por conductor',value:'',fill:greenSoft,text:green});
+  if(staff7>0)staffSummary.push({label:fmt(staff7)+' conductores',sub:'6 francos + 1 DNL',detail:(pdfGroup7?fmt(staffWorkdays(pdfGroup7)):'0')+' jornadas por conductor',value:'',fill:[255,246,237],text:[168,82,16]});
+  if(staff8>0)staffSummary.push({label:fmt(staff8)+' conductores',sub:'6 francos + 2 DNL',detail:(pdfGroup8?fmt(staffWorkdays(pdfGroup8)):'0')+' jornadas por conductor',value:'',fill:[246,240,255],text:[107,63,160]});
   if(staffCustom>0){
     const customFrancoLabels=[...new Set(staffCustomRows.map(r=>staffFrancos(r)))].sort((a,b)=>a-b).map(f=>f+' francos').join(' / ');
-    staffSummary.push({label:customFrancoLabels||'Esquema especial',sub:'',value:fmt(staffCustom),fill:[243,246,250],text:[71,85,105]});
+    const customFirst=staffCustomRows[0];
+    staffSummary.push({label:fmt(staffCustom)+(staffCustom===1?' conductor':' conductores'),sub:customFrancoLabels||'Esquema especial',detail:(customFirst?fmt(staffWorkdays(customFirst)):'0')+' jornadas por conductor',value:'',fill:[243,246,250],text:[71,85,105]});
   }
   const sumW=(contentW-sumGap*(staffSummary.length-1))/staffSummary.length;
   staffSummary.forEach((c,i)=>{
@@ -4287,15 +4291,23 @@ function downloadPDFFromSnapshot(s){
     doc.text(c.label.toUpperCase(),x+2.4,cursor+3.5);
 
     if(c.sub){
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(4.8);
-      doc.text(c.sub,x+2.4,cursor+7.2,{maxWidth:sumW-12});
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(5.1);
+      doc.setTextColor(...c.text);
+      doc.text(c.sub,x+2.4,cursor+7.1,{maxWidth:sumW-4.8});
     }
-
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(9.8);
-    doc.setTextColor(...c.text);
-    doc.text(c.value,x+sumW-2.4,cursor+9.1,{align:'right'});
+    if(c.detail){
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(4.7);
+      doc.setTextColor(...muted);
+      doc.text(c.detail,x+2.4,cursor+10.2,{maxWidth:sumW-4.8});
+    }
+    if(c.value){
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(9.8);
+      doc.setTextColor(...c.text);
+      doc.text(c.value,x+sumW-2.4,cursor+9.1,{align:'right'});
+    }
   });
 
   cursor+=sumH+2.5;
