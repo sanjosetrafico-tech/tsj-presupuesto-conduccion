@@ -4270,13 +4270,13 @@ function downloadPDFFromSnapshot(s){
   const pdfGroup6=pdfStaff.find(r=>staffFrancos(r)===6);
   const pdfGroup7=pdfStaff.find(r=>staffFrancos(r)===7);
   const pdfGroup8=pdfStaff.find(r=>staffFrancos(r)===8);
-  if(staff6>0)staffSummary.push({label:fmt(staff6)+' conductores',sub:'6 francos',detail:(pdfGroup6?fmt(staffWorkdays(pdfGroup6)):'0')+' jornadas por conductor',value:'',fill:greenSoft,text:green});
-  if(staff7>0)staffSummary.push({label:fmt(staff7)+' conductores',sub:'6 francos + 1 DNL',detail:(pdfGroup7?fmt(staffWorkdays(pdfGroup7)):'0')+' jornadas por conductor',value:'',fill:[255,246,237],text:[168,82,16]});
-  if(staff8>0)staffSummary.push({label:fmt(staff8)+' conductores',sub:'6 francos + 2 DNL',detail:(pdfGroup8?fmt(staffWorkdays(pdfGroup8)):'0')+' jornadas por conductor',value:'',fill:[246,240,255],text:[107,63,160]});
+  if(staff6>0)staffSummary.push({label:fmt(staff6)+' conductores',sub:'6 francos',value:'',fill:greenSoft,text:green});
+  if(staff7>0)staffSummary.push({label:fmt(staff7)+' conductores',sub:'6 francos + 1 DNL',value:'',fill:[255,246,237],text:[168,82,16]});
+  if(staff8>0)staffSummary.push({label:fmt(staff8)+' conductores',sub:'6 francos + 2 DNL',value:'',fill:[246,240,255],text:[107,63,160]});
   if(staffCustom>0){
     const customFrancoLabels=[...new Set(staffCustomRows.map(r=>staffFrancos(r)))].sort((a,b)=>a-b).map(f=>f+' francos').join(' / ');
     const customFirst=staffCustomRows[0];
-    staffSummary.push({label:fmt(staffCustom)+(staffCustom===1?' conductor':' conductores'),sub:customFrancoLabels||'Esquema especial',detail:(customFirst?fmt(staffWorkdays(customFirst)):'0')+' jornadas por conductor',value:'',fill:[243,246,250],text:[71,85,105]});
+    staffSummary.push({label:fmt(staffCustom)+(staffCustom===1?' conductor':' conductores'),sub:customFrancoLabels||'Esquema especial',value:'',fill:[243,246,250],text:[71,85,105]});
   }
   const sumW=(contentW-sumGap*(staffSummary.length-1))/staffSummary.length;
   staffSummary.forEach((c,i)=>{
@@ -4295,12 +4295,6 @@ function downloadPDFFromSnapshot(s){
       doc.setFontSize(5.1);
       doc.setTextColor(...c.text);
       doc.text(c.sub,x+2.4,cursor+7.1,{maxWidth:sumW-4.8});
-    }
-    if(c.detail){
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(4.7);
-      doc.setTextColor(...muted);
-      doc.text(c.detail,x+2.4,cursor+10.2,{maxWidth:sumW-4.8});
     }
     if(c.value){
       doc.setFont('helvetica','bold');
