@@ -4328,7 +4328,7 @@ function downloadPDFFromSnapshot(s){
       count:fmt(staff6),
       label:'conductores',
       sub:'6 francos',
-      workdays:(pdfGroup6?fmt(staffWorkdays(pdfGroup6)):'0')+' jornadas c/u',
+      workdays:(pdfGroup6?fmt(staffWorkdays(pdfGroup6)):'0')+' jornadas por conductor',
       fill:[237,249,244],
       border:[188,231,214],
       accent:[13,104,79]
@@ -4339,7 +4339,7 @@ function downloadPDFFromSnapshot(s){
       count:fmt(staff7),
       label:'conductores',
       sub:'6 francos + 1 DNL',
-      workdays:(pdfGroup7?fmt(staffWorkdays(pdfGroup7)):'0')+' jornadas c/u',
+      workdays:(pdfGroup7?fmt(staffWorkdays(pdfGroup7)):'0')+' jornadas por conductor',
       fill:[255,246,237],
       border:[255,210,162],
       accent:[168,82,16]
@@ -4350,7 +4350,7 @@ function downloadPDFFromSnapshot(s){
       count:fmt(staff8),
       label:'conductores',
       sub:'6 francos + 2 DNL',
-      workdays:(pdfGroup8?fmt(staffWorkdays(pdfGroup8)):'0')+' jornadas c/u',
+      workdays:(pdfGroup8?fmt(staffWorkdays(pdfGroup8)):'0')+' jornadas por conductor',
       fill:[246,240,255],
       border:[217,195,255],
       accent:[107,63,160]
@@ -4363,7 +4363,7 @@ function downloadPDFFromSnapshot(s){
       count:fmt(staffCustom),
       label:'conductores',
       sub:customFrancoLabels||'Esquema especial',
-      workdays:(customFirst?fmt(staffWorkdays(customFirst)):'0')+' jornadas c/u',
+      workdays:(customFirst?fmt(staffWorkdays(customFirst)):'0')+' jornadas por conductor',
       fill:[243,246,250],
       border:[203,213,225],
       accent:[71,85,105]
