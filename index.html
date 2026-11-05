@@ -4268,9 +4268,12 @@ function downloadPDFFromSnapshot(s){
     {label:'Jornadas',sub:'',value:fmt(M.gross),fill:soft,text:ink}
   ];
   if(staff6>0)staffSummary.push({label:'6 francos',sub:'base mensual',value:fmt(staff6),fill:greenSoft,text:green});
-  if(staff7>0)staffSummary.push({label:'+1 DNL',sub:'1 feriado nac. no trabajado',value:fmt(staff7),fill:[255,246,237],text:[168,82,16]});
-  if(staff8>0)staffSummary.push({label:'+2 DNL',sub:'2 feriados nac. no trabajados',value:fmt(staff8),fill:[246,240,255],text:[107,63,160]});
-  if(staffCustom>0)staffSummary.push({label:'Especiales',sub:'francos: '+staffCustomDetail,value:fmt(staffCustom),fill:[243,246,250],text:[71,85,105]});
+  if(staff7>0)staffSummary.push({label:'6 francos + 1 DNL',sub:'1 feriado nac. no trabajado',value:fmt(staff7),fill:[255,246,237],text:[168,82,16]});
+  if(staff8>0)staffSummary.push({label:'6 francos + 2 DNL',sub:'2 feriados nac. no trabajados',value:fmt(staff8),fill:[246,240,255],text:[107,63,160]});
+  if(staffCustom>0){
+    const customFrancoLabels=[...new Set(staffCustomRows.map(r=>staffFrancos(r)))].sort((a,b)=>a-b).map(f=>f+' francos').join(' / ');
+    staffSummary.push({label:customFrancoLabels||'Esquema especial',sub:'',value:fmt(staffCustom),fill:[243,246,250],text:[71,85,105]});
+  }
   const sumW=(contentW-sumGap*(staffSummary.length-1))/staffSummary.length;
   staffSummary.forEach((c,i)=>{
     const x=left+i*(sumW+sumGap);
