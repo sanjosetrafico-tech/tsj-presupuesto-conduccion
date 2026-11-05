@@ -4260,52 +4260,137 @@ function downloadPDFFromSnapshot(s){
 
   cursor=doc.lastAutoTable.finalY+2.5;
 
-  // Resumen de dotación — cards amplios para mejor lectura en PDF
-  const sumGap=2.3;
-  const sumH=14.5;
-  const staffSummary=[
-    {label:'Conductores',sub:'',value:fmt(M.count),fill:soft,text:ink},
-    {label:'Jornadas',sub:'',value:fmt(M.gross),fill:soft,text:ink}
-  ];
+  // Resumen de dotación — cards grandes solo en PDF
+  cursor=addSectionTitle('Resumen de dotación',cursor);
+
   const pdfGroup6=pdfStaff.find(r=>staffFrancos(r)===6);
   const pdfGroup7=pdfStaff.find(r=>staffFrancos(r)===7);
   const pdfGroup8=pdfStaff.find(r=>staffFrancos(r)===8);
-  if(staff6>0)staffSummary.push({label:fmt(staff6)+' conductores',sub:'6 francos',value:'',fill:greenSoft,text:green});
-  if(staff7>0)staffSummary.push({label:fmt(staff7)+' conductores',sub:'6 francos + 1 DNL',value:'',fill:[255,246,237],text:[168,82,16]});
-  if(staff8>0)staffSummary.push({label:fmt(staff8)+' conductores',sub:'6 francos + 2 DNL',value:'',fill:[246,240,255],text:[107,63,160]});
+
+  // Primera fila: dos cards grandes
+  const topGap=3;
+  const topH=18;
+  const topW=(contentW-topGap)/2;
+  const topCards=[
+    {title:'CONDUCTORES',value:fmt(M.count),sub:'Conductores totales'},
+    {title:'JORNADAS',value:fmt(M.gross),sub:'Jornadas disponibles'}
+  ];
+
+  topCards.forEach((card,i)=>{
+    const x=left+i*(topW+topGap);
+    doc.setFillColor(248,248,250);
+    doc.setDrawColor(220,225,230);
+    doc.setLineWidth(.3);
+    doc.roundedRect(x,cursor,topW,topH,2,2,'FD');
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7.2);
+    doc.setTextColor(...muted);
+    doc.text(card.title,x+3,cursor+5);
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(15.5);
+    doc.setTextColor(...ink);
+    doc.text(card.value,x+3,cursor+11.8);
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7.1);
+    doc.setTextColor(43,64,102);
+    doc.text(card.sub,x+3,cursor+15.7);
+  });
+
+  cursor+=topH+4;
+
+  // Segunda fila: solo se muestran grupos con conductores > 0
+  const detailCards=[];
+
+  if(staff6>0){
+    detailCards.push({
+      count:fmt(staff6),
+      label:staff6===1?'conductor':'conductores',
+      sub:'6 francos',
+      workdays:(pdfGroup6?fmt(staffWorkdays(pdfGroup6)):'0')+' jornadas por conductor',
+      fill:[237,249,244],
+      border:[188,231,214],
+      accent:[13,104,79]
+    });
+  }
+
+  if(staff7>0){
+    detailCards.push({
+      count:fmt(staff7),
+      label:staff7===1?'conductor':'conductores',
+      sub:'6 francos + 1 DNL',
+      workdays:(pdfGroup7?fmt(staffWorkdays(pdfGroup7)):'0')+' jornadas por conductor',
+      fill:[255,246,237],
+      border:[255,210,162],
+      accent:[168,82,16]
+    });
+  }
+
+  if(staff8>0){
+    detailCards.push({
+      count:fmt(staff8),
+      label:staff8===1?'conductor':'conductores',
+      sub:'6 francos + 2 DNL',
+      workdays:(pdfGroup8?fmt(staffWorkdays(pdfGroup8)):'0')+' jornadas por conductor',
+      fill:[246,240,255],
+      border:[217,195,255],
+      accent:[107,63,160]
+    });
+  }
+
   if(staffCustom>0){
     const customFrancoLabels=[...new Set(staffCustomRows.map(r=>staffFrancos(r)))].sort((a,b)=>a-b).map(f=>f+' francos').join(' / ');
     const customFirst=staffCustomRows[0];
-    staffSummary.push({label:fmt(staffCustom)+(staffCustom===1?' conductor':' conductores'),sub:customFrancoLabels||'Esquema especial',value:'',fill:[243,246,250],text:[71,85,105]});
+    detailCards.push({
+      count:fmt(staffCustom),
+      label:staffCustom===1?'conductor':'conductores',
+      sub:customFrancoLabels||'Francos personalizados',
+      workdays:(customFirst?fmt(staffWorkdays(customFirst)):'0')+' jornadas por conductor',
+      fill:[243,246,250],
+      border:[203,213,225],
+      accent:[71,85,105]
+    });
   }
-  const sumW=(contentW-sumGap*(staffSummary.length-1))/staffSummary.length;
-  staffSummary.forEach((c,i)=>{
-    const x=left+i*(sumW+sumGap);
-    doc.setFillColor(...c.fill);
-    doc.setDrawColor(...line);
-    doc.setLineWidth(.25);
-    doc.roundedRect(x,cursor,sumW,sumH,1.5,1.5,'FD');
 
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(7);
-    doc.setTextColor(...(c.sub?c.text:muted));
-    doc.text(c.label.toUpperCase(),x+2.6,cursor+4.5,{maxWidth:sumW-5.2});
+  if(detailCards.length){
+    const detailGap=3;
+    const detailH=21;
+    const detailW=(contentW-detailGap*(detailCards.length-1))/detailCards.length;
 
-    if(c.sub){
+    detailCards.forEach((card,i)=>{
+      const x=left+i*(detailW+detailGap);
+      doc.setFillColor(...card.fill);
+      doc.setDrawColor(...card.border);
+      doc.setLineWidth(.3);
+      doc.roundedRect(x,cursor,detailW,detailH,2,2,'FD');
+
       doc.setFont('helvetica','bold');
-      doc.setFontSize(6.3);
-      doc.setTextColor(...c.text);
-      doc.text(c.sub,x+2.6,cursor+9.1,{maxWidth:sumW-5.2});
-    }
-    if(c.value){
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(12.8);
-      doc.setTextColor(...c.text);
-      doc.text(c.value,x+sumW-2.8,cursor+12.1,{align:'right'});
-    }
-  });
+      doc.setFontSize(15.5);
+      doc.setTextColor(...card.accent);
+      doc.text(card.count,x+3,cursor+7.3);
 
-  cursor+=sumH+1.8;
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(6.8);
+      doc.setTextColor(...ink);
+      doc.text(card.label,x+14,cursor+7.1);
+
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(8);
+      doc.setTextColor(...card.accent);
+      doc.text(card.sub,x+3,cursor+12.8,{maxWidth:detailW-6});
+
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(7);
+      doc.setTextColor(51,65,85);
+      doc.text(card.workdays,x+3,cursor+17.8,{maxWidth:detailW-6});
+    });
+
+    cursor+=detailH+2.5;
+  }else{
+    cursor+=1.5;
+  }
 
   // Alerta por dotación insuficiente para el plan Hábil
   if(staffShortage>0){
