@@ -4260,9 +4260,9 @@ function downloadPDFFromSnapshot(s){
 
   cursor=doc.lastAutoTable.finalY+2.5;
 
-  // Resumen de dotación compacto
-  const sumGap=2;
-  const sumH=9.5;
+  // Resumen de dotación — cards amplios para mejor lectura en PDF
+  const sumGap=2.3;
+  const sumH=14.5;
   const staffSummary=[
     {label:'Conductores',sub:'',value:fmt(M.count),fill:soft,text:ink},
     {label:'Jornadas',sub:'',value:fmt(M.gross),fill:soft,text:ink}
@@ -4283,24 +4283,25 @@ function downloadPDFFromSnapshot(s){
     const x=left+i*(sumW+sumGap);
     doc.setFillColor(...c.fill);
     doc.setDrawColor(...line);
-    doc.roundedRect(x,cursor,sumW,sumH,1.2,1.2,'FD');
+    doc.setLineWidth(.25);
+    doc.roundedRect(x,cursor,sumW,sumH,1.5,1.5,'FD');
 
     doc.setFont('helvetica','bold');
-    doc.setFontSize(6.4);
-    doc.setTextColor(...muted);
-    doc.text(c.label.toUpperCase(),x+2.2,cursor+3.2);
+    doc.setFontSize(7);
+    doc.setTextColor(...(c.sub?c.text:muted));
+    doc.text(c.label.toUpperCase(),x+2.6,cursor+4.5,{maxWidth:sumW-5.2});
 
     if(c.sub){
       doc.setFont('helvetica','bold');
-      doc.setFontSize(5.7);
+      doc.setFontSize(6.3);
       doc.setTextColor(...c.text);
-      doc.text(c.sub,x+2.2,cursor+6.7,{maxWidth:sumW-4.4});
+      doc.text(c.sub,x+2.6,cursor+9.1,{maxWidth:sumW-5.2});
     }
     if(c.value){
       doc.setFont('helvetica','bold');
-      doc.setFontSize(9.8);
+      doc.setFontSize(12.8);
       doc.setTextColor(...c.text);
-      doc.text(c.value,x+sumW-2.4,cursor+9.1,{align:'right'});
+      doc.text(c.value,x+sumW-2.8,cursor+12.1,{align:'right'});
     }
   });
 
