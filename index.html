@@ -1238,8 +1238,11 @@ h1{
   margin-top:0;
 }
 .budget-main-split .staff-table{
-  min-width:620px;
+  min-width:880px;
 }
+.staff-table th,.staff-table td{text-align:center}
+.staff-table input[type="number"]{min-width:72px;text-align:center}
+.staff-calc-francos,.staff-calc-workdays{font-weight:900;color:var(--ink)}
 .budget-main-split .plan-service-panel table{
   min-width:620px;
 }
@@ -1642,7 +1645,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
       </div>
       <div class="controls">
         <input class="input" id="budgetName" value="" aria-label="Nombre del presupuesto">
-        <input class="input" type="month" id="period" value="" aria-label="Período">
+        <input class="input" type="month" id="period" value="" aria-label="Período" onchange="normalizeStaff();renderStaff();calculate()">
         <select id="status" aria-label="Estado"><option>Borrador</option><option>Definitivo</option><option>Cerrado</option></select>
       </div>
     </div>
@@ -1652,15 +1655,15 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
 
   <section class="panel staff-panel">
     <div class="panel-head">
-      <div><h2>Dotación disponible</h2><p class="help">Agrupá conductores según las jornadas que trabajarán.</p></div>
+      <div><h2>Dotación disponible</h2><p class="help">Los francos y jornadas se calculan automáticamente según días activos y feriados nacionales no trabajados.</p></div>
       <button class="btn soft" onclick="addStaffRow()">+ Agregar grupo</button>
     </div>
     <div class="staff-layout">
       <div class="staff-table-wrap">
         <table class="staff-table">
-          <thead><tr><th>Conductores</th><th>Jornadas por conductor</th><th>Francos mensuales</th><th>Disponibles</th><th></th></tr></thead>
+          <thead><tr><th>Conductores</th><th>Días activos</th><th>Feriados Nac. no trab.</th><th>Francos</th><th>Jornadas por conductor</th><th>Disponibles</th><th></th></tr></thead>
           <tbody id="staffBody"></tbody>
-          <tfoot><tr class="total-row"><td class="num" id="staffCount">0</td><td>Total</td><td></td><td class="num" id="staffTotal">0</td><td></td></tr></tfoot>
+          <tfoot><tr class="total-row"><td class="num" id="staffCount">0</td><td colspan="4">Total</td><td class="num" id="staffTotal">0</td><td></td></tr></tfoot>
         </table>
       </div>
       <div id="staffShortageAlert" class="staff-shortage-alert" hidden>
@@ -3842,54 +3845,63 @@ function restoreServiceTab(){
 
 const KEY='tsj_presupuestos_v1';let currentId=null;
 let plan=[{type:'Hábil',desc:'Plan normal',fleet:116,days:20},{type:'Sábado',desc:'Plan sábado',fleet:54,days:6},{type:'Domingo',desc:'Plan domingo',fleet:36,days:5}];
-let staff=[{count:36,workdays:24,francos:6},{count:95,workdays:23,francos:7}];
+let staff=[{count:36,activeDays:30,holidaysOff:0},{count:95,activeDays:30,holidaysOff:1}];
 const DED_CONCEPTS=['Licencia medica','Licencia especial','Monitor escuela','Monitor taller','Sanciones','Vacaciones'];
 let deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5},{name:'Licencia medica',kind:'days',value:65},{name:'Licencia especial',kind:'days',value:10},{name:'Monitor escuela',kind:'days',value:32}];
 const fmt=(n,d=0)=>new Intl.NumberFormat('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}).format(Number(n)||0);const val=x=>Number(x)||0;const whole=x=>Math.floor(val(x));const deductionDays=(raw,kind)=>kind==='percent'?Math.ceil(val(raw)):Math.floor(val(raw));
-function computeMetricsData(planData=plan,staffData=staff,dedData=deductions){let need=0,days=0;(planData||[]).forEach(r=>{const fleet=whole(r.fleet),d=whole(r.days);need+=fleet*d;days+=d});let gross=0,count=0;(staffData||[]).forEach(r=>{const c=whole(r.count),w=whole(r.workdays);gross+=c*w;count+=c});let deds=0;const dedItems=(dedData||[]).map(r=>{const raw=r.kind==='percent'?need*val(r.value)/100:val(r.value);const j=deductionDays(raw,r.kind);deds+=j;return j});const net=Math.floor(gross-deds),balance=Math.floor(net-need),cov=need?net/need*100:0;return{need,days,gross,count,deds,net,balance,cov,dedItems}}
+function computeMetricsData(planData=plan,staffData=staff,dedData=deductions){let need=0,days=0;(planData||[]).forEach(r=>{const fleet=whole(r.fleet),d=whole(r.days);need+=fleet*d;days+=d});let gross=0,count=0;(staffData||[]).forEach(r=>{const c=whole(r.count),w=staffWorkdays(r);gross+=c*w;count+=c});let deds=0;const dedItems=(dedData||[]).map(r=>{const raw=r.kind==='percent'?need*val(r.value)/100:val(r.value);const j=deductionDays(raw,r.kind);deds+=j;return j});const net=Math.floor(gross-deds),balance=Math.floor(net-need),cov=need?net/need*100:0;return{need,days,gross,count,deds,net,balance,cov,dedItems}}
 function habilFleetRequirement(planData=plan){
   return Math.max(0,...(planData||[]).filter(r=>r.type==='Hábil').map(r=>whole(r.fleet)));
 }
-function staffFrancos(r){
-  if(r&&r.francos!==undefined&&r.francos!==null&&r.francos!==''){
-    const f=Math.max(0,whole(r.francos));
-    return f;
-  }
-  return whole(r?.workdays)<=22?8:whole(r?.workdays)===23?7:6
+function conductionPeriodDays(){
+  const p=document.getElementById('period')?.value||currentBudgetPeriod();
+  const [y,m]=String(p).split('-').map(Number);
+  return new Date(y,m,0).getDate();
 }
-function isStandardFranco(v){return [6,7,8].includes(whole(v))}
-function setStaffFrancosMode(i,value){
-  if(value==='custom'){
-    const current=staffFrancos(staff[i]);
-    staff[i].francos=isStandardFranco(current)?0:current;
-    renderStaff();
-    calculate();
-    return;
+function normalizeStaffRow(r){
+  const row={...r};
+  if(row.activeDays===undefined||row.activeDays===null||row.activeDays===''){
+    const oldW=Math.max(0,whole(row.workdays));
+    const oldF=Math.max(0,whole(row.francos));
+    row.activeDays=Math.max(0,oldW+oldF);
+    const monthDays=conductionPeriodDays();
+    const base=Math.floor(6*Math.min(row.activeDays,monthDays)/monthDays);
+    row.holidaysOff=Math.max(0,oldF-base);
   }
-  staff[i].francos=whole(value);
-  renderStaff();
-  calculate();
+  row.activeDays=Math.max(0,whole(row.activeDays));
+  row.holidaysOff=Math.max(0,whole(row.holidaysOff));
+  delete row.workdays;
+  delete row.francos;
+  return row;
 }
-function normalizeStaff(){staff=(staff||[]).map(r=>({...r,francos:staffFrancos(r)}))}
+function normalizeStaff(){staff=(staff||[]).map(normalizeStaffRow)}
+function staffBaseFrancos(r){
+  const monthDays=conductionPeriodDays();
+  const active=Math.min(Math.max(0,whole(r?.activeDays)),monthDays);
+  return Math.floor(6*active/monthDays);
+}
+function staffFrancos(r){return staffBaseFrancos(r)+Math.max(0,whole(r?.holidaysOff))}
+function staffWorkdays(r){return Math.max(0,Math.max(0,whole(r?.activeDays))-staffFrancos(r))}
 function renderAll(){normalizeStaff();renderPlan();renderStaff();renderDeds();calculate();renderSaved()}
 function renderPlan(){planBody.innerHTML=plan.map((r,i)=>{const cls=r.type==='Hábil'?'plan-hab':r.type==='Sábado'?'plan-sab':r.type==='Domingo'?'plan-dom':'plan-other';return `<tr class="${cls}"><td><select class="plan-type-select" onchange="plan[${i}].type=this.value;renderPlan();calculate()"><option ${r.type==='Hábil'?'selected':''}>Hábil</option><option ${r.type==='Sábado'?'selected':''}>Sábado</option><option ${r.type==='Domingo'?'selected':''}>Domingo</option><option ${r.type==='Feriado'?'selected':''}>Feriado</option><option ${r.type==='Otro'?'selected':''}>Otro</option></select></td><td><input value="${esc(r.desc)}" oninput="plan[${i}].desc=this.value"></td><td><input type="number" min="0" value="${r.fleet}" oninput="plan[${i}].fleet=val(this.value);calculate()"></td><td><input class="plan-days-input" type="number" min="0" value="${r.days}" oninput="plan[${i}].days=val(this.value);calculate()"></td><td class="num plan-jornadas" id="planJ${i}">0</td><td><button class="icon-btn" onclick="removePlan(${i})">×</button></td></tr>`}).join('')}
 function renderStaff(){normalizeStaff();staffBody.innerHTML=staff.map((r,i)=>{
-  const f=staffFrancos(r),custom=!isStandardFranco(f);
+  const f=staffFrancos(r),w=staffWorkdays(r);
   return `<tr>
 <td><input type="number" min="0" value="${r.count}" oninput="staff[${i}].count=val(this.value);calculate()"></td>
-<td><input type="number" min="0" value="${r.workdays}" oninput="staff[${i}].workdays=val(this.value);calculate()"></td>
-<td><div class="staff-francos-wrap"><select onchange="setStaffFrancosMode(${i},this.value)"><option value="6" ${f===6?'selected':''}>6 (trabaja feriados)</option><option value="7" ${f===7?'selected':''}>7 (no trabaja 1 feriado)</option><option value="8" ${f===8?'selected':''}>8 (no trabaja 2 feriados)</option><option value="custom" ${custom?'selected':''}>Personalizar francos…</option></select>${custom?`<input class="staff-francos-custom" type="number" min="0" max="31" step="1" value="${f}" aria-label="Cantidad personalizada de francos" oninput="staff[${i}].francos=Math.max(0,whole(this.value));calculate()">`:''}<span class="staff-info" title="Podés usar 6, 7 u 8 francos o cargar una cantidad personalizada para altas o incorporaciones durante el mes.">i</span></div></td>
+<td><input type="number" min="0" max="${conductionPeriodDays()}" value="${r.activeDays}" oninput="staff[${i}].activeDays=Math.max(0,whole(this.value));renderStaff();calculate()"></td>
+<td><input type="number" min="0" step="1" value="${r.holidaysOff}" oninput="staff[${i}].holidaysOff=Math.max(0,whole(this.value));renderStaff();calculate()"></td>
+<td class="num staff-calc-francos">${fmt(f)}</td>
+<td class="num staff-calc-workdays">${fmt(w)}</td>
 <td class="num" id="staffJ${i}">0</td>
 <td><button class="icon-btn" onclick="removeStaff(${i})">×</button></td>
-</tr>`}).join('')}
-function renderDeds(){dedBody.innerHTML=deductions.map((r,i)=>{const aus=r.kind==='percent'&&String(r.name).toLowerCase().includes('ausentismo');const c=aus?`<input value="Ausentismo estimado" readonly style="background:#f5f3f4;color:#6b7280">`:`<select onchange="deductions[${i}].name=this.value">${DED_CONCEPTS.map(x=>`<option value="${x}" ${r.name===x?'selected':''}>${x}</option>`).join('')}</select>`;return `<tr><td>${c}</td><td><select onchange="deductions[${i}].kind=this.value;renderDeds();calculate()"><option value="days" ${r.kind==='days'?'selected':''}>Jornadas</option><option value="percent" ${r.kind==='percent'?'selected':''}>Porcentaje</option></select></td><td><input type="number" min="0" step="${r.kind==='percent'?'0.1':'1'}" value="${r.value}" oninput="deductions[${i}].value=val(this.value);calculate()"></td><td class="num" id="dedJ${i}">0</td><td><button class="icon-btn" onclick="removeDed(${i})">×</button></td></tr>`}).join('')}
-function calculate(){const m=computeMetricsData();plan.forEach((r,i)=>{const e=document.getElementById('planJ'+i);if(e)e.textContent=fmt(whole(r.fleet)*whole(r.days))});staff.forEach((r,i)=>{const e=document.getElementById('staffJ'+i);if(e)e.textContent=fmt(whole(r.count)*whole(r.workdays))});deductions.forEach((r,i)=>{const e=document.getElementById('dedJ'+i);if(e)e.textContent=fmt(m.dedItems[i]||0)});planDays.textContent=fmt(m.days);planTotal.textContent=fmt(m.need);staffCount.textContent=fmt(m.count);staffTotal.textContent=fmt(m.gross);
-const sf6=staff.filter(r=>staffFrancos(r)===6).reduce((a,r)=>a+whole(r.count),0);
-const sf7=staff.filter(r=>staffFrancos(r)===7).reduce((a,r)=>a+whole(r.count),0);
-const sf8=staff.filter(r=>staffFrancos(r)===8).reduce((a,r)=>a+whole(r.count),0);
-const sfCustomRows=staff.filter(r=>!isStandardFranco(staffFrancos(r)));
-const sfCustom=sfCustomRows.reduce((a,r)=>a+whole(r.count),0);
-const sfCustomDetail=[...new Set(sfCustomRows.map(r=>staffFrancos(r)))].sort((a,b)=>a-b).map(f=>f+' franco'+(f===1?'':'s')).join(' · ')||'Francos personalizados';
+</tr>`}).join('')}function renderDeds(){dedBody.innerHTML=deductions.map((r,i)=>{const aus=r.kind==='percent'&&String(r.name).toLowerCase().includes('ausentismo');const c=aus?`<input value="Ausentismo estimado" readonly style="background:#f5f3f4;color:#6b7280">`:`<select onchange="deductions[${i}].name=this.value">${DED_CONCEPTS.map(x=>`<option value="${x}" ${r.name===x?'selected':''}>${x}</option>`).join('')}</select>`;return `<tr><td>${c}</td><td><select onchange="deductions[${i}].kind=this.value;renderDeds();calculate()"><option value="days" ${r.kind==='days'?'selected':''}>Jornadas</option><option value="percent" ${r.kind==='percent'?'selected':''}>Porcentaje</option></select></td><td><input type="number" min="0" step="${r.kind==='percent'?'0.1':'1'}" value="${r.value}" oninput="deductions[${i}].value=val(this.value);calculate()"></td><td class="num" id="dedJ${i}">0</td><td><button class="icon-btn" onclick="removeDed(${i})">×</button></td></tr>`}).join('')}
+function calculate(){const m=computeMetricsData();plan.forEach((r,i)=>{const e=document.getElementById('planJ'+i);if(e)e.textContent=fmt(whole(r.fleet)*whole(r.days))});staff.forEach((r,i)=>{const e=document.getElementById('staffJ'+i);if(e)e.textContent=fmt(whole(r.count)*staffWorkdays(r))});deductions.forEach((r,i)=>{const e=document.getElementById('dedJ'+i);if(e)e.textContent=fmt(m.dedItems[i]||0)});planDays.textContent=fmt(m.days);planTotal.textContent=fmt(m.need);staffCount.textContent=fmt(m.count);staffTotal.textContent=fmt(m.gross);
+const francoGroups={};
+staff.forEach(r=>{const f=staffFrancos(r);francoGroups[f]=(francoGroups[f]||0)+whole(r.count)});
+const sf6=francoGroups[6]||0,sf7=francoGroups[7]||0,sf8=francoGroups[8]||0;
+const sfCustomRows=Object.entries(francoGroups).filter(([f])=>![6,7,8].includes(Number(f)));
+const sfCustom=sfCustomRows.reduce((a,[,count])=>a+count,0);
+const sfCustomDetail=sfCustomRows.sort((a,b)=>Number(a[0])-Number(b[0])).map(([f,count])=>f+' francos · '+fmt(count)+' cond.').join(' · ')||'Francos personalizados';
 const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross'),ss6=document.getElementById('staffSummary6Count'),ss7=document.getElementById('staffSummary7Count'),ss8=document.getElementById('staffSummary8Count'),ssCustom=document.getElementById('staffSummaryCustomCount'),ssCustomDetail=document.getElementById('staffSummaryCustomDetail');
 const ss6Card=document.getElementById('staffSummary6Card'),ss7Card=document.getElementById('staffSummary7Card'),ss8Card=document.getElementById('staffSummary8Card'),ssCustomCard=document.getElementById('staffSummaryCustomCard');
 if(ssc)ssc.textContent=fmt(m.count);if(ssg)ssg.textContent=fmt(m.gross);if(ss6)ss6.textContent=fmt(sf6);if(ss7)ss7.textContent=fmt(sf7);if(ss8)ss8.textContent=fmt(sf8);if(ssCustom)ssCustom.textContent=fmt(sfCustom);if(ssCustomDetail)ssCustomDetail.textContent=sfCustomDetail;
@@ -3903,7 +3915,7 @@ if(shortageAlert)shortageAlert.hidden=shortage<=0;
 if(shortageCount)shortageCount.textContent=fmt(shortage);
 if(shortageText)shortageText.textContent='Faltan '+fmt(shortage)+' conductores. La cobertura requerirá HHEE adicionales para completar los turnos (8 a 10 hs por turno a cubrir).';
 dedTotal.textContent=fmt(m.deds);needKpi.textContent=fmt(m.need);grossKpi.textContent=fmt(m.gross);netKpi.textContent=fmt(m.net);balanceKpi.textContent=(m.balance>=0?'+':'')+fmt(m.balance);rNeed.textContent=fmt(m.need);rGross.textContent=fmt(m.gross);rDeds.textContent=fmt(m.deds);rNet.textContent=fmt(m.net);coverage.textContent=fmt(m.cov,1)+'%';rBalance.textContent=(m.balance>=0?'+':'')+fmt(m.balance);balanceCard.className='card '+(m.balance>=0?'positive':'negative');resultAlert.className='alert '+(m.balance>=0?'ok':'bad');resultAlert.textContent=m.balance>=0?`La dotación cubre el plan con un margen de ${fmt(m.balance)} jornadas (${fmt(m.cov,1)}% de cobertura).`:`Faltan ${fmt(Math.abs(m.balance))} jornadas para cubrir el plan (${fmt(m.cov,1)}% de cobertura).`;return m}
-function addPlanRow(){plan.push({type:'Hábil',desc:'Nuevo período',fleet:0,days:0});renderPlan();calculate()}function addStaffRow(){staff.push({count:0,workdays:0,francos:6});renderStaff();calculate()}function addDeductionRow(){deductions.push({name:DED_CONCEPTS[0],kind:'days',value:0});renderDeds();calculate()}function removePlan(i){plan.splice(i,1);renderPlan();calculate()}function removeStaff(i){staff.splice(i,1);renderStaff();calculate()}function removeDed(i){deductions.splice(i,1);renderDeds();calculate()}
+function addPlanRow(){plan.push({type:'Hábil',desc:'Nuevo período',fleet:0,days:0});renderPlan();calculate()}function addStaffRow(){staff.push({count:0,activeDays:conductionPeriodDays(),holidaysOff:0});renderStaff();calculate()}function addDeductionRow(){deductions.push({name:DED_CONCEPTS[0],kind:'days',value:0});renderDeds();calculate()}function removePlan(i){plan.splice(i,1);renderPlan();calculate()}function removeStaff(i){staff.splice(i,1);renderStaff();calculate()}function removeDed(i){deductions.splice(i,1);renderDeds();calculate()}
 function snapshot(){return{id:currentId||crypto.randomUUID(),name:budgetName.value.trim()||'Presupuesto sin nombre',period:period.value,status:document.getElementById('status').value,plan:structuredClone(plan),staff:structuredClone(staff),deductions:structuredClone(deductions),metrics:calculate(),updatedAt:new Date().toISOString()}}function getSaved(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}
 function currentBudgetPeriod(){
   const d=new Date();
@@ -3964,7 +3976,7 @@ function saveBudget(duplicate){let list=getSaved();if(duplicate)currentId=null;l
 function loadBudget(id){let s=getSaved().find(x=>x.id===id);if(!s)return;applyBudgetSnapshot(s);renderAll();window.scrollTo({top:0,behavior:'smooth'})}
 function deleteBudget(id){if(!confirm('¿Eliminar este presupuesto guardado?'))return;localStorage.setItem(KEY,JSON.stringify(getSaved().filter(x=>x.id!==id)));if(currentId===id)currentId=null;renderSaved()}
 function renderSaved(){let list=getSaved();savedList.innerHTML=list.length?list.map(s=>{const m=computeMetricsData(s.plan||[],s.staff||[],s.deductions||[]);return `<div class="saved-item"><div><b>${esc(s.name)} <span class="badge">${esc(s.status||'Borrador')}</span></b><span>${s.period||''} · Saldo ${m.balance>=0?'+':''}${fmt(m.balance)} jornadas · actualizado ${new Date(s.updatedAt).toLocaleString('es-AR')}</span></div><div class="section-actions"><button class="btn ghost" onclick="loadBudget('${s.id}')">Abrir</button><button class="btn pdf" onclick="downloadSavedPDF('${s.id}')">PDF</button><button class="btn danger" onclick="deleteBudget('${s.id}')">Eliminar</button></div></div>`}).join(''):'<div class="footer-note">Todavía no hay presupuestos guardados.</div>'}
-function newBudget(){currentId=null;const p=currentBudgetPeriod();period.value=p;budgetName.value=budgetNameForPeriod(p);document.getElementById('status').value='Borrador';plan=[{type:'Hábil',desc:'Plan normal',fleet:0,days:0},{type:'Sábado',desc:'Plan sábado',fleet:0,days:0},{type:'Domingo',desc:'Plan domingo',fleet:0,days:0}];staff=[{count:0,workdays:0,francos:6}];deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5}];renderAll();window.scrollTo({top:0,behavior:'smooth'})}
+function newBudget(){currentId=null;const p=currentBudgetPeriod();period.value=p;budgetName.value=budgetNameForPeriod(p);document.getElementById('status').value='Borrador';plan=[{type:'Hábil',desc:'Plan normal',fleet:0,days:0},{type:'Sábado',desc:'Plan sábado',fleet:0,days:0},{type:'Domingo',desc:'Plan domingo',fleet:0,days:0}];staff=[{count:0,activeDays:conductionPeriodDays(),holidaysOff:0}];deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5}];renderAll();window.scrollTo({top:0,behavior:'smooth'})}
 function downloadPDF(){downloadPDFFromSnapshot(snapshot())}function downloadSavedPDF(id){let s=getSaved().find(x=>x.id===id);if(s)downloadPDFFromSnapshot(s)}function periodLabel(p){if(!p)return'Sin período';let[y,m]=p.split('-').map(Number);let d=new Date(Date.UTC(y,m-1,1));let t=new Intl.DateTimeFormat('es-AR',{month:'long',year:'numeric',timeZone:'UTC'}).format(d);return t.charAt(0).toUpperCase()+t.slice(1)}function safeFileName(s){return String(s||'presupuesto').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'')||'presupuesto'}
 function downloadPDFFromSnapshot(s){
   if(!window.jspdf||!window.jspdf.jsPDF){
@@ -3996,17 +4008,20 @@ function downloadPDFFromSnapshot(s){
   ]);
   const planDays=(s.plan||[]).reduce((a,r)=>a+whole(r.days),0);
 
-  const staffRows=(s.staff||[]).map(r=>[
+  const pdfStaff=(s.staff||[]).map(normalizeStaffRow);
+  const staffRows=pdfStaff.map(r=>[
     fmt(whole(r.count)),
-    fmt(whole(r.workdays)),
+    fmt(whole(r.activeDays)),
+    fmt(whole(r.holidaysOff)),
     fmt(staffFrancos(r)),
-    fmt(whole(r.count)*whole(r.workdays))
+    fmt(staffWorkdays(r)),
+    fmt(whole(r.count)*staffWorkdays(r))
   ]);
 
-  const staff6=(s.staff||[]).filter(r=>staffFrancos(r)===6).reduce((a,r)=>a+whole(r.count),0);
-  const staff7=(s.staff||[]).filter(r=>staffFrancos(r)===7).reduce((a,r)=>a+whole(r.count),0);
-  const staff8=(s.staff||[]).filter(r=>staffFrancos(r)===8).reduce((a,r)=>a+whole(r.count),0);
-  const staffCustomRows=(s.staff||[]).filter(r=>!isStandardFranco(staffFrancos(r)));
+  const staff6=pdfStaff.filter(r=>staffFrancos(r)===6).reduce((a,r)=>a+whole(r.count),0);
+  const staff7=pdfStaff.filter(r=>staffFrancos(r)===7).reduce((a,r)=>a+whole(r.count),0);
+  const staff8=pdfStaff.filter(r=>staffFrancos(r)===8).reduce((a,r)=>a+whole(r.count),0);
+  const staffCustomRows=pdfStaff.filter(r=>![6,7,8].includes(staffFrancos(r)));
   const staffCustom=staffCustomRows.reduce((a,r)=>a+whole(r.count),0);
   const staffCustomDetail=[...new Set(staffCustomRows.map(r=>staffFrancos(r)))].sort((a,b)=>a-b).join(', ')||'—';
   const habilFleet=habilFleetRequirement(s.plan||[]);
@@ -4156,17 +4171,19 @@ function downloadPDFFromSnapshot(s){
   doc.autoTable({
     ...common,
     startY:cursor,
-    head:[['Conductores','Jornadas por conductor','Francos','Disponibles']],
+    head:[['Conductores','Días activos','Feriados Nac. no trab.','Francos','Jornadas/cond.','Disponibles']],
     body:staffRows,
     foot:[[
-      {content:'Total · '+fmt(M.count)+' conductores',colSpan:3,styles:{halign:'left'}},
+      {content:'Total · '+fmt(M.count)+' conductores',colSpan:5,styles:{halign:'left'}},
       {content:fmt(M.gross),styles:{halign:'right'}}
     ]],
     columnStyles:{
-      0:{halign:'center',cellWidth:35},
-      1:{halign:'center',cellWidth:55},
-      2:{halign:'center',cellWidth:35},
-      3:{halign:'right',cellWidth:57}
+      0:{halign:'center',cellWidth:27},
+      1:{halign:'center',cellWidth:27},
+      2:{halign:'center',cellWidth:37},
+      3:{halign:'center',cellWidth:24},
+      4:{halign:'center',cellWidth:32},
+      5:{halign:'right',cellWidth:35}
     }
   });
 
