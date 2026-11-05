@@ -1265,8 +1265,11 @@ h1{
   text-align:center;
 }
 .staff-calc-francos,.staff-calc-workdays{font-weight:900;color:var(--ink)}
-.staff-total-row .staff-total-label{text-align:left!important;padding-left:12px!important;font-weight:900}
 .staff-total-row td{vertical-align:middle}
+.staff-total-left{text-align:left!important;padding-left:14px!important;font-weight:700}
+.staff-total-left strong{font-weight:950}
+.staff-total-right{text-align:right!important;padding-right:14px!important;font-weight:700}
+.staff-total-right strong{margin-left:5px;font-weight:950}
 .budget-main-split .plan-service-panel table{
   min-width:620px;
 }
@@ -1679,7 +1682,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
 
   <section class="panel staff-panel">
     <div class="panel-head">
-      <div><h2>Dotación disponible</h2><p class="help">Los francos y jornadas se calculan automáticamente según días activos y feriados nacionales no trabajados.</p></div>
+      <div><h2>Dotación disponible</h2><p class="help">Base mensual: 6 francos para mes completo. Si trabaja menos días, la base se prorratea; luego se suman los feriados nacionales no trabajados.</p></div>
       <button class="btn soft" onclick="addStaffRow()">+ Agregar grupo</button>
     </div>
     <div class="staff-layout">
@@ -1687,7 +1690,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
         <table class="staff-table">
           <thead><tr><th>Conductores</th><th>Días activos</th><th>Feriados Nac. no trab.</th><th>Francos</th><th>Jornadas por conductor</th><th>Disponibles</th><th></th></tr></thead>
           <tbody id="staffBody"></tbody>
-          <tfoot><tr class="total-row staff-total-row"><td class="num" id="staffCount">0</td><td class="staff-total-label" colspan="2">Total</td><td colspan="2"></td><td class="num" id="staffTotal">0</td><td></td></tr></tfoot>
+          <tfoot><tr class="total-row staff-total-row"><td class="staff-total-left" colspan="3"><strong id="staffCount">0</strong> Conductores</td><td colspan="2"></td><td class="staff-total-right">Total <strong id="staffTotal">0</strong></td><td></td></tr></tfoot>
         </table>
       </div>
       <div id="staffShortageAlert" class="staff-shortage-alert" hidden>
@@ -3902,6 +3905,7 @@ function normalizeStaff(){staff=(staff||[]).map(normalizeStaffRow)}
 function staffBaseFrancos(r){
   const monthDays=conductionPeriodDays();
   const active=Math.min(Math.max(0,whole(r?.activeDays)),monthDays);
+  if(active>=monthDays)return 6;
   return Math.floor(6*active/monthDays);
 }
 function staffFrancos(r){return staffBaseFrancos(r)+Math.max(0,whole(r?.holidaysOff))}
