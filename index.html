@@ -1211,7 +1211,7 @@ h1{
 .staff-francos-wrap{display:flex;align-items:center;gap:7px}
 .staff-francos-custom{width:72px!important;min-width:72px!important;text-align:center!important;font-weight:850!important}
 .staff-franco-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-.staff-franco-head strong{font-size:20px;line-height:1;font-weight:950}
+.staff-franco-head strong{font-size:18px;line-height:1;font-weight:950}
 .staff-franco-head b{font-size:14px;font-weight:950}
 .staff-franco-card span{display:block;margin-top:5px;font-size:10px;line-height:1.25;color:#334155}
 @media(max-width:1050px){.staff-layout{grid-template-columns:1fr}.staff-summary{min-height:0}}
@@ -1688,7 +1688,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
 
   <section class="panel staff-panel">
     <div class="panel-head">
-      <div><h2>Dotación disponible</h2><p class="help">Base mensual: 6 francos para mes completo. Si trabaja menos días, la base se prorratea; luego se suman los feriados nacionales no trabajados.</p></div>
+      <div><h2>Dotación disponible</h2><p class="help">Base mensual: 6 francos para mes completo. Cada feriado nacional no trabajado suma 1 DNL, que se goza el mismo día del feriado. Si trabaja menos días, la base se prorratea.</p></div>
       <button class="btn soft" onclick="addStaffRow()">+ Agregar grupo</button>
     </div>
     <div class="staff-layout">
@@ -1737,16 +1737,16 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
         </div>
         <div class="staff-summary-bottom">
           <div class="staff-franco-card franco-6" id="staffSummary6Card">
-            <div class="staff-franco-head"><strong>6</strong><b id="staffSummary6Count">0</b></div>
-            <span>Conductores con 6 francos<br>(trabajan feriado)</span>
+            <div class="staff-franco-head"><strong>6 francos</strong><b id="staffSummary6Count">0</b></div>
+            <span>Base mensual<br>(trabaja feriados nac.)</span>
           </div>
           <div class="staff-franco-card franco-7" id="staffSummary7Card">
-            <div class="staff-franco-head"><strong>7</strong><b id="staffSummary7Count">0</b></div>
-            <span>Conductores con 7 francos<br>(no trabajan 1 feriado nac.)</span>
+            <div class="staff-franco-head"><strong>+1 DNL</strong><b id="staffSummary7Count">0</b></div>
+            <span>1 feriado nac. no trabajado<br>(se goza el mismo día)</span>
           </div>
           <div class="staff-franco-card franco-8" id="staffSummary8Card">
-            <div class="staff-franco-head"><strong>8</strong><b id="staffSummary8Count">0</b></div>
-            <span>Conductores con 8 francos<br>(no trabajan 2 feriados nac.)</span>
+            <div class="staff-franco-head"><strong>+2 DNL</strong><b id="staffSummary8Count">0</b></div>
+            <span>2 feriados nac. no trabajados<br>(se gozan esos días)</span>
           </div>
           <div class="staff-franco-card franco-custom" id="staffSummaryCustomCard">
             <div class="staff-franco-head"><strong>Otros</strong><b id="staffSummaryCustomCount">0</b></div>
@@ -4238,16 +4238,16 @@ function downloadPDFFromSnapshot(s){
 
   // Resumen de dotación compacto
   const sumGap=2;
-  const sumW=(contentW-sumGap*5)/6;
   const sumH=12;
   const staffSummary=[
     {label:'Conductores',sub:'',value:fmt(M.count),fill:soft,text:ink},
-    {label:'Jornadas',sub:'',value:fmt(M.gross),fill:soft,text:ink},
-    {label:'6 francos',sub:'trabajan feriados',value:fmt(staff6),fill:greenSoft,text:green},
-    {label:'7 francos',sub:'no trabajan 1 feriado nac.',value:fmt(staff7),fill:[255,246,237],text:[168,82,16]},
-    {label:'8 francos',sub:'no trabajan 2 feriados nac.',value:fmt(staff8),fill:[246,240,255],text:[107,63,160]},
-    {label:'Especiales',sub:'francos: '+staffCustomDetail,value:fmt(staffCustom),fill:[243,246,250],text:[71,85,105]}
+    {label:'Jornadas',sub:'',value:fmt(M.gross),fill:soft,text:ink}
   ];
+  if(staff6>0)staffSummary.push({label:'6 francos',sub:'base mensual',value:fmt(staff6),fill:greenSoft,text:green});
+  if(staff7>0)staffSummary.push({label:'+1 DNL',sub:'1 feriado nac. no trabajado',value:fmt(staff7),fill:[255,246,237],text:[168,82,16]});
+  if(staff8>0)staffSummary.push({label:'+2 DNL',sub:'2 feriados nac. no trabajados',value:fmt(staff8),fill:[246,240,255],text:[107,63,160]});
+  if(staffCustom>0)staffSummary.push({label:'Especiales',sub:'francos: '+staffCustomDetail,value:fmt(staffCustom),fill:[243,246,250],text:[71,85,105]});
+  const sumW=(contentW-sumGap*(staffSummary.length-1))/staffSummary.length;
   staffSummary.forEach((c,i)=>{
     const x=left+i*(sumW+sumGap);
     doc.setFillColor(...c.fill);
