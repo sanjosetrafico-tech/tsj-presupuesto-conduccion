@@ -1201,7 +1201,7 @@ h1{
 .staff-summary-mini{display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px;background:#e5f0ff;color:#1876ea;font-size:20px}
 .staff-summary-stat strong{display:block;font-size:23px;line-height:1;font-weight:950;color:#111}
 .staff-summary-stat small{display:block;margin-top:4px;font-size:11px;color:#5f6270}
-.staff-summary-bottom{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.staff-summary-bottom{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .staff-franco-card{border-radius:12px;padding:11px 12px;min-height:84px}
 .staff-franco-card.franco-6{background:#edf9f4;border:1px solid #bce7d6;color:#0d684f}
 .staff-franco-card.franco-7{background:#fff6ed;border:1px solid #ffd2a2;color:#9b4b0f}
@@ -1691,15 +1691,15 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           </div>
         </div>
         <div class="staff-summary-bottom">
-          <div class="staff-franco-card franco-6">
+          <div class="staff-franco-card franco-6" id="staffSummary6Card">
             <div class="staff-franco-head"><strong>6</strong><b id="staffSummary6Count">0</b></div>
             <span>Conductores con 6 francos<br>(trabajan feriado)</span>
           </div>
-          <div class="staff-franco-card franco-7">
+          <div class="staff-franco-card franco-7" id="staffSummary7Card">
             <div class="staff-franco-head"><strong>7</strong><b id="staffSummary7Count">0</b></div>
             <span>Conductores con 7 francos<br>(no trabajan 1 feriado nac.)</span>
           </div>
-          <div class="staff-franco-card franco-8">
+          <div class="staff-franco-card franco-8" id="staffSummary8Card">
             <div class="staff-franco-head"><strong>8</strong><b id="staffSummary8Count">0</b></div>
             <span>Conductores con 8 francos<br>(no trabajan 2 feriados nac.)</span>
           </div>
@@ -3891,7 +3891,9 @@ const sfCustomRows=staff.filter(r=>!isStandardFranco(staffFrancos(r)));
 const sfCustom=sfCustomRows.reduce((a,r)=>a+whole(r.count),0);
 const sfCustomDetail=[...new Set(sfCustomRows.map(r=>staffFrancos(r)))].sort((a,b)=>a-b).map(f=>f+' franco'+(f===1?'':'s')).join(' · ')||'Francos personalizados';
 const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross'),ss6=document.getElementById('staffSummary6Count'),ss7=document.getElementById('staffSummary7Count'),ss8=document.getElementById('staffSummary8Count'),ssCustom=document.getElementById('staffSummaryCustomCount'),ssCustomDetail=document.getElementById('staffSummaryCustomDetail');
+const ss6Card=document.getElementById('staffSummary6Card'),ss7Card=document.getElementById('staffSummary7Card'),ss8Card=document.getElementById('staffSummary8Card'),ssCustomCard=document.getElementById('staffSummaryCustomCard');
 if(ssc)ssc.textContent=fmt(m.count);if(ssg)ssg.textContent=fmt(m.gross);if(ss6)ss6.textContent=fmt(sf6);if(ss7)ss7.textContent=fmt(sf7);if(ss8)ss8.textContent=fmt(sf8);if(ssCustom)ssCustom.textContent=fmt(sfCustom);if(ssCustomDetail)ssCustomDetail.textContent=sfCustomDetail;
+if(ss6Card)ss6Card.hidden=sf6<=0;if(ss7Card)ss7Card.hidden=sf7<=0;if(ss8Card)ss8Card.hidden=sf8<=0;if(ssCustomCard)ssCustomCard.hidden=sfCustom<=0;
 const habilFleet=habilFleetRequirement();
 const shortage=Math.max(0,habilFleet-m.count);
 const shortageAlert=document.getElementById('staffShortageAlert');
