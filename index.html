@@ -1697,13 +1697,13 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           <colgroup>
             <col style="width:14%">
             <col style="width:16%">
-            <col style="width:21%">
-            <col style="width:11%">
+            <col style="width:13%">
+            <col style="width:19%">
             <col style="width:18%">
             <col style="width:14%">
             <col style="width:6%">
           </colgroup>
-          <thead><tr><th>Conductores</th><th>Días activos</th><th>Feriados Nac. no trab.</th><th>Francos</th><th>Jornadas por conductor</th><th>Disponibles</th><th></th></tr></thead>
+          <thead><tr><th>Conductores</th><th>Días activos</th><th>DNL</th><th>Francos + DNL</th><th>Jornadas por conductor</th><th>Disponibles</th><th></th></tr></thead>
           <tbody id="staffBody"></tbody>
           <tfoot><tr class="total-row staff-total-row"><td class="staff-total-left"><span class="staff-total-number" id="staffCount">0</span></td><td></td><td></td><td></td><td></td><td class="staff-total-right"><span class="staff-total-number" id="staffTotal">0</span></td><td></td></tr></tfoot>
         </table>
@@ -3932,8 +3932,8 @@ function renderStaff(){normalizeStaff();staffBody.innerHTML=staff.map((r,i)=>{
   return `<tr>
 <td><input type="number" min="0" value="${r.count}" oninput="staff[${i}].count=val(this.value);calculate()"></td>
 <td><input type="number" min="0" max="${conductionPeriodDays()}" value="${r.activeDays}" oninput="staff[${i}].activeDays=Math.max(0,whole(this.value));renderStaff();calculate()"></td>
-<td><input type="number" min="0" step="1" value="${r.holidaysOff}" oninput="staff[${i}].holidaysOff=Math.max(0,whole(this.value));renderStaff();calculate()"></td>
-<td class="num staff-calc-francos">${fmt(f)}</td>
+<td><input type="number" min="0" step="1" value="${r.holidaysOff}" title="DNL: feriado nacional no trabajado. Se goza el mismo día del feriado." oninput="staff[${i}].holidaysOff=Math.max(0,whole(this.value));renderStaff();calculate()"></td>
+<td class="num staff-calc-francos" title="6 francos base para mes completo + DNL correspondientes">${fmt(f)}</td>
 <td class="num staff-calc-workdays">${fmt(w)}</td>
 <td class="num" id="staffJ${i}">0</td>
 <td><button class="icon-btn" onclick="removeStaff(${i})">×</button></td>
@@ -4214,7 +4214,7 @@ function downloadPDFFromSnapshot(s){
   doc.autoTable({
     ...common,
     startY:cursor,
-    head:[['Conductores','Días activos','Feriados Nac. no trab.','Francos','Jornadas/cond.','Disponibles']],
+    head:[['Conductores','Días activos','DNL','Francos + DNL','Jornadas/cond.','Disponibles']],
     body:staffRows,
     foot:[[
       {content:fmt(M.count),styles:{halign:'center'}},
@@ -4227,8 +4227,8 @@ function downloadPDFFromSnapshot(s){
     columnStyles:{
       0:{halign:'center',cellWidth:27},
       1:{halign:'center',cellWidth:27},
-      2:{halign:'center',cellWidth:37},
-      3:{halign:'center',cellWidth:24},
+      2:{halign:'center',cellWidth:22},
+      3:{halign:'center',cellWidth:39},
       4:{halign:'center',cellWidth:32},
       5:{halign:'right',cellWidth:35}
     }
