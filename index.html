@@ -1213,6 +1213,11 @@ h1{
 .staff-franco-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .staff-franco-head strong{font-size:18px;line-height:1;font-weight:950}
 .staff-franco-head b{font-size:14px;font-weight:950}
+.staff-franco-main{display:flex;align-items:baseline;gap:6px}
+.staff-franco-main strong{font-size:22px;line-height:1;font-weight:950}
+.staff-franco-main span{margin:0;font-size:9px;color:#475569}
+.staff-franco-card>b{display:block;margin-top:6px;font-size:11px;font-weight:900;color:inherit}
+.staff-franco-card>small{display:block;margin-top:3px;font-size:9.5px;color:#475569}
 .staff-franco-card span{display:block;margin-top:5px;font-size:10px;line-height:1.25;color:#334155}
 @media(max-width:1050px){.staff-layout{grid-template-columns:1fr}.staff-summary{min-height:0}}
 @media(max-width:620px){.staff-summary-top,.staff-summary-bottom{grid-template-columns:1fr}}
@@ -1738,20 +1743,24 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
         </div>
         <div class="staff-summary-bottom">
           <div class="staff-franco-card franco-6" id="staffSummary6Card">
-            <div class="staff-franco-head"><strong>6 francos</strong><b id="staffSummary6Count">0</b></div>
-            <span>Base mensual<br>(trabaja feriados nac.)</span>
+            <div class="staff-franco-main"><strong id="staffSummary6Count">0</strong><span>conductores</span></div>
+            <b>6 francos</b>
+            <small id="staffSummary6Workdays">0 jorn./cond.</small>
           </div>
           <div class="staff-franco-card franco-7" id="staffSummary7Card">
-            <div class="staff-franco-head"><strong>+1 DNL</strong><b id="staffSummary7Count">0</b></div>
-            <span>1 feriado nac. no trabajado<br>(se goza el mismo día)</span>
+            <div class="staff-franco-main"><strong id="staffSummary7Count">0</strong><span>conductores</span></div>
+            <b>6 francos + 1 DNL</b>
+            <small id="staffSummary7Workdays">0 jorn./cond.</small>
           </div>
           <div class="staff-franco-card franco-8" id="staffSummary8Card">
-            <div class="staff-franco-head"><strong>+2 DNL</strong><b id="staffSummary8Count">0</b></div>
-            <span>2 feriados nac. no trabajados<br>(se gozan esos días)</span>
+            <div class="staff-franco-main"><strong id="staffSummary8Count">0</strong><span>conductores</span></div>
+            <b>6 francos + 2 DNL</b>
+            <small id="staffSummary8Workdays">0 jorn./cond.</small>
           </div>
           <div class="staff-franco-card franco-custom" id="staffSummaryCustomCard">
-            <div class="staff-franco-head"><strong>Otros</strong><b id="staffSummaryCustomCount">0</b></div>
-            <span id="staffSummaryCustomDetail">Francos personalizados</span>
+            <div class="staff-franco-main"><strong id="staffSummaryCustomCount">0</strong><span>conductores</span></div>
+            <b>Esquema especial</b>
+            <small id="staffSummaryCustomDetail">Francos personalizados</small>
           </div>
         </div>
       </aside>
@@ -3947,9 +3956,13 @@ const sf6=francoGroups[6]||0,sf7=francoGroups[7]||0,sf8=francoGroups[8]||0;
 const sfCustomRows=Object.entries(francoGroups).filter(([f])=>![6,7,8].includes(Number(f)));
 const sfCustom=sfCustomRows.reduce((a,[,count])=>a+count,0);
 const sfCustomDetail=sfCustomRows.sort((a,b)=>Number(a[0])-Number(b[0])).map(([f,count])=>f+' francos · '+fmt(count)+' cond.').join(' · ')||'Francos personalizados';
-const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross'),ss6=document.getElementById('staffSummary6Count'),ss7=document.getElementById('staffSummary7Count'),ss8=document.getElementById('staffSummary8Count'),ssCustom=document.getElementById('staffSummaryCustomCount'),ssCustomDetail=document.getElementById('staffSummaryCustomDetail');
+const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross'),ss6=document.getElementById('staffSummary6Count'),ss7=document.getElementById('staffSummary7Count'),ss8=document.getElementById('staffSummary8Count'),ssCustom=document.getElementById('staffSummaryCustomCount'),ssCustomDetail=document.getElementById('staffSummaryCustomDetail'),ss6W=document.getElementById('staffSummary6Workdays'),ss7W=document.getElementById('staffSummary7Workdays'),ss8W=document.getElementById('staffSummary8Workdays');
 const ss6Card=document.getElementById('staffSummary6Card'),ss7Card=document.getElementById('staffSummary7Card'),ss8Card=document.getElementById('staffSummary8Card'),ssCustomCard=document.getElementById('staffSummaryCustomCard');
+const sf6W=staff.find(r=>staffFrancos(r)===6),sf7W=staff.find(r=>staffFrancos(r)===7),sf8W=staff.find(r=>staffFrancos(r)===8);
 if(ssc)ssc.textContent=fmt(m.count);if(ssg)ssg.textContent=fmt(m.gross);if(ss6)ss6.textContent=fmt(sf6);if(ss7)ss7.textContent=fmt(sf7);if(ss8)ss8.textContent=fmt(sf8);if(ssCustom)ssCustom.textContent=fmt(sfCustom);if(ssCustomDetail)ssCustomDetail.textContent=sfCustomDetail;
+if(ss6W)ss6W.textContent=(sf6W?fmt(staffWorkdays(sf6W)):'0')+' jorn./cond.';
+if(ss7W)ss7W.textContent=(sf7W?fmt(staffWorkdays(sf7W)):'0')+' jorn./cond.';
+if(ss8W)ss8W.textContent=(sf8W?fmt(staffWorkdays(sf8W)):'0')+' jorn./cond.';
 if(ss6Card)ss6Card.hidden=sf6<=0;if(ss7Card)ss7Card.hidden=sf7<=0;if(ss8Card)ss8Card.hidden=sf8<=0;if(ssCustomCard)ssCustomCard.hidden=sfCustom<=0;
 const habilFleet=habilFleetRequirement();
 const shortage=Math.max(0,habilFleet-m.count);
