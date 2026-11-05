@@ -4105,7 +4105,7 @@ function downloadPDFFromSnapshot(s){
 
   const totalDataRows=planRows.length+staffRows.length+incidenceRows.length;
   const dense=totalDataRows>11;
-  const tableFont=dense?6.7:7.3;
+  const tableFont=dense?7.0:7.8;
   const tablePad=dense?1.15:1.45;
   const sectionGap=dense?4:5;
 
@@ -4113,7 +4113,7 @@ function downloadPDFFromSnapshot(s){
     doc.setFillColor(...soft2);
     doc.roundedRect(left,y,contentW,6.5,1.2,1.2,'F');
     doc.setFont('helvetica','bold');
-    doc.setFontSize(9.2);
+    doc.setFontSize(9.8);
     doc.setTextColor(...ink);
     doc.text(title,left+4,y+4.5);
     return y+8.5;
@@ -4128,7 +4128,7 @@ function downloadPDFFromSnapshot(s){
   doc.text('Presupuesto mensual de conducción',44,13);
 
   doc.setFont('helvetica','normal');
-  doc.setFontSize(8.2);
+  doc.setFontSize(8.4);
   doc.setTextColor(...muted);
   doc.text('Transporte San José S.A. · '+periodLabel(s.period),44,18.5);
 
@@ -4149,7 +4149,7 @@ function downloadPDFFromSnapshot(s){
   doc.text(s.name||'Presupuesto',left,31);
 
   doc.setFont('helvetica','normal');
-  doc.setFontSize(7.4);
+  doc.setFontSize(8.0);
   doc.setTextColor(...muted);
   doc.text('Emitido: '+new Date().toLocaleString('es-AR'),right,31,{align:'right'});
 
@@ -4195,6 +4195,7 @@ function downloadPDFFromSnapshot(s){
       fillColor:black,
       textColor:[255,255,255],
       fontStyle:'bold',
+      fontSize:7.5,
       halign:'center',
       cellPadding:{top:1.6,right:1.8,bottom:1.6,left:1.8}
     },
@@ -4284,17 +4285,17 @@ function downloadPDFFromSnapshot(s){
     doc.roundedRect(x,cursor,topW,topH,2,2,'FD');
 
     doc.setFont('helvetica','bold');
-    doc.setFontSize(7.2);
+    doc.setFontSize(8.0);
     doc.setTextColor(...muted);
     doc.text(card.title,x+3,cursor+5);
 
     doc.setFont('helvetica','bold');
-    doc.setFontSize(15.5);
+    doc.setFontSize(17);
     doc.setTextColor(...ink);
-    doc.text(card.value,x+3,cursor+11.8);
+    doc.text(card.value,x+3,cursor+11.9);
 
     doc.setFont('helvetica','bold');
-    doc.setFontSize(7.1);
+    doc.setFontSize(7.5);
     doc.setTextColor(43,64,102);
     doc.text(card.sub,x+3,cursor+15.7);
   });
@@ -4367,22 +4368,22 @@ function downloadPDFFromSnapshot(s){
       doc.roundedRect(x,cursor,detailW,detailH,2,2,'FD');
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(15.5);
+      doc.setFontSize(17);
       doc.setTextColor(...card.accent);
-      doc.text(card.count,x+3,cursor+7.3);
+      doc.text(card.count,x+3,cursor+7.5);
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(6.8);
+      doc.setFontSize(7.2);
       doc.setTextColor(...ink);
-      doc.text(card.label,x+14,cursor+7.1);
+      doc.text(card.label,x+15,cursor+7.2);
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(8);
+      doc.setFontSize(8.5);
       doc.setTextColor(...card.accent);
       doc.text(card.sub,x+3,cursor+12.8,{maxWidth:detailW-6});
 
       doc.setFont('helvetica','bold');
-      doc.setFontSize(7);
+      doc.setFontSize(7.5);
       doc.setTextColor(51,65,85);
       doc.text(card.workdays,x+3,cursor+17.8,{maxWidth:detailW-6});
     });
@@ -4474,7 +4475,7 @@ function downloadPDFFromSnapshot(s){
   doc.text('Resultado del presupuesto',left+4,cursor+6.5);
 
   doc.setFont('helvetica','normal');
-  doc.setFontSize(7.7);
+  doc.setFontSize(8.0);
   doc.setTextColor(...muted);
   doc.text('Conductores: '+fmt(M.count),left+4,cursor+13);
   doc.text('Incidencias: '+fmt(M.deds)+' jornadas',left+4,cursor+18.5);
