@@ -3900,7 +3900,7 @@ function restoreServiceTab(){
 const KEY='tsj_presupuestos_v1';let currentId=null;
 let plan=[{type:'Hábil',desc:'Plan normal',fleet:116,days:20},{type:'Sábado',desc:'Plan sábado',fleet:54,days:6},{type:'Domingo',desc:'Plan domingo',fleet:36,days:5}];
 let staff=[{count:36,activeDays:30,holidaysOff:0},{count:95,activeDays:30,holidaysOff:1}];
-const DED_CONCEPTS=['Licencia medica','Licencia especial','Monitor escuela','Monitor taller','Sanciones','Vacaciones'];
+const DED_CONCEPTS=['Ausentismo estimado','Licencia medica','Licencia especial','Monitor escuela','Monitor taller','Sanciones','Vacaciones'];
 let deductions=[{name:'Ausentismo estimado',kind:'percent',value:2.5},{name:'Licencia medica',kind:'days',value:65},{name:'Licencia especial',kind:'days',value:10},{name:'Monitor escuela',kind:'days',value:32}];
 const fmt=(n,d=0)=>new Intl.NumberFormat('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}).format(Number(n)||0);const val=x=>Number(x)||0;const whole=x=>Math.floor(val(x));const deductionDays=(raw,kind)=>kind==='percent'?Math.ceil(val(raw)):Math.floor(val(raw));
 function computeMetricsData(planData=plan,staffData=staff,dedData=deductions){let need=0,days=0;(planData||[]).forEach(r=>{const fleet=whole(r.fleet),d=whole(r.days);need+=fleet*d;days+=d});let gross=0,count=0;(staffData||[]).forEach(r=>{const c=whole(r.count),w=staffWorkdays(r);gross+=c*w;count+=c});let deds=0;const dedItems=(dedData||[]).map(r=>{const raw=r.kind==='percent'?need*val(r.value)/100:val(r.value);const j=deductionDays(raw,r.kind);deds+=j;return j});const net=Math.floor(gross-deds),balance=Math.floor(net-need),cov=need?net/need*100:0;return{need,days,gross,count,deds,net,balance,cov,dedItems}}
