@@ -2917,9 +2917,9 @@ async function inspReadPlanDailyPdf(file){
       }
     }
     // Fallbacks calibrados al formato Plan Diario TSJ si el encabezado viene fragmentado.
-    if(xLine==null)xLine=54;
-    if(xME==null)xME=244;
-    if(xTE==null)xTE=405;
+    if(xLine==null)xLine=39;
+    if(xME==null)xME=188;
+    if(xTE==null)xTE=321;
 
     for(const row of byY){
       const s=row.items.sort((a,b)=>a.x-b.x);
