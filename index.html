@@ -2026,9 +2026,9 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
             <input id="inspectorWeek" type="date" aria-label="Inicio de semana">
           </label>
           <input id="inspectorFileInput" type="file" accept=".xlsx,.xls,.csv" multiple hidden onchange="handleInspectorFiles(this.files)">
-          <button class="btn soft" type="button" onclick="const input=document.getElementById('inspectorFileInput');input.value='';input.click()">Importar Excel</button>
+          <button class="btn soft" type="button" onclick="const input=document.getElementById('inspectorFileInput');input.value='';input.click()">Importar Medias vueltas</button>
           <input id="inspectorPlanPdfInput" type="file" accept=".pdf,application/pdf" multiple hidden onchange="handleInspectorPlanPDFs(this.files)">
-          <button class="btn soft" type="button" onclick="const input=document.getElementById('inspectorPlanPdfInput');input.value='';input.click()">Adjuntar Plan Diario PDF</button>
+          <button class="btn soft" type="button" onclick="const input=document.getElementById('inspectorPlanPdfInput');input.value='';input.click()">Importar Plan diario</button>
           <button class="btn primary" type="button" onclick="generateInspectorCalendar()">Generar calendario</button>
           <button class="btn ghost" type="button" onclick="saveInspectorCalendar()">Guardar semana</button>
           <button class="btn pdf" type="button" onclick="exportInspectorPDF()">Exportar PDF</button>
