@@ -4071,7 +4071,7 @@ function renderStaff(){normalizeStaff();staffBody.innerHTML=staff.map((r,i)=>{
   const f=staffFrancos(r),w=staffWorkdays(r);
   return `<tr>
 <td><input type="number" min="0" value="${r.count}" oninput="staff[${i}].count=val(this.value);calculate()"></td>
-<td><input type="number" min="0" max="${conductionPeriodDays()}" value="${r.activeDays}" oninput="staff[${i}].activeDays=Math.max(0,whole(this.value));renderStaff();calculate()"></td>
+<td><input type="number" min="0" max="31" value="${r.activeDays}" oninput="staff[${i}].activeDays=Math.min(31,Math.max(0,whole(this.value)));renderStaff();calculate()"></td>
 <td class="num staff-calc-base">${fmt(staffBaseFrancos(r))}</td>
 <td><input type="number" min="0" step="1" value="${r.holidaysOff}" title="DNL: feriado nacional no trabajado. Se goza el mismo día del feriado." oninput="staff[${i}].holidaysOff=Math.max(0,whole(this.value));renderStaff();calculate()"></td>
 <td class="num staff-calc-francos" title="Francos base + DNL correspondientes">${fmt(f)}</td>
