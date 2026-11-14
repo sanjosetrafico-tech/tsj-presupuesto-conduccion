@@ -2030,6 +2030,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
           <input id="inspectorPlanPdfInput" type="file" accept=".pdf,application/pdf" multiple hidden onchange="handleInspectorPlanPDFs(this.files)">
           <button class="btn soft" type="button" onclick="const input=document.getElementById('inspectorPlanPdfInput');input.value='';input.click()">Importar Plan diario</button>
           <button class="btn primary" type="button" onclick="generateInspectorCalendar()">Generar calendario</button>
+          <button class="btn ghost" type="button" onclick="startNewInspectorCalendar()">Nuevo calendario</button>
           <button class="btn ghost" type="button" onclick="saveInspectorCalendar()">Guardar semana</button>
           <button class="btn pdf" type="button" onclick="exportInspectorPDF()">Exportar PDF</button>
         </div>
@@ -3497,6 +3498,19 @@ function generateInspectorCalendar(){
   renderInspectorCalendar();
   document.getElementById('inspectorSaveState').textContent='Calendario generado · cambios sin guardar';
 }
+function startNewInspectorCalendar(){
+  const week=inspMonday(document.getElementById('inspectorWeek')?.value||inspISO(new Date()));
+  if(!confirm('¿Iniciar un calendario vacío para la semana '+inspDateLabel(week)+'? Los cambios sin guardar se perderán.'))return;
+  inspectorTasks=[];
+  inspectorFindings=[];
+  inspectorImportedFiles=[];
+  inspectorImportedRows=[];
+  inspectorAutoProposals=[];
+  renderInspectorAnalysis();
+  renderInspectorCalendar();
+  clearInspectorEditor();
+  document.getElementById('inspectorSaveState').textContent='Calendario nuevo · cambios sin guardar';
+}
 function inspHistoricalLineCandidates(){
   const current=inspMonday(document.getElementById('inspectorWeek')?.value||inspISO(new Date()));
   const weeks=Object.keys(inspectorSharedStore)
@@ -3554,6 +3568,8 @@ function inspHistoricalLineCandidates(){
   ).sort((a,b)=>b.score-a.score||a.avg-b.avg);
 }
 function inspBuildAutoProposals(){
+  // Una semana nueva no hereda propuestas ni datos de semanas anteriores.
+  if(!inspectorFindings.length&&!inspectorTasks.length)return [];
   const dates=inspWeekDates();
   const candidates=inspHistoricalLineCandidates();
   const proposals=[];
@@ -3766,7 +3782,7 @@ async function loadInspectorWeek(force=true){
     inspectorFindings=Array.isArray(rec.findings)?inspNormalizeFindings(rec.findings):[];
     inspectorImportedFiles=Array.isArray(rec.files)?rec.files:[];
     document.getElementById('inspectorSaveState').textContent=(inspectorSharedStore[week]?'Compartido · ':'Local · ')+new Date(rec.updatedAt||Date.now()).toLocaleString('es-AR');
-  }else if(force||inspectorTasks.length===0){
+  }else{
     inspectorTasks=[];inspectorFindings=[];inspectorImportedFiles=[];
     document.getElementById('inspectorSaveState').textContent='Semana nueva · sin guardar';
   }
