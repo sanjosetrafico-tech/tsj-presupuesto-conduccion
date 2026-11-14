@@ -3813,12 +3813,14 @@ async function exportInspectorSavedPDF(week){
 function exportInspectorPDF(record){
   if(!window.jspdf||!window.jspdf.jsPDF){alert('No se pudo cargar el generador de PDF.');return}
   const rec=record||{week:document.getElementById('inspectorWeek').value,tasks:inspectorTasks};
-  const tasks=inspNormalizeStoredTasks(rec.tasks||[]).sort((a,b)=>a.date.localeCompare(b.date)||(a.shift==='Mañana'?-1:1));
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const left=12,right=285;
   const monday=inspMonday(rec.week||document.getElementById('inspectorWeek').value);
   const sunday=inspISO(new Date(new Date(monday+'T12:00:00').getTime()+6*86400000));
+  const tasks=inspNormalizeStoredTasks(rec.tasks||[])
+    .filter(t=>t.date>=monday&&t.date<=sunday)
+    .sort((a,b)=>a.date.localeCompare(b.date)||(a.shift==='Mañana'?-1:1));
 
   doc.setFont('helvetica','bold');
   doc.setFontSize(18);
