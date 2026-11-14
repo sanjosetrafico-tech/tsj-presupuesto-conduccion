@@ -3818,8 +3818,13 @@ function exportInspectorPDF(record){
   const left=12,right=285;
   const monday=inspMonday(rec.week||document.getElementById('inspectorWeek').value);
   const sunday=inspISO(new Date(new Date(monday+'T12:00:00').getTime()+6*86400000));
+  const weekStart=new Date(monday+'T00:00:00').getTime();
+  const weekEnd=new Date(sunday+'T23:59:59.999').getTime();
   const tasks=inspNormalizeStoredTasks(rec.tasks||[])
-    .filter(t=>t.date>=monday&&t.date<=sunday)
+    .filter(t=>{
+      const taskDate=Date.parse(String(t.date||'')+'T12:00:00');
+      return Number.isFinite(taskDate)&&taskDate>=weekStart&&taskDate<=weekEnd;
+    })
     .sort((a,b)=>a.date.localeCompare(b.date)||(a.shift==='Mañana'?-1:1));
 
   doc.setFont('helvetica','bold');
