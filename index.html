@@ -1697,7 +1697,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
 
   <section class="panel staff-panel">
     <div class="panel-head">
-      <div><h2>Dotación disponible</h2><p class="help">Francos base editables: 6 o 7 (por defecto 6). Cada franco pagado reduce en 1 los francos efectivos del mes. Cada feriado nacional no trabajado suma 1 DNL.</p></div>
+      <div><h2>Dotación disponible</h2><p class="help">Francos base editables: 6 o 7 (por defecto 6). Cada franco trabajado reduce en 1 los francos efectivos del mes. Cada feriado nacional no trabajado suma 1 DNL.</p></div>
       <button class="btn soft" onclick="addStaffRow()">+ Agregar grupo</button>
     </div>
     <div class="staff-layout">
@@ -1714,7 +1714,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
             <col style="width:14%">
             <col style="width:6%">
           </colgroup>
-          <thead><tr><th>Conductores</th><th>Días activos</th><th>Francos</th><th>Francos pagados</th><th>DNL</th><th>Total Desc.</th><th>Jorn./Cond.</th><th>Jorn. Disp.</th><th></th></tr></thead>
+          <thead><tr><th>Conductores</th><th>Días activos</th><th>Francos</th><th>Francos trabajados</th><th>DNL</th><th>Total Desc.</th><th>Jorn./Cond.</th><th>Jorn. Disp.</th><th></th></tr></thead>
           <tbody id="staffBody"></tbody>
           <tfoot><tr class="total-row staff-total-row"><td class="staff-total-left"><span class="staff-total-number" id="staffCount">0</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="staff-total-right"><span class="staff-total-number" id="staffTotal">0</span></td><td></td></tr></tfoot>
         </table>
@@ -4092,7 +4092,7 @@ function renderStaff(){normalizeStaff();staffBody.innerHTML=staff.map((r,i)=>{
 <td><select onchange="staff[${i}].baseFrancos=whole(this.value);renderStaff();calculate()"><option value="6" ${staffBaseFrancos(r)===6?'selected':''}>6</option><option value="7" ${staffBaseFrancos(r)===7?'selected':''}>7</option></select></td>
 <td><select onchange="staff[${i}].paidFrancos=whole(this.value);renderStaff();calculate()"><option value="0" ${staffPaidFrancos(r)===0?'selected':''}>0</option><option value="1" ${staffPaidFrancos(r)===1?'selected':''}>1</option><option value="2" ${staffPaidFrancos(r)===2?'selected':''}>2</option><option value="3" ${staffPaidFrancos(r)===3?'selected':''}>3</option><option value="4" ${staffPaidFrancos(r)===4?'selected':''}>4</option><option value="5" ${staffPaidFrancos(r)===5?'selected':''}>5</option></select></td>
 <td><input type="number" min="0" step="1" value="${r.holidaysOff}" title="DNL: feriado nacional no trabajado. Se goza el mismo día del feriado." oninput="staff[${i}].holidaysOff=Math.max(0,whole(this.value));renderStaff();calculate()"></td>
-<td class="num staff-calc-francos" title="Francos efectivos = Francos - Francos pagados + DNL">${fmt(f)}</td>
+<td class="num staff-calc-francos" title="Francos efectivos = Francos - Francos trabajados + DNL">${fmt(f)}</td>
 <td class="num staff-calc-workdays">${fmt(w)}</td>
 <td class="num" id="staffJ${i}">0</td>
 <td><button class="icon-btn" onclick="removeStaff(${i})">×</button></td>
@@ -4384,7 +4384,7 @@ function downloadPDFFromSnapshot(s){
   doc.autoTable({
     ...common,
     startY:cursor,
-    head:[['Conductores','Días activos','Francos','Francos pag.','DNL','Total Desc.','Jorn./Cond.','Jorn. Disp.']],
+    head:[['Conductores','Días activos','Francos','Francos trab.','DNL','Total Desc.','Jorn./Cond.','Jorn. Disp.']],
     body:staffRows,
     foot:[[
       {content:fmt(M.count),styles:{halign:'center'}},
