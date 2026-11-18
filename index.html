@@ -367,7 +367,7 @@ td input,td select{
   font-size:11px;
 }
 .total-row td{background:#faf8f9;font-weight:850}
-.kpi-line{padding:10px 0}
+.kpi-line{padding:14px 0}
 .kpi-line strong{font-size:16px}
 .alert{font-size:12px}
 .saved-item{padding:11px 12px}
@@ -437,7 +437,7 @@ td input,td select{
   margin:6px 0 14px!important;
 }
 .cards{
-  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
   gap:14px!important;
 }
 .card{
@@ -759,7 +759,7 @@ h1{
   }
 
   .kpi-line{
-    padding:9px 0!important;
+    padding:13px 0!important;
     font-size:12px!important;
   }
   .kpi-line strong{
@@ -1691,7 +1691,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
         <select id="status" aria-label="Estado"><option>Borrador</option><option>Definitivo</option><option>Cerrado</option></select>
       </div>
     </div>
-    <section class="cards"><div class="card"><div class="label">Jornadas necesarias</div><div class="value" id="needKpi">0</div><div class="hint">Plan de servicio del mes</div></div><div class="card"><div class="label">Disponibilidad bruta</div><div class="value" id="grossKpi">0</div><div class="hint">Antes de licencias y ausentismo</div></div><div class="card"><div class="label">Disponibilidad neta</div><div class="value" id="netKpi">0</div><div class="hint">Luego de incidencias</div></div><div class="card positive" id="balanceCard"><div class="label">Saldo mensual</div><div class="value" id="balanceKpi">0</div><div class="hint">Jornadas de margen</div></div></section>
+    <section class="cards"><div class="card"><div class="label">Jornadas necesarias</div><div class="value" id="needKpi">0</div><div class="hint">Plan de servicio del mes</div></div><div class="card"><div class="label">Disponibilidad bruta</div><div class="value" id="grossKpi">0</div><div class="hint">Antes de licencias y ausentismo</div></div><div class="card"><div class="label">Disponibilidad neta</div><div class="value" id="netKpi">0</div><div class="hint">Luego de incidencias</div></div><div class="card"><div class="label">FT</div><div class="value" id="workedKpi">0</div><div class="hint">Francos trabajados</div></div><div class="card positive" id="balanceCard"><div class="label">Saldo mensual</div><div class="value" id="balanceKpi">0</div><div class="hint">Jornadas de margen</div></div></section>
   <div class="budget-main-split">
   <section class="panel plan-service-panel"><div class="panel-head"><div><h2>Plan de servicio</h2><p class="help">Podés tener varios tramos hábiles dentro del mismo mes.</p></div><button class="btn soft" onclick="addPlanRow()">+ Agregar período</button></div><table><thead><tr><th>Tipo</th><th>Descripción</th><th>Flota</th><th>Días</th><th>Jornadas</th><th></th></tr></thead><tbody id="planBody"></tbody><tfoot><tr class="total-row"><td colspan="3">Total</td><td class="num" id="planDays">0</td><td class="num" id="planTotal">0</td><td></td></tr></tfoot></table></section>
 
@@ -1754,7 +1754,7 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
   </section>
   </div>
   <div class="grid"><section class="panel"><div class="panel-head"><div><h2>Incidencias</h2><p class="help">Las porcentuales se aplican sobre las jornadas necesarias.</p></div><button class="btn soft" onclick="addDeductionRow()">+ Agregar concepto</button></div><table><thead><tr><th>Concepto</th><th>Tipo</th><th>Valor</th><th>Descuento</th><th></th></tr></thead><tbody id="dedBody"></tbody><tfoot><tr class="total-row"><td colspan="3">Total descuentos</td><td class="num" id="dedTotal">0</td><td></td></tr></tfoot></table><div class="footer-note">Las jornadas se muestran siempre como números enteros. El saldo y la disponibilidad se ajustan hacia abajo.</div></section>
-  <section class="panel"><div class="panel-head"><div><h2>Resultado del escenario</h2><p class="help">Se actualiza automáticamente con cada cambio.</p></div></div><div class="kpi-line"><span>Jornadas necesarias</span><strong id="rNeed">0</strong></div><div class="kpi-line"><span>Disponibilidad bruta</span><strong id="rGross">0</strong></div><div class="kpi-line"><span>Descuentos</span><strong id="rDeds">0</strong></div><div class="kpi-line"><span>Disponibilidad neta</span><strong id="rNet">0</strong></div><div class="kpi-line"><span>Cobertura</span><strong id="coverage">0%</strong></div><div class="kpi-line"><span>Saldo</span><strong id="rBalance">0</strong></div><div id="resultAlert" class="alert ok"></div><div class="section-actions" style="margin-top:14px"><button class="btn primary" onclick="saveBudget(false)">Guardar presupuesto</button><button class="btn pdf" onclick="downloadPDF()">Descargar PDF</button><button class="btn ghost" onclick="saveBudget(true)">Duplicar escenario</button><button class="btn ghost" onclick="newBudget()">Nuevo</button></div></section></div>
+  <section class="panel"><div class="panel-head"><div><h2>Resultado del presupuesto</h2><p class="help">Se actualiza automáticamente con cada cambio.</p></div></div><div class="kpi-line"><span>Jornadas necesarias</span><strong id="rNeed">0</strong></div><div class="kpi-line"><span>Disponibilidad bruta</span><strong id="rGross">0</strong></div><div class="kpi-line"><span>Disponibilidad neta</span><strong id="rNet">0</strong></div><div class="kpi-line"><span>FT · Francos trabajados</span><strong id="rWorked">0</strong></div><div class="kpi-line"><span>Saldo</span><strong id="rBalance">0</strong></div><div class="kpi-line"><span>Descuentos</span><strong id="rDeds">0</strong></div><div class="kpi-line"><span>Cobertura</span><strong id="coverage">0%</strong></div><div id="resultAlert" class="alert ok"></div><div class="section-actions" style="margin-top:14px"><button class="btn primary" onclick="saveBudget(false)">Guardar presupuesto</button><button class="btn pdf" onclick="downloadPDF()">Descargar PDF</button><button class="btn ghost" onclick="saveBudget(true)">Duplicar escenario</button><button class="btn ghost" onclick="newBudget()">Nuevo</button></div></section></div>
   <section class="panel" id="historial"><div class="panel-head"><div><h2>Presupuestos guardados</h2><p class="help">Se guardan en este navegador. Podés abrirlos y seguir simulando.</p></div><button class="btn ghost" onclick="exportJSON()">Exportar respaldo</button></div><div class="saved-list" id="savedList"></div></section>
 
   </section>
@@ -4096,7 +4096,7 @@ const shortageText=document.getElementById('staffShortageText');
 if(shortageAlert)shortageAlert.hidden=shortage<=0;
 if(shortageCount)shortageCount.textContent=fmt(shortage);
 if(shortageText)shortageText.textContent='Faltan '+fmt(shortage)+' conductores. La cobertura requerirá HHEE adicionales para completar los turnos (8 a 10 hs por turno a cubrir).';
-dedTotal.textContent=fmt(m.deds);needKpi.textContent=fmt(m.need);grossKpi.textContent=fmt(m.gross);netKpi.textContent=fmt(m.net);balanceKpi.textContent=(m.balance>=0?'+':'')+fmt(m.balance);rNeed.textContent=fmt(m.need);rGross.textContent=fmt(m.gross);rDeds.textContent=fmt(m.deds);rNet.textContent=fmt(m.net);coverage.textContent=fmt(m.cov,1)+'%';rBalance.textContent=(m.balance>=0?'+':'')+fmt(m.balance);balanceCard.className='card '+(m.balance>=0?'positive':'negative');resultAlert.className='alert '+(m.balance>=0?'ok':'bad');resultAlert.textContent=m.balance>=0?`La dotación cubre el plan con un margen de ${fmt(m.balance)} jornadas (${fmt(m.cov,1)}% de cobertura).`:`Faltan ${fmt(Math.abs(m.balance))} jornadas para cubrir el plan (${fmt(m.cov,1)}% de cobertura).`;return m}
+dedTotal.textContent=fmt(m.deds);needKpi.textContent=fmt(m.need);grossKpi.textContent=fmt(m.gross);netKpi.textContent=fmt(m.net);workedKpi.textContent=fmt(workedTotal);balanceKpi.textContent=(m.balance>=0?'+':'')+fmt(m.balance);rNeed.textContent=fmt(m.need);rGross.textContent=fmt(m.gross);rDeds.textContent=fmt(m.deds);rNet.textContent=fmt(m.net);rWorked.textContent=fmt(workedTotal);coverage.textContent=fmt(m.cov,1)+'%';rBalance.textContent=(m.balance>=0?'+':'')+fmt(m.balance);balanceCard.className='card '+(m.balance>=0?'positive':'negative');resultAlert.className='alert '+(m.balance>=0?'ok':'bad');resultAlert.textContent=m.balance>=0?`La dotación cubre el plan con un margen de ${fmt(m.balance)} jornadas (${fmt(m.cov,1)}% de cobertura).`:`Faltan ${fmt(Math.abs(m.balance))} jornadas para cubrir el plan (${fmt(m.cov,1)}% de cobertura).`;return m}
 function addPlanRow(){plan.push({type:'Hábil',desc:'Nuevo período',fleet:0,days:0});renderPlan();calculate()}function addStaffRow(){staff.push({count:0,activeDays:conductionPeriodDays(),baseFrancos:6,paidFrancos:0,holidaysOff:0});renderStaff();calculate()}function addDeductionRow(){deductions.push({name:DED_CONCEPTS[0],kind:'days',value:0});renderDeds();calculate()}function removePlan(i){plan.splice(i,1);renderPlan();calculate()}function removeStaff(i){staff.splice(i,1);renderStaff();calculate()}function removeDed(i){deductions.splice(i,1);renderDeds();calculate()}
 function snapshot(){return{id:currentId||crypto.randomUUID(),name:budgetName.value.trim()||'Presupuesto sin nombre',period:period.value,status:document.getElementById('status').value,plan:structuredClone(plan),staff:structuredClone(staff),deductions:structuredClone(deductions),metrics:calculate(),updatedAt:new Date().toISOString()}}function getSaved(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}
 function currentBudgetPeriod(){
@@ -4277,9 +4277,9 @@ function downloadPDFFromSnapshot(s){
   const cardY=36,gap=2.4,cardW=(contentW-gap*4)/5;
   const cards=[
     {label:'Jornadas necesarias',value:fmt(M.need)},
-    {label:'Francos trabajados',value:fmt(pdfWorkedFrancosTop),worked:true},
     {label:'Disponibilidad bruta',value:fmt(M.gross)},
     {label:'Disponibilidad neta',value:fmt(M.net)},
+    {label:'FT · Francos trabajados',value:fmt(pdfWorkedFrancosTop),worked:true},
     {label:'Saldo mensual',value:(M.balance>=0?'+':'')+fmt(M.balance),accent:true}
   ];
   cards.forEach((c,i)=>{
@@ -4450,8 +4450,8 @@ function downloadPDFFromSnapshot(s){
   cursor=doc.lastAutoTable.finalY+5;
 
   // Resultado final compacto
-  const resultH=27;
-  const maxResultY=252;
+  const resultH=35;
+  const maxResultY=246;
   if(cursor>maxResultY) cursor=maxResultY;
   const boxFill=M.balance>=0?greenSoft:redSoft;
   const boxAccent=M.balance>=0?green:red;
@@ -4469,10 +4469,10 @@ function downloadPDFFromSnapshot(s){
   doc.setFont('helvetica','normal');
   doc.setFontSize(8.0);
   doc.setTextColor(...muted);
-  doc.text('Conductores: '+fmt(M.count),left+4,cursor+12);
-  doc.text('Francos trabajados: '+fmt(pdfWorkedFrancos),left+4,cursor+16.5);
-  doc.text('Incidencias: '+fmt(M.deds)+' jornadas',left+4,cursor+21);
-  doc.text('Cobertura: '+fmt(M.cov,1)+'%',left+4,cursor+25.5);
+  doc.text('Conductores: '+fmt(M.count),left+4,cursor+13);
+  doc.text('Francos trabajados: '+fmt(pdfWorkedFrancos),left+4,cursor+19);
+  doc.text('Incidencias: '+fmt(M.deds)+' jornadas',left+4,cursor+25);
+  doc.text('Cobertura: '+fmt(M.cov,1)+'%',left+4,cursor+31);
 
   doc.setFont('helvetica','bold');
   doc.setFontSize(7.8);
