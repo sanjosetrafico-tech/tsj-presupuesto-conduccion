@@ -4463,12 +4463,14 @@ function downloadPDFFromSnapshot(s){
   doc.setTextColor(...ink);
   doc.text('Resultado del presupuesto',left+4,cursor+6.5);
 
+  const pdfWorkedFrancos=(s.staff||[]).map(normalizeStaffRow).reduce((a,r)=>a+(whole(r.count)*staffPaidFrancos(r)),0);
   doc.setFont('helvetica','normal');
   doc.setFontSize(8.0);
   doc.setTextColor(...muted);
-  doc.text('Conductores: '+fmt(M.count),left+4,cursor+13);
-  doc.text('Incidencias: '+fmt(M.deds)+' jornadas',left+4,cursor+18.5);
-  doc.text('Cobertura: '+fmt(M.cov,1)+'%',left+4,cursor+24);
+  doc.text('Conductores: '+fmt(M.count),left+4,cursor+12);
+  doc.text('Francos trabajados: '+fmt(pdfWorkedFrancos),left+4,cursor+16.5);
+  doc.text('Incidencias: '+fmt(M.deds)+' jornadas',left+4,cursor+21);
+  doc.text('Cobertura: '+fmt(M.cov,1)+'%',left+4,cursor+25.5);
 
   doc.setFont('helvetica','bold');
   doc.setFontSize(7.8);
