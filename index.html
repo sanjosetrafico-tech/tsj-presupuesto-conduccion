@@ -1196,7 +1196,7 @@ h1{
 .staff-summary-title{display:flex;align-items:center;color:#0d3f97;border-bottom:1px solid #dce8fb;padding-bottom:6px}
 .staff-summary-title strong{font-size:16px;font-weight:900}
 .staff-summary-icon{font-size:17px;line-height:1}
-.staff-summary-top{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.staff-summary-top{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .staff-summary-stat{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.82);border-radius:10px;padding:10px 12px;min-height:66px;box-sizing:border-box}
 .staff-summary-mini{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9px;background:#e5f0ff;color:#1876ea;font-size:16px;line-height:1;flex:0 0 auto}
 .staff-summary-mini svg{display:block}
@@ -1223,7 +1223,7 @@ h1{
 .staff-franco-card>small{display:block;margin-top:4px;font-size:10px;line-height:1.15;font-weight:800;color:#334155}
 .staff-franco-card span{display:block;margin-top:5px;font-size:10px;line-height:1.25;color:#334155}
 @media(max-width:1050px){.staff-layout{grid-template-columns:1fr}.staff-summary{min-height:0}}
-@media(max-width:620px){.staff-summary-top,.staff-summary-bottom{grid-template-columns:1fr}}
+@media(max-width:780px){.staff-summary-top{grid-template-columns:1fr}.staff-summary-bottom{grid-template-columns:1fr}}
 
 
 /* Plan de servicio + Dotación: dos columnas */
@@ -1744,11 +1744,9 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
             <span class="staff-summary-mini staff-summary-mini-calendar" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m8.5 15 2 2 4-4"/></svg></span>
             <div><strong id="staffSummaryGross">0</strong><small>Jornadas disponibles</small></div>
           </div>
-        </div>
-        <div class="staff-summary-bottom">
-          <div class="staff-franco-card franco-custom" id="staffSummaryWorkedCard">
-            <div class="staff-franco-main"><strong id="staffSummaryWorkedTotal">0</strong><span>francos trabajados</span></div>
-            
+          <div class="staff-summary-stat" id="staffSummaryWorkedCard">
+            <span class="staff-summary-mini" aria-hidden="true">FT</span>
+            <div><strong id="staffSummaryWorkedTotal">0</strong><small>Francos trabajados</small></div>
           </div>
         </div>
       </aside>
