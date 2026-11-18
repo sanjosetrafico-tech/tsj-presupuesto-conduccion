@@ -4273,16 +4273,18 @@ function downloadPDFFromSnapshot(s){
   doc.text('Emitido: '+new Date().toLocaleString('es-AR'),right,31,{align:'right'});
 
   // KPIs compactos
-  const cardY=36,gap=3,cardW=(contentW-gap*3)/4;
+  const pdfWorkedFrancosTop=(s.staff||[]).map(normalizeStaffRow).reduce((a,r)=>a+(whole(r.count)*staffPaidFrancos(r)),0);
+  const cardY=36,gap=2.4,cardW=(contentW-gap*4)/5;
   const cards=[
     {label:'Jornadas necesarias',value:fmt(M.need)},
+    {label:'Francos trabajados',value:fmt(pdfWorkedFrancosTop),worked:true},
     {label:'Disponibilidad bruta',value:fmt(M.gross)},
     {label:'Disponibilidad neta',value:fmt(M.net)},
     {label:'Saldo mensual',value:(M.balance>=0?'+':'')+fmt(M.balance),accent:true}
   ];
   cards.forEach((c,i)=>{
     const x=left+i*(cardW+gap);
-    const fill=c.accent?(M.balance>=0?greenSoft:redSoft):soft;
+    const fill=c.accent?(M.balance>=0?greenSoft:redSoft):(c.worked?[244,248,255]:soft);
     doc.setFillColor(...fill);
     doc.setDrawColor(...line);
     doc.roundedRect(x,cardY,cardW,17,1.6,1.6,'FD');
@@ -4290,7 +4292,7 @@ function downloadPDFFromSnapshot(s){
     doc.setFontSize(5.5);
     doc.setTextColor(...muted);
     doc.text(c.label.toUpperCase(),x+2.7,cardY+5);
-    doc.setFontSize(11.8);
+    doc.setFontSize(11.2);
     doc.setTextColor(...(c.accent?(M.balance>=0?green:red):ink));
     doc.text(c.value,x+2.7,cardY+12.5);
   });
