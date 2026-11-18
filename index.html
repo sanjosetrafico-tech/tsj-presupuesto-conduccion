@@ -1745,7 +1745,12 @@ body.tsj-auth-locked .tsj-login-overlay{display:flex}
             <div><strong id="staffSummaryGross">0</strong><small>Jornadas disponibles</small></div>
           </div>
         </div>
-        <div class="staff-summary-bottom" id="staffSummaryGroups"></div>
+        <div class="staff-summary-bottom">
+          <div class="staff-franco-card franco-custom" id="staffSummaryWorkedCard">
+            <div class="staff-franco-main"><strong id="staffSummaryWorkedTotal">0</strong><span>francos trabajados</span></div>
+            <small>Suma total de francos trabajados</small>
+          </div>
+        </div>
       </aside>
     </div>
   </section>
@@ -4077,25 +4082,11 @@ function renderStaff(){normalizeStaff();staffBody.innerHTML=staff.map((r,i)=>{
 <td><button class="icon-btn" onclick="removeStaff(${i})">×</button></td>
 </tr>`}).join('')}function renderDeds(){dedBody.innerHTML=deductions.map((r,i)=>{const aus=r.kind==='percent'&&String(r.name).toLowerCase().includes('ausentismo');const c=aus?`<input value="Ausentismo estimado" readonly style="background:#f5f3f4;color:#6b7280">`:`<select onchange="deductions[${i}].name=this.value">${DED_CONCEPTS.map(x=>`<option value="${x}" ${r.name===x?'selected':''}>${x}</option>`).join('')}</select>`;return `<tr><td>${c}</td><td><select onchange="deductions[${i}].kind=this.value;renderDeds();calculate()"><option value="days" ${r.kind==='days'?'selected':''}>Jornadas</option><option value="percent" ${r.kind==='percent'?'selected':''}>Porcentaje</option></select></td><td><input type="number" min="0" step="${r.kind==='percent'?'0.1':'1'}" value="${r.value}" oninput="deductions[${i}].value=val(this.value);calculate()"></td><td class="num" id="dedJ${i}">0</td><td><button class="icon-btn" onclick="removeDed(${i})">×</button></td></tr>`}).join('')}
 function calculate(){const m=computeMetricsData();plan.forEach((r,i)=>{const e=document.getElementById('planJ'+i);if(e)e.textContent=fmt(whole(r.fleet)*whole(r.days))});staff.forEach((r,i)=>{const e=document.getElementById('staffJ'+i);if(e)e.textContent=fmt(whole(r.count)*staffWorkdays(r))});deductions.forEach((r,i)=>{const e=document.getElementById('dedJ'+i);if(e)e.textContent=fmt(m.dedItems[i]||0)});planDays.textContent=fmt(m.days);planTotal.textContent=fmt(m.need);staffCount.textContent=fmt(m.count);staffTotal.textContent=fmt(m.gross);
-const summaryGroups=document.getElementById('staffSummaryGroups');
-if(summaryGroups){
-  const visibleGroups=staff.filter(r=>whole(r.count)>0);
-  summaryGroups.innerHTML=visibleGroups.map((r,i)=>{
-    const effective=staffFrancos(r);
-    const cls=effective===6?'franco-6':effective===7?'franco-7':effective===8?'franco-8':'franco-custom';
-    const count=whole(r.count);
-    const paid=staffPaidFrancos(r);
-    const dnl=Math.max(0,whole(r.holidaysOff));
-    const base=staffBaseFrancos(r);
-    const workedLabel=paid===1?'1 franco trabajado':fmt(paid)+' francos trabajados';
-    const dnlLabel=dnl===1?'1 DNL':fmt(dnl)+' DNL';
-    return `<div class="staff-franco-card ${cls}">
-      <div class="staff-franco-main"><strong>${fmt(count)}</strong><span>${count===1?'conductor':'conductores'}</span></div>
-      <b>${fmt(base)} francos · ${workedLabel} · ${dnlLabel}</b>
-      <small>${fmt(effective)} descansos efectivos · ${fmt(staffWorkdays(r))} jornadas por conductor</small>
-    </div>`;
-  }).join('');
-}
+const workedTotal=staff.reduce((a,r)=>a+staffPaidFrancos(r),0);
+const workedTotalEl=document.getElementById('staffSummaryWorkedTotal');
+const workedCard=document.getElementById('staffSummaryWorkedCard');
+if(workedTotalEl)workedTotalEl.textContent=fmt(workedTotal);
+if(workedCard)workedCard.hidden=workedTotal<=0;
 const ssc=document.getElementById('staffSummaryCount'),ssg=document.getElementById('staffSummaryGross');
 if(ssc)ssc.textContent=fmt(m.count);
 if(ssg)ssg.textContent=fmt(m.gross);
