@@ -4278,8 +4278,8 @@ function downloadPDFFromSnapshot(s){
   const cards=[
     {label:'Jornadas necesarias',value:fmt(M.need)},
     {label:'Disponibilidad bruta',value:fmt(M.gross)},
-    {label:'Disponibilidad neta',value:fmt(M.net)},
     {label:'FT · Francos trabajados',value:fmt(pdfWorkedFrancosTop),worked:true},
+    {label:'Disponibilidad neta',value:fmt(M.net)},
     {label:'Saldo mensual',value:(M.balance>=0?'+':'')+fmt(M.balance),accent:true}
   ];
   cards.forEach((c,i)=>{
