@@ -3325,11 +3325,29 @@ function analyzeInspectorRows(rows){
     const gap=rec.adelanto-rec.horario;
     if(gap<5)return;
     const key=rec.line+'|'+rec.legajo;
-    const prev=dailyAdvanceByDriver.get(key);
-    if(!prev||gap>prev.gap)dailyAdvanceByDriver.set(key,{...rec,gap,lineHorario});
+    const prev=dailyAdvanceByDriver.get(key)||{
+      line:rec.line,
+      legajo:rec.legajo,
+      dates:new Set(),
+      maxGap:-Infinity,
+      adelanto:rec.adelanto,
+      horario:rec.horario,
+      shift:rec.shift||'',
+      lineHorario
+    };
+    prev.dates.add(rec.date);
+    if(gap>prev.maxGap){
+      prev.maxGap=gap;
+      prev.adelanto=rec.adelanto;
+      prev.horario=rec.horario;
+      prev.shift=rec.shift||prev.shift||'';
+    }
+    dailyAdvanceByDriver.set(key,prev);
   });
 
   dailyAdvanceByDriver.forEach(rec=>{
+    const advanceDays=rec.dates.size;
+    if(advanceDays<2)return;
     const already=findings.some(f=>f.kind==='driver'&&f.line===rec.line&&f.legajo===rec.legajo&&/adelant/i.test(String(f.action||f.hallazgo||'')));
     if(already)return;
     findings.push({
@@ -3338,17 +3356,17 @@ function analyzeInspectorRows(rows){
       legajo:rec.legajo,
       shift:rec.shift||'',
       task:'Seguimiento de conductor',
-      hallazgo:'Adelanto '+rec.adelanto.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'% vs cumplimiento diario '+rec.horario.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'% · diferencia '+rec.gap.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' pp',
+      hallazgo:advanceDays+' días con adelantos · diferencia máxima '+rec.maxGap.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' pp sobre el cumplimiento diario',
       action:'Seguimiento de conductor · Adelantos',
       pctAdelanto:rec.adelanto,
       pctAtraso:null,
       pctHorario:rec.horario,
-      metric:'+'+rec.gap.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' pp',
-      streak:0,
-      impactPct:rec.gap,
-      count:1,
+      metric:advanceDays+' días con adelantos',
+      streak:advanceDays,
+      impactPct:rec.maxGap,
+      count:advanceDays,
       dailyAdvance:true,
-      priority:rec.gap>=10?'high':'medium'
+      priority:rec.maxGap>=10||advanceDays>=3?'high':'medium'
     });
   });
 
@@ -3391,6 +3409,16 @@ function inspNormalizeStoredTasks(tasks){
 function inspNormalizeFindings(findings){
   return (findings||[]).map(f=>{
     if(f?.kind!=='driver')return f;
+    if(f.dailyAdvance){
+      const days=Number(f.streak)||Number(f.count)||Number((String(f.metric||'').match(/(\d+)/)||[])[1])||2;
+      return {
+        ...f,
+        streak:days,
+        count:days,
+        metric:days+' días con adelantos',
+        action:'Seguimiento de conductor · Adelantos'
+      };
+    }
     const streak=Number(f.streak)||Number((String(f.metric||'').match(/(\d+)/)||[])[1])||3;
     return {
       ...f,
@@ -3428,9 +3456,9 @@ function renderInspectorAnalysis(){
   const pct=v=>v===null||v===undefined?'—':v.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
 
   body.innerHTML=inspectorFindings.length?inspectorFindings.map(x=>{
-    const driverStreak=x.kind==='driver'?(Number(x.streak)||Number((String(x.metric||'').match(/(\\d+)/)||[])[1])||3):0;
+    const driverStreak=x.kind==='driver'?(Number(x.streak)||Number((String(x.metric||'').match(/(\\d+)/)||[])[1])||(x.dailyAdvance?2:3)):0;
     const driverFocus=x.kind==='driver'&&/adelant/i.test(String(x.action||x.hallazgo||''))?'Adelantos':'Atrasos';
-    const displayMetric=x.kind==='driver'?driverStreak+' días reincidencia':pct(x.pctHorario);
+    const displayMetric=x.kind==='driver'?(x.dailyAdvance?driverStreak+' días con adelantos':driverStreak+' días reincidencia'):pct(x.pctHorario);
     const displayAction=x.kind==='driver'?'Seguimiento de conductor · '+driverFocus:(x.action||x.task);
     return `<tr>
     <td><span class="priority-pill ${x.priority}">${inspPriorityLabel(x.priority)}</span></td>
