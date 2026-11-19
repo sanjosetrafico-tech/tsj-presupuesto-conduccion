@@ -2796,6 +2796,7 @@ let inspectorImportedRows=[];
 let inspectorPlanAssignments={};
 let inspectorPlanPdfFiles=[];
 let inspectorAutoProposals=[];
+let inspectorDismissedProposals=new Set();
 let inspectorReady=false;
 
 function inspNorm(v){return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
@@ -2883,7 +2884,7 @@ async function inspReadPlanDailyPdf(file){
     const byY=[];
     const sorted=[...items].sort((a,b)=>b.y-a.y||a.x-b.x);
     sorted.forEach(it=>{
-      let row=byY.find(r=>Math.abs(r.y-it.y)<2.2);
+      let row=byY.find(r=>Math.abs(r.y-it.y)<3.2);
       if(!row){row={y:it.y,items:[]};byY.push(row)}
       row.items.push(it);
     });
@@ -2898,6 +2899,8 @@ async function inspReadPlanDailyPdf(file){
         if(texts[i].includes('legajo te'))xTE=s[i].x;
         if(texts[i]==='legajo'&&texts[i+1]==='me')xME=s[i].x;
         if(texts[i]==='legajo'&&texts[i+1]==='te')xTE=s[i].x;
+        if(texts[i]==='me'&&i>0&&texts[i-1].includes('legajo'))xME=s[i-1].x;
+        if(texts[i]==='te'&&i>0&&texts[i-1].includes('legajo'))xTE=s[i-1].x;
       }
     }
     // Fallbacks calibrados al formato Plan Diario TSJ si el encabezado viene fragmentado.
@@ -3182,9 +3185,15 @@ function inspLinePct(horario,atraso,adelanto){
     adelanto:inspPct(d,total)
   };
 }
+function inspPercentValue(v){
+  const n=inspParseNumber(v);
+  if(!Number.isFinite(n))return NaN;
+  return Math.abs(n)<=1?Math.abs(n)*100:Math.abs(n);
+}
 function analyzeInspectorRows(rows){
   const lineStats=new Map();
   const driverStats=new Map();
+  const driverDailyPct=new Map();
 
   rows.forEach(rec=>{
     const line=inspCanonicalLine(inspField(rec,['Linea','Línea','Ramal']));
@@ -3192,6 +3201,17 @@ function analyzeInspectorRows(rows){
     const shift=inspShift(inspField(rec,['Turno','Franja']));
     const estado=inspEstado(inspField(rec,['Estado','Resultado']));
     const date=inspParseDate(inspField(rec,['Fecha','Dia','Día']))||inspParseDate(rec.fileName)||inspParseDate(rec.sheetName);
+
+    // Porcentajes diarios explícitos por conductor, si vienen en el Excel de medias vueltas.
+    const dailyAdelanto=inspPercentValue(inspField(rec,['% Adelanto','Porcentaje Adelanto','Pct Adelanto','Adelanto %']));
+    const dailyHorario=inspPercentValue(inspField(rec,['% Horario','Porcentaje Horario','Pct Horario','Cumplimiento horario','Cumplimiento Horario','% Cumplimiento']));
+    if(line&&legajo&&date&&Number.isFinite(dailyAdelanto)&&Number.isFinite(dailyHorario)){
+      const key=line+'|'+legajo+'|'+date;
+      const prev=driverDailyPct.get(key);
+      if(!prev||dailyAdelanto-dailyHorario>prev.adelanto-prev.horario){
+        driverDailyPct.set(key,{line,legajo,date,adelanto:dailyAdelanto,horario:dailyHorario,shift});
+      }
+    }
 
     if(line&&estado){
       const ls=lineStats.get(line)||{
@@ -3293,6 +3313,45 @@ function analyzeInspectorRows(rows){
     });
   });
 
+  // Seguimiento adicional por adelanto diario:
+  // si la línea está por debajo de 90% y el % de adelanto del conductor
+  // supera en al menos 5 puntos al % de cumplimiento horario del mismo día.
+  const dailyAdvanceByDriver=new Map();
+  driverDailyPct.forEach(rec=>{
+    const ls=lineStats.get(rec.line);
+    if(!ls||!ls.total)return;
+    const lineHorario=inspPct(ls.horario,ls.total);
+    if(lineHorario>=90)return;
+    const gap=rec.adelanto-rec.horario;
+    if(gap<5)return;
+    const key=rec.line+'|'+rec.legajo;
+    const prev=dailyAdvanceByDriver.get(key);
+    if(!prev||gap>prev.gap)dailyAdvanceByDriver.set(key,{...rec,gap,lineHorario});
+  });
+
+  dailyAdvanceByDriver.forEach(rec=>{
+    const already=findings.some(f=>f.kind==='driver'&&f.line===rec.line&&f.legajo===rec.legajo&&/adelant/i.test(String(f.action||f.hallazgo||'')));
+    if(already)return;
+    findings.push({
+      kind:'driver',
+      line:rec.line,
+      legajo:rec.legajo,
+      shift:rec.shift||'',
+      task:'Seguimiento de conductor',
+      hallazgo:'Adelanto '+rec.adelanto.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'% vs cumplimiento diario '+rec.horario.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'% · diferencia '+rec.gap.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' pp',
+      action:'Seguimiento de conductor · Adelantos',
+      pctAdelanto:rec.adelanto,
+      pctAtraso:null,
+      pctHorario:rec.horario,
+      metric:'+'+rec.gap.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+' pp',
+      streak:0,
+      impactPct:rec.gap,
+      count:1,
+      dailyAdvance:true,
+      priority:rec.gap>=10?'high':'medium'
+    });
+  });
+
   return findings.sort((a,b)=>{
     if(a.kind!==b.kind)return a.kind==='line'?-1:1;
     if(a.kind==='line')return (a.pctHorario??100)-(b.pctHorario??100);
@@ -3323,7 +3382,7 @@ function inspNormalizeStoredTasks(tasks){
       ...t,
       reason:inspNormalizeTaskReason(t),
       task:t.task==='Relevamiento operativo'?'Relevamiento del servicio':t.task,
-      shift:t.task==='Seguimiento de conductor'?'Ver Plan Diario':t.shift,
+      shift:t.task==='Seguimiento de conductor'?(inspPlanShift(t.date,t.legajo)||t.shift||'Ver Plan Diario'):t.shift,
       inspector:t.inspector||legacyInspector||'',
       notes:''
     };
@@ -3391,6 +3450,7 @@ async function initInspector(){
     inspRestorePlanAssignments();
     document.getElementById('inspectorWeek').value=inspISO(new Date());
     document.getElementById('inspectorWeek').addEventListener('change',async()=>{
+      inspectorDismissedProposals=new Set();
       await loadInspectorWeek(false);
     });
     const taskSel=document.getElementById('inspEditTask');
@@ -3589,8 +3649,10 @@ function inspBuildAutoProposals(){
 }
 function confirmInspectorProposal(id){
   const p=inspectorAutoProposals.find(x=>x.id===id);if(!p)return;
+  const resolvedShift=p.legajo?(inspPlanShift(p.date,p.legajo)||p.shift):p.shift;
   inspectorTasks.push({
     ...p,
+    shift:resolvedShift,
     id:inspUid(),
     manual:true,
     inspector:'',
@@ -3614,10 +3676,16 @@ function moveInspectorProposal(id){
   document.getElementById('inspEditPriority').value=p.priority||'medium';
   document.getElementById('inspectorEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+function deleteInspectorProposal(id){
+  inspectorDismissedProposals.add(id);
+  renderInspectorCalendar();
+  const state=document.getElementById('inspectorSaveState');
+  if(state)state.textContent='Sugerencia eliminada · cambios sin guardar';
+}
 function renderInspectorCalendar(){
   const grid=document.getElementById('inspectorCalendarGrid');if(!grid)return;
   const dates=inspWeekDates();
-  inspectorAutoProposals=inspBuildAutoProposals();
+  inspectorAutoProposals=inspBuildAutoProposals().filter(p=>!inspectorDismissedProposals.has(p.id));
   const tasksKpi=document.getElementById('inspTasksKpi');
   if(tasksKpi)tasksKpi.textContent=inspectorFindings.length+inspectorAutoProposals.length;
   document.getElementById('inspectorWeekLabel').textContent='Semana '+inspWeekTitle();
@@ -3638,7 +3706,7 @@ function renderInspectorCalendar(){
       </div>`).join('')+proposed.map(t=>`<div class="inspector-task-card auto-proposal ${t.priority}">
         <strong>${inspEsc(t.task)}</strong>
         <span>Línea ${inspEsc(t.line||'—')} · ${inspEsc(t.reason)}</span>
-        <div class="inspector-task-actions"><button class="inspector-mini-btn confirm" onclick="confirmInspectorProposal('${t.id}')">Confirmar</button><button class="inspector-mini-btn" onclick="moveInspectorProposal('${t.id}')">Mover</button></div>
+        <div class="inspector-task-actions"><button class="inspector-mini-btn confirm" onclick="confirmInspectorProposal('${t.id}')">Confirmar</button><button class="inspector-mini-btn" onclick="moveInspectorProposal('${t.id}')">Mover</button><button class="inspector-mini-btn delete" onclick="deleteInspectorProposal('${t.id}')">Eliminar</button></div>
       </div>`).join('')+`<button class="inspector-add-cell" onclick="openInspectorEditor('${date}','${shift}')">+ Agregar tarea</button></div>`;
     });
   });
