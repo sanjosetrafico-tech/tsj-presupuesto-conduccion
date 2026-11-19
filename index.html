@@ -3314,14 +3314,10 @@ function analyzeInspectorRows(rows){
   });
 
   // Seguimiento adicional por adelanto diario:
-  // si la línea está por debajo de 90% y el % de adelanto del conductor
-  // supera en al menos 5 puntos al % de cumplimiento horario del mismo día.
+  // para adelantos no importa el cumplimiento general de la línea.
+  // Se activa si el adelanto supera en al menos 5 puntos al cumplimiento horario diario.
   const dailyAdvanceByDriver=new Map();
   driverDailyPct.forEach(rec=>{
-    const ls=lineStats.get(rec.line);
-    if(!ls||!ls.total)return;
-    const lineHorario=inspPct(ls.horario,ls.total);
-    if(lineHorario>=90)return;
     const gap=rec.adelanto-rec.horario;
     if(gap<5)return;
     const key=rec.line+'|'+rec.legajo;
@@ -3332,8 +3328,7 @@ function analyzeInspectorRows(rows){
       maxGap:-Infinity,
       adelanto:rec.adelanto,
       horario:rec.horario,
-      shift:rec.shift||'',
-      lineHorario
+      shift:rec.shift||''
     };
     prev.dates.add(rec.date);
     if(gap>prev.maxGap){
