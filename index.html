@@ -2934,19 +2934,34 @@ async function inspReadPlanDailyPdf(file){
 async function handleInspectorPlanPDFs(files){
   if(!files||!files.length)return;
   if(!window.pdfjsLib){alert('No se pudo cargar el lector de PDF.');return}
-  let errors=[],count=0;
+  let errors=[],count=0,tmCount=0,ttCount=0;
   for(const file of Array.from(files)){
     try{
       const rows=await inspReadPlanDailyPdf(file);
-      rows.forEach(r=>{inspectorPlanAssignments[inspPlanKey(r.date,r.legajo)]=r});
+      rows.forEach(r=>{
+        inspectorPlanAssignments[inspPlanKey(r.date,r.legajo)]=r;
+        if(r.shift==='Mañana')tmCount++;
+        if(r.shift==='Tarde')ttCount++;
+      });
       if(!inspectorPlanPdfFiles.includes(file.name))inspectorPlanPdfFiles.push(file.name);
       count+=rows.length;
       if(!rows.length)errors.push(file.name+': no se reconocieron legajos ME/TE');
     }catch(e){errors.push(file.name+': '+(e?.message||'error de lectura'))}
   }
+
+  // Reubicar inmediatamente las tareas de seguimiento ya creadas.
+  let relocated=0;
+  inspectorTasks=inspectorTasks.map(t=>{
+    if((t.task||'')!=='Seguimiento de conductor'||!t.legajo||!t.date)return t;
+    const detected=inspPlanShift(t.date,t.legajo);
+    if(!detected||detected===t.shift)return t;
+    relocated++;
+    return {...t,shift:detected};
+  });
+
   inspSavePlanAssignments();
   const state=document.getElementById('inspectorSaveState');
-  if(state)state.textContent='Plan Diario cargado · '+count+' asignaciones TM/TT detectadas';
+  if(state)state.textContent='Plan Diario cargado · '+count+' asignaciones · TM '+tmCount+' · TT '+ttCount+(relocated?' · '+relocated+' tareas reubicadas':'');
   renderInspectorAnalysis();
   renderInspectorCalendar();
   const input=document.getElementById('inspectorPlanPdfInput');if(input)input.value='';
